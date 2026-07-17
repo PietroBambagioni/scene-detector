@@ -27,6 +27,9 @@ def run(
     split_mode: SplitMode = typer.Option(SplitMode.copy, "--split-mode"),
     threshold: float = typer.Option(0.5, "--threshold"),
     min_scene_len: int = typer.Option(15, "--min-scene-len"),
+    low_mem: bool = typer.Option(False, "--low-mem",
+                                 help="Detection neurale in streaming: RAM da GB a MB "
+                                      "(in ensemble decodifica due volte, niente decode-once)"),
     transnet_weights: Path = typer.Option(None, "--transnet-weights"),
     autoshot_weights: Path = typer.Option(None, "--autoshot-weights"),
     asr: bool = typer.Option(False, "--asr", help="Trascrivi i dialoghi (faster-whisper)"),
@@ -56,6 +59,7 @@ def run(
     cfg = Config(
         video=video, output_dir=output_dir, detector=detector, ensemble=ensemble,
         split_mode=split_mode, threshold=threshold, min_scene_len=min_scene_len,
+        low_mem=low_mem,
         transnet_weights=transnet_weights, autoshot_weights=autoshot_weights,
     )
 
@@ -73,7 +77,7 @@ def run(
         "flags": {
             "detector": detector.value, "ensemble": ensemble,
             "split_mode": split_mode.value, "threshold": threshold,
-            "min_scene_len": min_scene_len,
+            "min_scene_len": min_scene_len, "low_mem": low_mem,
             "asr": asr, "asr_model": asr_model, "asr_lang": asr_lang, "asr_threads": asr_threads,
             "vlm": vlm, "vlm_model": vlm_model, "vlm_frames": vlm_frames,
             "jobs": jobs, "output_dir": str(output_dir),
@@ -101,10 +105,14 @@ def run(
             t_det = build_detector(DetectorKind.transnet, cfg)
             a_det = build_detector(DetectorKind.autoshot, cfg)
             assert t_det.input_size == a_det.input_size, "ensemble: input dei due detector diverso"
-            h, w = t_det.input_size  # (H, W) — decodifica condivisa una sola volta
-            frames = read_small_frames(info.path, w, h, total=info.n_frames, desc="[decode] frames")
-            a = t_det.detect_from_frames(frames, info)
-            b = a_det.detect_from_frames(frames, info)
+            if low_mem:
+                a = t_det.detect(info)  # streaming: decodifica indipendente (RAM bounded)
+                b = a_det.detect(info)
+            else:
+                h, w = t_det.input_size  # (H, W) — decodifica condivisa una sola volta
+                frames = read_small_frames(info.path, w, h, total=info.n_frames, desc="[decode] frames")
+                a = t_det.detect_from_frames(frames, info)
+                b = a_det.detect_from_frames(frames, info)
             scenes, flags = conf_mod.reconcile(a, b, info.n_frames, info.fps, cfg.agreement_tol)
             if flags:
                 log.info("  %d boundary in disaccordo (rivedere): %s", len(flags), flags)

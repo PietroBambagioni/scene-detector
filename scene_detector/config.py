@@ -25,6 +25,7 @@ class Config:
     split_mode: SplitMode = SplitMode.copy
     threshold: float = 0.5        # soglia boundary neurale
     min_scene_len: int = 15       # frame minimi per scena
+    low_mem: bool = False         # detection neurale in streaming (RAM bounded, no decode-once)
     pyscd_threshold: float = 27.0  # ContentDetector
     agreement_tol: int = 5        # tolleranza (frame) per agreement in ensemble
     transnet_weights: Path | None = None

@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from ..scene import scenes_from_ranges
-from ._neural import read_small_frames, probs_to_ranges
+from ._neural import read_small_frames, stream_small_windows, probs_to_ranges
 
 
 class TransNetV2Detector:
@@ -12,13 +12,19 @@ class TransNetV2Detector:
     name = "transnet"
     input_size = (27, 48)  # (H, W)
 
-    def __init__(self, weights=None, threshold=0.5, min_scene_len=15):
+    def __init__(self, weights=None, threshold=0.5, low_mem=False):
         self.weights = Path(weights) if weights else None
         self.threshold = threshold
-        self.min_scene_len = min_scene_len
+        self.low_mem = low_mem
 
     def detect(self, video):
         h, w = self.input_size
+        if self.low_mem:
+            streamer = stream_small_windows(video.path, w, h, total=video.n_frames,
+                                            desc=f"[{self.name}] stream")
+            probs = self._load_model().predict_stream(streamer)
+            ranges = probs_to_ranges(probs, self.threshold)
+            return scenes_from_ranges(ranges, video.fps, self.name)
         frames = read_small_frames(video.path, w, h, total=video.n_frames,
                                    desc=f"[{self.name}] frames")
         return self.detect_from_frames(frames, video)
@@ -29,7 +35,7 @@ class TransNetV2Detector:
         Separata da `detect` per condividere una singola decodifica in ensemble."""
         model = self._load_model()  # espone .predict(uint8[N,27,48,3]) -> float[N]
         probs = model.predict(frames)
-        ranges = probs_to_ranges(probs, self.threshold, self.min_scene_len)
+        ranges = probs_to_ranges(probs, self.threshold)
         return scenes_from_ranges(ranges, video.fps, self.name)
 
     def _load_model(self):

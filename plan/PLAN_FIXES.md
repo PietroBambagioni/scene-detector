@@ -37,22 +37,29 @@ Legenda stato: `[ ]` da fare · `[x]` fatto · `🔴` alto valore · `🟡` medi
 - **Direzione scelta**: decode-once (non streaming). Confligge con lo streaming del punto
   "Tutto il film in RAM" — quest'ultimo resta da fare solo se la RAM diventa un vincolo reale.
 
-### [ ] 🟡 `min_scene_len` applicato due volte
-- **File**: `detectors/_neural.py:49` (`probs_to_ranges`) + `cli.py:72` (`enforce_min_len`)
-- **Problema**: due semantiche diverse sullo stesso vincolo. `probs_to_ranges` **sopprime**
-  il boundary (sposta il taglio in avanti); `enforce_min_len` **fonde** nella scena precedente.
-  Su shot corti danno risultati diversi.
-- **Fix**: togliere il vincolo da `probs_to_ranges` (che deve solo tradurre prob→range) e
-  lasciare `enforce_min_len` come unica autorità.
-- **Tradeoff**: nessuno rilevante; serve un test che fissi il comportamento atteso.
+### [x] 🟡 `min_scene_len` applicato due volte
+- **File**: `detectors/_neural.py` (`probs_to_ranges`) + `cli.py` (`enforce_min_len`)
+- **Problema**: due semantiche diverse sullo stesso vincolo. `probs_to_ranges` **sopprimeva**
+  il boundary (spostava il taglio in avanti); `enforce_min_len` **fonde** nella scena precedente.
+  Su shot corti davano risultati diversi.
+- **Fix (fatto)**: `probs_to_ranges(probs, threshold)` ora **solo** traduce prob→range (rimosso
+  il param `min_scene_len`). `enforce_min_len` in `cli.py` resta l'**unica autorità**. Rimosso
+  il param `min_scene_len` (ora inutilizzato) dai detector neurali e dalla factory. Test
+  aggiornato: `test_probs_to_ranges_keeps_short_boundary` fissa il nuovo comportamento (boundary
+  corto **non** soppresso). Fuori scope: `pyscenedetect` passa ancora `min_scene_len` alla lib
+  (meccanismo diverso, non toccato).
 
-### [ ] 🟡 Tutto il film caricato in RAM
-- **File**: `detectors/_neural.py:7` (`read_small_frames`)
+### [x] 🟡 Tutto il film caricato in RAM
+- **File**: `detectors/_neural.py`, `models/wrapper.py`, `detectors/*`, `config.py`, `cli.py`
 - **Problema**: materializza `[N,27,48,3]` interi (~1.2 GB a 2h, >2 GB per il film da 3.5h).
-- **Fix**: streaming windowed inference — leggere dalla pipe ffmpeg una finestra (100 frame,
-  passo 50) alla volta e predire, senza tenere tutti i frame. RAM da GB a MB.
-- **Tradeoff**: complica il codice (buffer scorrevole) e rompe il riuso «decode-once» del
-  fix ensemble. Da fare solo se la RAM è un vincolo reale sul target.
+- **Fix (fatto)**: flag opt-in `--low-mem`. `FrameWindower` (in `_neural.py`) produce le finestre
+  da 100 frame (passo 50, padding TransNet) dalla pipe ffmpeg senza materializzare tutti i frame
+  (in RAM vive solo la finestra corrente, ~100 frame). I predictor espongono `predict_stream`.
+  Verificato **bit-identico** al batch (`max|diff|=0` su TransNet+AutoShot su clip reale) e con
+  test parametrico `test_streaming_windows_match_batch` (n∈{1,20,49,50,51,100,137,250}).
+- **Default invariato** (decode-once). **Tradeoff**: in `--ensemble --low-mem` ogni detector
+  streamma indipendentemente → **decodifica due volte** (si sacrifica il decode-once per la RAM,
+  che è lo scopo del flag).
 
 ### [ ] 🟡 Fragilità API di `mlx-vlm`
 - **File**: `scene_detector/caption.py:90-93`, `pyproject.toml:19`
@@ -74,16 +81,24 @@ Legenda stato: `[ ]` da fare · `[x]` fatto · `🔴` alto valore · `🟡` medi
 
 ## Minori / cleanup
 
-### [ ] ⚪️ Nessun controllo di versione
+### [x] ⚪️ Nessun controllo di versione
 - Il progetto non è un repo git. `git init` + primo commit (`.gitignore` già presente).
+- **Fatto**: `git init` + primo commit `18e0ad6`. Verificato che l'index escluda `weights/`,
+  `clips/`, `.venv/`, `*.pth`, `.DS_Store` (solo sorgenti/test/plan committati).
 
-### [ ] ⚪️ `torch.load` incoerente
+### [x] ⚪️ `torch.load` incoerente
 - **File**: `models/wrapper.py:24` (TransNet, senza flag) vs `:69` (AutoShot, `weights_only=True`).
   Allineare TransNet a `weights_only=True`.
+- **Fatto**: aggiunto `weights_only=True` al load TransNet (checkpoint = state_dict puro).
+  Verificato con smoke che il caricamento pesi non si rompe.
 
-### [ ] ⚪️ Coverage sulla logica di boundary
+### [x] ⚪️ Coverage sulla logica di boundary
 - `probs_to_ranges`, `enforce_min_len`, `probe` sono funzioni pure non testate — proprio dove
   i bug si nascondono. Aggiungere unit-test.
+- **Fatto**: `probs_to_ranges`/`enforce_min_len` avevano già test base; aggiunti edge-case
+  (soppressione boundary corto, tutti sotto soglia, prima scena corta, lista vuota) +
+  `tests/test_video.py` per `probe` (genera un video con ffmpeg, skip se ffmpeg assente).
+  Suite: 26 test verdi.
 
 ### [ ] ⚪️ `Config` bypassato
 - **File**: `cli.py` — i parametri ASR/VLM/`jobs` viaggiano come argomenti sciolti invece che
@@ -93,8 +108,9 @@ Legenda stato: `[ ]` da fare · `[x]` fatto · `🔴` alto valore · `🟡` medi
 - **File**: `align.py:14-19` — con shot ordinati diventa lineare con un puntatore. Trascurabile
   finché non si sale di scala.
 
-### [ ] ⚪️ File spuri
+### [x] ⚪️ File spuri
 - `text.txt` (vuoto) e `.DS_Store` da rimuovere / ignorare.
+- **Fatto**: rimossi `text.txt` e `.DS_Store` (root + `clips/`); aggiunto `.DS_Store` al `.gitignore`.
 
 ---
 

@@ -27,18 +27,19 @@ def test_enforce_min_len_merges_short():
 def test_probs_to_ranges():
     probs = [0.0] * 40
     probs[20] = 0.9
-    assert probs_to_ranges(probs, threshold=0.5, min_scene_len=3) == [(0, 20), (21, 39)]
+    assert probs_to_ranges(probs, threshold=0.5) == [(0, 20), (21, 39)]
 
 
-def test_probs_to_ranges_suppresses_short_boundary():
-    # boundary a 2 con min_scene_len=5: soppresso, resta un unico range
+def test_probs_to_ranges_keeps_short_boundary():
+    # probs_to_ranges traduce solo prob->range: il boundary corto NON è soppresso qui
+    # (il vincolo min_scene_len è di enforce_min_len). Boundary a 2 -> due range.
     probs = [0.0] * 20
     probs[2] = 0.9
-    assert probs_to_ranges(probs, threshold=0.5, min_scene_len=5) == [(0, 19)]
+    assert probs_to_ranges(probs, threshold=0.5) == [(0, 2), (3, 19)]
 
 
 def test_probs_to_ranges_all_below_threshold():
-    assert probs_to_ranges([0.0] * 10, threshold=0.5, min_scene_len=3) == [(0, 9)]
+    assert probs_to_ranges([0.0] * 10, threshold=0.5) == [(0, 9)]
 
 
 def test_enforce_min_len_keeps_leading_short_scene():

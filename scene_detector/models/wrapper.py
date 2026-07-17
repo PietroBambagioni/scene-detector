@@ -48,6 +48,22 @@ class TransNetV2Predictor:
 
         return np.concatenate(preds)[:n]
 
+    def predict_stream(self, streamer, progress=True):
+        """Come `predict` ma consuma finestre uint8[100,27,48,3] da uno streamer (RAM bounded).
+
+        La progress bar è quella dei frame nello streamer; qui niente barra (disabilitata).
+        """
+        import numpy as np
+
+        torch = self.torch
+        preds = []
+        with torch.no_grad():
+            for window in streamer:
+                t = torch.from_numpy(window[np.newaxis]).to(self.device)
+                logits, _ = self.model(t)
+                preds.append(torch.sigmoid(logits)[0, 25:75, 0].cpu().numpy())
+        return np.concatenate(preds)[:streamer.n]
+
 
 class AutoShotPredictor:
     """Carica AutoShot (TransNetV2Supernet, NAS) e applica il windowing.
@@ -101,3 +117,17 @@ class AutoShotPredictor:
                 preds.append(torch.sigmoid(single)[0, 25:75, 0].cpu().numpy())
 
         return np.concatenate(preds)[:n]
+
+    def predict_stream(self, streamer, progress=True):
+        """Come `predict` ma consuma finestre uint8[100,27,48,3] da uno streamer (RAM bounded)."""
+        import numpy as np
+
+        torch = self.torch
+        preds = []
+        with torch.no_grad():
+            for window in streamer:
+                x = torch.from_numpy(window).permute(3, 0, 1, 2).unsqueeze(0).float().to(self.device)
+                out = self.model(x)
+                single = out[0] if isinstance(out, (tuple, list)) else out
+                preds.append(torch.sigmoid(single)[0, 25:75, 0].cpu().numpy())
+        return np.concatenate(preds)[:streamer.n]
