@@ -21,7 +21,7 @@ class TransNetV2Predictor:
         self.device = device
 
         self.model = TransNetV2()
-        self.model.load_state_dict(torch.load(str(Path(weights)), map_location="cpu"))
+        self.model.load_state_dict(torch.load(str(Path(weights)), map_location="cpu", weights_only=True))
         self.model.eval().to(self.device)
 
     def predict(self, frames, progress=True):

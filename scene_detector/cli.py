@@ -168,11 +168,31 @@ def run(
         o["manifest"] = str(manifest_path)
         o["index_html"] = str(out_dir / "index.html")
     log.info("  → %s/  (manifest.json, index.html)", out_dir)
+
+    from .gallery import write_gallery
+    gallery_path, n_films = write_gallery(output_dir)
+    log.info("  → %s  (galleria: %d film)", gallery_path, n_films)
     tel.close()
+
+
+index_app = typer.Typer(add_completion=False, help="(Ri)genera la galleria dei cataloghi.")
+
+
+@index_app.command()
+def index(output_dir: Path = typer.Option(Path("clips"), "--output-dir", "-o",
+                                          help="Cartella con i cataloghi per-film")):
+    """(Ri)genera la galleria `<out>/index.html` scandendo i cataloghi presenti."""
+    from .gallery import write_gallery
+    gallery_path, n_films = write_gallery(output_dir)
+    typer.echo(f"→ {gallery_path}  ({n_films} film)")
 
 
 def main():
     app()
+
+
+def main_index():
+    index_app()
 
 
 if __name__ == "__main__":

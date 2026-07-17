@@ -277,7 +277,16 @@ scene_detector/
 
 ---
 
-## Piano 3 — Launcher UI: galleria multi-film 🟡
+## Piano 3 — Launcher UI: galleria multi-film 🟡 ✅ FATTO
+
+> **Stato**: implementato in `scene_detector/gallery.py` (Opzione A — galleria statica, zero deps).
+> `scan_catalogs(out)` scandisce `<out>/*/manifest.json` (ignora cartelle senza/con manifest
+> illeggibile, ordina per nome film); `build_index_html` genera un `<out>/index.html`
+> self-contained (una card per film: titolo, n_shot, durata, detector + filtro). `write_gallery`
+> è chiamata **automaticamente a fine `run`**. Rebuild manuale via nuovo entry point
+> `scene-detector-index -o <out>` (**non** sotto-comando, per non rompere l'invocazione nuda
+> `scene-detector FILM.mp4` del README — vedi `pyproject [project.scripts]`). Thumbnail (step 4,
+> opzionale) **non** implementata. Test: `tests/test_gallery.py` (3). Verificato su `clips/` reale.
 
 ### Obiettivo
 Oggi la UI è un `index.html` **per film** in `<out>/<film>/`: per vederne uno lo si apre a mano,

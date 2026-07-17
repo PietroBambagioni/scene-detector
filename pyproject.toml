@@ -22,6 +22,7 @@ dev = ["pytest>=8.0"]
 
 [project.scripts]
 scene-detector = "scene_detector.cli:main"
+scene-detector-index = "scene_detector.cli:main_index"
 
 [tool.setuptools.packages.find]
 include = ["scene_detector*"]

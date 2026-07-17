@@ -28,3 +28,25 @@ def test_probs_to_ranges():
     probs = [0.0] * 40
     probs[20] = 0.9
     assert probs_to_ranges(probs, threshold=0.5, min_scene_len=3) == [(0, 20), (21, 39)]
+
+
+def test_probs_to_ranges_suppresses_short_boundary():
+    # boundary a 2 con min_scene_len=5: soppresso, resta un unico range
+    probs = [0.0] * 20
+    probs[2] = 0.9
+    assert probs_to_ranges(probs, threshold=0.5, min_scene_len=5) == [(0, 19)]
+
+
+def test_probs_to_ranges_all_below_threshold():
+    assert probs_to_ranges([0.0] * 10, threshold=0.5, min_scene_len=3) == [(0, 9)]
+
+
+def test_enforce_min_len_keeps_leading_short_scene():
+    # la prima scena non ha una precedente in cui fondersi: resta com'è
+    scenes = scenes_from_ranges([(0, 3), (4, 40)], fps=24.0)
+    merged = enforce_min_len(scenes, min_len=15)
+    assert [(s.start_frame, s.end_frame) for s in merged] == [(0, 3), (4, 40)]
+
+
+def test_enforce_min_len_empty():
+    assert enforce_min_len([], min_len=15) == []
