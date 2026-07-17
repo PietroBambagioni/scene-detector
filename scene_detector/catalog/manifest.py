@@ -16,6 +16,7 @@ def build_manifest(video_info, scenes, detector, clip_template="scene-{:03d}.mp4
         "duration": video_info.duration,
         "detector": detector,
         "n_shots": len(scenes),
+        "cast": [],
         "shots": [
             {
                 "index": s.index,
@@ -27,6 +28,7 @@ def build_manifest(video_info, scenes, detector, clip_template="scene-{:03d}.mp4
                 "confidence": s.confidence,
                 "description": None,
                 "dialogue": None,
+                "characters": [],
             }
             for s in scenes
         ],

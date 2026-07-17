@@ -44,8 +44,8 @@ def sample_frames(video, start_time, end_time, n=3, size=512):
 
 # ------------------------------------------------------------------ prompt ---
 
-def build_prompt(n_frames, dialogue=None):
-    """Prompt IT: descrizione concreta di 1-2 frasi, dialogo (ASR) come contesto."""
+def build_prompt(n_frames, dialogue=None, characters=None):
+    """Prompt IT: descrizione concreta di 1-2 frasi; personaggi (face-rec) e dialogo (ASR) come contesto."""
     imgs = "un fotogramma campionato" if n_frames == 1 else \
         f"{n_frames} fotogrammi campionati in ordine cronologico"
     parts = [
@@ -53,6 +53,11 @@ def build_prompt(n_frames, dialogue=None):
         "Descrivi in italiano, in 1-2 frasi concise, cosa succede: chi è presente, dove si "
         "svolge la scena e l'azione principale. Sii concreto e non inventare dettagli non visibili.",
     ]
+    if characters:
+        parts.append(
+            "Personaggi riconosciuti in questa inquadratura: " + ", ".join(characters)
+            + ". Usa questi nomi nella descrizione se corrispondono a chi è visibile."
+        )
     if dialogue:
         parts.append(f'Dialogo pronunciato in questa inquadratura (contesto): "{dialogue}"')
     return "\n".join(parts)
@@ -73,13 +78,13 @@ class MlxVlmCaptioner:
         self.max_tokens = max_tokens
         self.temperature = temperature
 
-    def describe(self, frames, dialogue=None):
+    def describe(self, frames, dialogue=None, characters=None):
         import os
         import tempfile
         from mlx_vlm import generate
         from mlx_vlm.prompt_utils import apply_chat_template
 
-        prompt = build_prompt(len(frames), dialogue)
+        prompt = build_prompt(len(frames), dialogue, characters)
         formatted = apply_chat_template(self.processor, self.config, prompt, num_images=len(frames))
 
         # mlx-vlm 0.6.5: generate vuole path di immagini, non PIL -> PNG temporanei
@@ -122,6 +127,7 @@ def caption_manifest(manifest, video, captioner, n_frames=3, size=512,
     from tqdm import tqdm
 
     shots = manifest["shots"]
+    cast_names = {c["id"]: c["name"] for c in manifest.get("cast", [])}  # id cluster → nome (face-rec)
 
     # resume cross-run: riporta le descrizioni già salvate su disco
     if manifest_path and Path(manifest_path).exists():
@@ -142,7 +148,8 @@ def caption_manifest(manifest, video, captioner, n_frames=3, size=512,
             continue
         try:
             frames = sample_frames(video, shot["start_time"], shot["end_time"], n_frames, size)
-            shot["description"] = captioner.describe(frames, shot.get("dialogue"))
+            chars = [cast_names[c] for c in shot.get("characters", []) if c in cast_names]
+            shot["description"] = captioner.describe(frames, shot.get("dialogue"), chars or None)
         except Exception as e:  # uno shot "velenoso" non deve fermare il batch (resume-friendly)
             failed += 1
             log.warning("shot %s: descrizione fallita (%s) — proseguo", shot.get("index"), e)

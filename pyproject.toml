@@ -17,6 +17,7 @@ dependencies = [
 neural = ["torch>=2.1", "pillow>=10.0", "einops>=0.7"]   # inference TransNetV2 / AutoShot
 asr = ["faster-whisper>=1.0"]                            # trascrizione dialoghi
 vlm = ["mlx-vlm>=0.1,<0.7", "pillow>=10.0"]              # VLM per shot (Apple Silicon); <0.7: firma generate() testata (0.6.x)
+faces = ["insightface>=1.0", "onnxruntime>=1.20"]        # riconoscimento personaggi (SCRFD+ArcFace, CoreML)
 obs = ["psutil>=5.9"]                                    # telemetria run (CPU%/RSS live)
 dev = ["pytest>=8.0"]
 

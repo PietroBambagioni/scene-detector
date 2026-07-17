@@ -26,12 +26,20 @@ def test_build_prompt_singular_no_dialogue():
     assert "Dialogo" not in p
 
 
+def test_build_prompt_with_characters():
+    p = build_prompt(3, characters=["Marco", "Giulia"])
+    assert "Personaggi riconosciuti" in p
+    assert "Marco, Giulia" in p
+
+
 class _StubCaptioner:
     def __init__(self):
         self.calls = 0
+        self.last_characters = None
 
-    def describe(self, frames, dialogue=None):
+    def describe(self, frames, dialogue=None, characters=None):
         self.calls += 1
+        self.last_characters = characters
         return f"descr {self.calls}"
 
 
@@ -71,7 +79,7 @@ class _FlakyCaptioner:
         self.fail_on = fail_on
         self.calls = 0
 
-    def describe(self, frames, dialogue=None):
+    def describe(self, frames, dialogue=None, characters=None):
         self.calls += 1
         if self.calls == self.fail_on:
             raise RuntimeError("boom")
@@ -90,3 +98,17 @@ def test_caption_manifest_resilient_per_shot(monkeypatch):
     caption_manifest(manifest, "video.mp4", cap, progress=False)
     assert manifest["shots"][0]["description"] is None      # fallito: resta None (editabile in UI)
     assert manifest["shots"][1]["description"] == "descr 2"  # il batch prosegue
+
+
+def test_caption_manifest_injects_character_names(monkeypatch):
+    monkeypatch.setattr(caption, "sample_frames", lambda *a, **k: ["frame"])
+    manifest = {
+        "cast": [{"id": 0, "name": "Alice"}, {"id": 1, "name": "Bob"}],
+        "shots": [
+            {"index": 0, "start_frame": 0, "end_frame": 100, "start_time": 0.0, "end_time": 4.0,
+             "description": None, "dialogue": None, "characters": [0, 1]},
+        ],
+    }
+    cap = _StubCaptioner()
+    caption_manifest(manifest, "video.mp4", cap, progress=False)
+    assert cap.last_characters == ["Alice", "Bob"]   # id cluster risolti in nomi dal cast

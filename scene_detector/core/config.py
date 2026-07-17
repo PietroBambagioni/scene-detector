@@ -39,5 +39,11 @@ class Config:
     vlm: bool = False
     vlm_model: str = "mlx-community/Qwen2.5-VL-3B-Instruct-4bit"
     vlm_frames: int = 3
+    # riconoscimento personaggi (faces)
+    faces: bool = False
+    faces_gallery: Path | None = None
+    faces_frames: int = 6
+    faces_threshold: float = 0.5
+    faces_min_score: float = 0.5
     # taglio clip
     jobs: int = 0                 # processi ffmpeg paralleli (0 = auto)

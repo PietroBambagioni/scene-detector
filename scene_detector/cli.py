@@ -33,7 +33,13 @@ def run(
     vlm_model: str = typer.Option("mlx-community/Qwen2.5-VL-3B-Instruct-4bit", "--vlm-model",
                                   help="Modello VLM (repo mlx-community o path locale)"),
     vlm_frames: int = typer.Option(3, "--vlm-frames", help="Frame campionati per shot"),
-    run_all: bool = typer.Option(False, "--all", help="Fa tutto: detection + split + ASR + VLM"),
+    faces: bool = typer.Option(False, "--faces", help="Riconoscimento personaggi (InsightFace) per arricchire il VLM"),
+    faces_gallery: Path = typer.Option(None, "--faces-gallery",
+                                       help="Cartella <Nome>/*.jpg per etichettare i personaggi (opz.; senza, restano anonimi)"),
+    faces_frames: int = typer.Option(6, "--faces-frames", help="Frame campionati per shot per il riconoscimento volti"),
+    faces_threshold: float = typer.Option(0.5, "--faces-threshold", help="Soglia coseno per clustering/gallery volti"),
+    faces_min_score: float = typer.Option(0.5, "--faces-min-score", help="Soglia det_score: scarta i volti deboli"),
+    run_all: bool = typer.Option(False, "--all", help="Fa tutto: detection + split + faces + ASR + VLM"),
     max_detail: bool = typer.Option(False, "--max", help="Massimo dettaglio + multi-core: --all + reencode frame-accurate + multi-core (2 core liberi)"),
     jobs: int = typer.Option(0, "-j", "--jobs", help="Processi ffmpeg paralleli per il taglio (0 = auto: tutti i core meno 2)"),
 ):
@@ -43,6 +49,7 @@ def run(
     if run_all:
         asr = True
         vlm = True
+        faces = True
     if transnet_weights is None and Path("weights/transnetv2.pth").exists():
         transnet_weights = Path("weights/transnetv2.pth")
     if autoshot_weights is None and Path("weights/autoshot.pth").exists():
@@ -55,6 +62,8 @@ def run(
         transnet_weights=transnet_weights, autoshot_weights=autoshot_weights,
         asr=asr, asr_model=asr_model, asr_lang=asr_lang, asr_threads=asr_threads,
         vlm=vlm, vlm_model=vlm_model, vlm_frames=vlm_frames,
+        faces=faces, faces_gallery=faces_gallery, faces_frames=faces_frames,
+        faces_threshold=faces_threshold, faces_min_score=faces_min_score,
         jobs=jobs,
     )
 

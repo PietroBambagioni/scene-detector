@@ -108,7 +108,7 @@ Legenda stato: `[ ]` da fare · `[x]` fatto · `🔴` alto valore · `🟡` medi
 ### [x] ⚪️ `Config` bypassato
 - **File**: `cli.py` — i parametri ASR/VLM/`jobs` viaggiano come argomenti sciolti invece che
   nel dataclass `Config`. Incoerenza architetturale (non un bug).
-- **Fatto**: ASR/VLM/`jobs` spostati in `core/config.py::Config`; `cli` popola un `Config`
+- **Fatto**: ASR/VLM/faces/`jobs` spostati in `core/config.py::Config`; `cli` popola un `Config`
   completo e la firma dell'orchestrazione si riduce a `pipeline.run(cfg)` (legge tutto da `cfg`).
 
 ### [x] ⚪️ `assign_dialogue` O(shot × segmenti)

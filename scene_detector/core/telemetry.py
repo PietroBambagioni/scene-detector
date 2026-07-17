@@ -45,6 +45,8 @@ def collect_env() -> dict:
         "scenedetect": _pkg_version("scenedetect"),
         "faster_whisper": _pkg_version("faster-whisper"),
         "mlx_vlm": _pkg_version("mlx-vlm"),
+        "insightface": _pkg_version("insightface"),
+        "onnxruntime": _pkg_version("onnxruntime"),
         "psutil": _pkg_version("psutil"),
     }
     try:

@@ -26,6 +26,7 @@ python3.13 -m venv .venv
 source .venv/bin/activate
 pip install -e .              # base: scenedetect, numpy, typer
 pip install -e '.[neural]'    # per TransNetV2 / AutoShot: torch, pillow, einops
+pip install -e '.[faces]'     # riconoscimento personaggi: insightface, onnxruntime (CoreML)
 ```
 
 ## Uso
@@ -36,8 +37,8 @@ pip install -e '.[neural]'    # per TransNetV2 / AutoShot: torch, pillow, einops
 scene-detector "FILM.mp4" --all -o catalogo/
 ```
 
-`--all` esegue l'intera pipeline: **rilevamento shot → taglio clip → trascrizione dialoghi (ASR)
-→ descrizione visiva per shot (VLM) → manifest + UI**. I pesi neurali sono presi **in automatico**
+`--all` esegue l'intera pipeline: **rilevamento shot → taglio clip → riconoscimento personaggi →
+trascrizione dialoghi (ASR) → descrizione visiva per shot (VLM) → manifest + UI**. I pesi neurali sono presi **in automatico**
 da `weights/transnetv2.pth` (e `weights/autoshot.pth`) se presenti — lancialo dalla cartella del
 progetto, oppure passa i path.
 
@@ -47,6 +48,13 @@ Le fasi `[1/N]…[N/N]` con barre mostrano l'avanzamento.
 > La **descrizione visiva** per shot (VLM) è locale su Apple Silicon (`mlx-vlm` + Qwen2.5-VL-3B 4-bit).
 > È lo step più lungo (~5s/shot); è **resumable**: un run interrotto riparte saltando gli shot già
 > descritti. Installa con `pip install -e '.[vlm]'`; il modello si scarica al primo uso (~2 GB).
+>
+> Il **riconoscimento personaggi** (`--faces`) rileva i volti (InsightFace SCRFD+ArcFace su CoreML)
+> e li clusterizza in personaggi ricorrenti sull'intero film. Con `--faces-gallery <dir>` (una
+> sotto-cartella `<Nome>/` con foto per personaggio) li etichetta coi nomi reali; senza gallery
+> restano "Personaggio N" da **rinominare nella UI**. I personaggi presenti in ogni shot arricchiscono
+> il prompt del VLM (descrizioni nominate). Resumable; `pip install -e '.[faces]'`, `buffalo_l` ~300 MB
+> al primo uso. Le foto della gallery devono mostrare il volto **con un minimo di contesto** (non crop nudi).
 
 ### Esempi per singolo job
 
@@ -88,6 +96,11 @@ scene-detector FILM.mp4 --all --asr-model medium
 | `--vlm` | off | descrizione visiva per shot (mlx-vlm, Apple Silicon) |
 | `--vlm-model` | `Qwen2.5-VL-3B-Instruct-4bit` | repo `mlx-community` o path locale |
 | `--vlm-frames` | `3` | frame campionati per shot (inizio/metà/fine) |
+| `--faces` | off | riconoscimento personaggi (InsightFace) per arricchire il VLM |
+| `--faces-gallery` | — | cartella `<Nome>/*.jpg` per etichettare i personaggi (opz.) |
+| `--faces-frames` | `6` | frame campionati per shot per il riconoscimento volti |
+| `--faces-threshold` | `0.5` | soglia coseno per clustering / match gallery |
+| `--faces-min-score` | `0.5` | soglia `det_score`: scarta i volti deboli |
 
 ### Film intero (~3.5h) — consigli
 
@@ -175,6 +188,9 @@ scene_detector/
     asr.py                  # faster-whisper
     align.py                # assegna dialoghi agli shot
   captioning/caption.py     # VLM: sample_frames + backend MLX + caption_manifest (resumable)
+  recognition/
+    faces.py                # InsightFace (SCRFD+ArcFace) + gallery + orchestratore
+    identify.py             # clustering coseno + match gallery (logica pura)
   catalog/
     manifest.py             # manifest.json del catalogo shot
     ui.py                   # UI HTML per-film

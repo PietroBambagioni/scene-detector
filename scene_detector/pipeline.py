@@ -13,7 +13,7 @@ from .segmentation.splitter import split
 
 
 def run(cfg: Config) -> None:
-    """Orchestrazione end-to-end: detection → split → (ASR) → (VLM) → manifest/UI → galleria.
+    """Orchestrazione end-to-end: detection → split → (faces) → (ASR) → (VLM) → manifest/UI → galleria.
 
     Tutti i parametri del run vivono in `cfg` (`cli` lo popola dai flag Typer).
     """
@@ -30,6 +30,8 @@ def run(cfg: Config) -> None:
     jobs = cfg.jobs
     asr, asr_model, asr_lang, asr_threads = cfg.asr, cfg.asr_model, cfg.asr_lang, cfg.asr_threads
     vlm, vlm_model, vlm_frames = cfg.vlm, cfg.vlm_model, cfg.vlm_frames
+    faces, faces_gallery, faces_frames = cfg.faces, cfg.faces_gallery, cfg.faces_frames
+    faces_threshold, faces_min_score = cfg.faces_threshold, cfg.faces_min_score
 
     info = probe(video)
     out_dir = output_dir / video.stem
@@ -48,6 +50,9 @@ def run(cfg: Config) -> None:
             "min_scene_len": min_scene_len, "low_mem": low_mem,
             "asr": asr, "asr_model": asr_model, "asr_lang": asr_lang, "asr_threads": asr_threads,
             "vlm": vlm, "vlm_model": vlm_model, "vlm_frames": vlm_frames,
+            "faces": faces, "faces_gallery": str(faces_gallery) if faces_gallery else None,
+            "faces_frames": faces_frames, "faces_threshold": faces_threshold,
+            "faces_min_score": faces_min_score,
             "jobs": jobs, "output_dir": str(output_dir),
             "transnet_weights": str(transnet_weights) if transnet_weights else None,
             "autoshot_weights": str(autoshot_weights) if autoshot_weights else None,
@@ -65,7 +70,7 @@ def run(cfg: Config) -> None:
         "env": env,
     })
 
-    n_steps = 3 + (1 if asr else 0) + (1 if vlm else 0)
+    n_steps = 3 + (1 if faces else 0) + (1 if asr else 0) + (1 if vlm else 0)
 
     log.info("[1/%d] Rilevamento shot…", n_steps)
     with tel.step("detection") as o:
@@ -105,6 +110,32 @@ def run(cfg: Config) -> None:
     manifest = build_manifest(info, scenes, label)
     manifest_path = out_dir / "manifest.json"
     step = 2
+
+    if faces:
+        step += 1
+        log.info("[%d/%d] Riconoscimento personaggi…", step, n_steps)
+        with tel.step("faces") as o:
+            from .catalog.manifest import load_manifest
+            prior = load_manifest(manifest_path) if manifest_path.exists() else None
+            if prior and prior.get("cast"):
+                manifest["cast"] = prior["cast"]  # resume: riusa il cast già calcolato (+ eventuali rinomine)
+                prior_chars = {s["index"]: s.get("characters", []) for s in prior["shots"]}
+                for s in manifest["shots"]:
+                    s["characters"] = prior_chars.get(s["index"], [])
+                n_faces, n_chars = 0, len(manifest["cast"])
+            else:
+                write_manifest(manifest, manifest_path)  # persisti prima (crash-safe)
+                from .recognition import FaceRecognizer, load_gallery, recognize_characters
+                recognizer = FaceRecognizer(min_score=faces_min_score)
+                gallery = load_gallery(faces_gallery, recognizer) if faces_gallery else None
+                n_faces, n_chars = recognize_characters(
+                    manifest, video, recognizer, gallery=gallery, n_frames=faces_frames,
+                    threshold=faces_threshold, film_dir=out_dir,
+                )
+            o["n_faces"] = n_faces
+            o["n_characters"] = n_chars
+            o["gallery"] = str(faces_gallery) if faces_gallery else None
+        log.info("  %d volti → %d personaggi", n_faces, n_chars)
 
     if asr:
         step += 1
