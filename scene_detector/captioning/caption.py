@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import logging
 import subprocess
 from io import BytesIO
 from pathlib import Path
 
 from ..catalog.manifest import load_manifest, write_manifest
+
+log = logging.getLogger("scene_detector")
 
 
 # ---------------------------------------------------------------- sampling ---
@@ -130,14 +133,21 @@ def caption_manifest(manifest, video, captioner, n_frames=3, size=512,
     done = sum(1 for s in shots if s.get("description"))
     bar = tqdm(total=len(shots), initial=done, desc="[vlm]", unit="shot", disable=not progress)
     since = 0
+    failed = 0
     for shot in shots:
         if shot.get("description"):
             continue
         if min_shot_frames and (shot["end_frame"] - shot["start_frame"]) < min_shot_frames:
             bar.update(1)
             continue
-        frames = sample_frames(video, shot["start_time"], shot["end_time"], n_frames, size)
-        shot["description"] = captioner.describe(frames, shot.get("dialogue"))
+        try:
+            frames = sample_frames(video, shot["start_time"], shot["end_time"], n_frames, size)
+            shot["description"] = captioner.describe(frames, shot.get("dialogue"))
+        except Exception as e:  # uno shot "velenoso" non deve fermare il batch (resume-friendly)
+            failed += 1
+            log.warning("shot %s: descrizione fallita (%s) — proseguo", shot.get("index"), e)
+            bar.update(1)
+            continue
         since += 1
         if manifest_path and since >= save_every:
             write_manifest(manifest, manifest_path)
@@ -147,4 +157,6 @@ def caption_manifest(manifest, video, captioner, n_frames=3, size=512,
     if manifest_path and since:
         write_manifest(manifest, manifest_path)
     bar.close()
+    if failed:
+        log.warning("VLM: %d shot su %d falliti (descrizione mancante)", failed, len(shots))
     return manifest

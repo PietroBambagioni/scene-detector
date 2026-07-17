@@ -53,12 +53,12 @@ def run(
         split_mode=split_mode, threshold=threshold, min_scene_len=min_scene_len,
         low_mem=low_mem,
         transnet_weights=transnet_weights, autoshot_weights=autoshot_weights,
+        asr=asr, asr_model=asr_model, asr_lang=asr_lang, asr_threads=asr_threads,
+        vlm=vlm, vlm_model=vlm_model, vlm_frames=vlm_frames,
+        jobs=jobs,
     )
 
-    pipeline.run(
-        cfg, asr=asr, asr_model=asr_model, asr_lang=asr_lang, asr_threads=asr_threads,
-        vlm=vlm, vlm_model=vlm_model, vlm_frames=vlm_frames, jobs=jobs,
-    )
+    pipeline.run(cfg)
 
 
 index_app = typer.Typer(add_completion=False, help="(Ri)genera la galleria dei cataloghi.")

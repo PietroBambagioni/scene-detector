@@ -12,12 +12,10 @@ from .io.video import probe
 from .segmentation.splitter import split
 
 
-def run(cfg: Config, *, asr: bool, asr_model: str, asr_lang: str | None, asr_threads: int,
-        vlm: bool, vlm_model: str, vlm_frames: int, jobs: int) -> None:
+def run(cfg: Config) -> None:
     """Orchestrazione end-to-end: detection → split → (ASR) → (VLM) → manifest/UI → galleria.
 
-    I parametri di detection/split vivono in `cfg`; ASR/VLM/`jobs` restano argomenti sciolti
-    (vedi PLAN_FIXES > 'Config bypassato', cleanup a parte).
+    Tutti i parametri del run vivono in `cfg` (`cli` lo popola dai flag Typer).
     """
     video = cfg.video
     output_dir = cfg.output_dir
@@ -29,6 +27,9 @@ def run(cfg: Config, *, asr: bool, asr_model: str, asr_lang: str | None, asr_thr
     low_mem = cfg.low_mem
     transnet_weights = cfg.transnet_weights
     autoshot_weights = cfg.autoshot_weights
+    jobs = cfg.jobs
+    asr, asr_model, asr_lang, asr_threads = cfg.asr, cfg.asr_model, cfg.asr_lang, cfg.asr_threads
+    vlm, vlm_model, vlm_frames = cfg.vlm, cfg.vlm_model, cfg.vlm_frames
 
     info = probe(video)
     out_dir = output_dir / video.stem

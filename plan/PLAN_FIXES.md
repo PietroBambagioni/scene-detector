@@ -61,8 +61,8 @@ Legenda stato: `[ ]` da fare · `[x]` fatto · `🔴` alto valore · `🟡` medi
   streamma indipendentemente → **decodifica due volte** (si sacrifica il decode-once per la RAM,
   che è lo scopo del flag).
 
-### [ ] 🟡 Fragilità API di `mlx-vlm`
-- **File**: `scene_detector/caption.py:90-93`, `pyproject.toml:19`
+### [x] 🟡 Fragilità API di `mlx-vlm`
+- **File**: `captioning/caption.py`, `pyproject.toml`
 - **Problema**: `generate()` riceve `temperature=`/`max_tokens=`; nelle versioni recenti di
   mlx-vlm la firma è cambiata (sampler). `pyproject` pinna solo `mlx-vlm>=0.1` → un upgrade
   può rompere il caption.
@@ -70,14 +70,19 @@ Legenda stato: `[ ]` da fare · `[x]` fatto · `🔴` alto valore · `🟡` medi
   un adapter tollerante alla firma.
 - **Tradeoff**: il pin è più semplice ma va aggiornato a mano; l'adapter è più robusto ma
   aggiunge codice.
+- **Fatto**: pin `mlx-vlm>=0.1,<0.7` in `pyproject` (la firma `generate()` è testata su 0.6.x;
+  da 0.7 cambia il sampler). Scelto il pin (semplice) sull'adapter, per non speculare su firme future.
 
-### [ ] 🟡 Resilienza per-shot mancante (VLM/ASR)
-- **File**: `scene_detector/caption.py:133-145`
+### [x] 🟡 Resilienza per-shot mancante (VLM/ASR)
+- **File**: `captioning/caption.py` (`caption_manifest`)
 - **Problema**: se `captioner.describe` lancia su **un** shot, muore l'intero step; un shot
   "velenoso" blocca ogni riavvio nonostante il resume.
 - **Fix**: `try/except` per-shot che logga e lascia `description=None` (già gestito dalla UI
   editabile). Il batch prosegue.
 - **Tradeoff**: nasconde errori sistematici → loggare il conteggio dei fallimenti a fine run.
+- **Fatto**: `try/except` per-shot in `caption_manifest`: logga il fallimento, `description=None`,
+  prosegue; a fine step logga il conteggio dei falliti. Test `test_caption_manifest_resilient_per_shot`.
+  (ASR = singola chiamata whisper sul file intero, già coperta dal `try` dello step: nessun loop per-shot.)
 
 ## Minori / cleanup
 
@@ -100,13 +105,17 @@ Legenda stato: `[ ]` da fare · `[x]` fatto · `🔴` alto valore · `🟡` medi
   `tests/test_video.py` per `probe` (genera un video con ffmpeg, skip se ffmpeg assente).
   Suite: 26 test verdi.
 
-### [ ] ⚪️ `Config` bypassato
+### [x] ⚪️ `Config` bypassato
 - **File**: `cli.py` — i parametri ASR/VLM/`jobs` viaggiano come argomenti sciolti invece che
   nel dataclass `Config`. Incoerenza architetturale (non un bug).
+- **Fatto**: ASR/VLM/`jobs` spostati in `core/config.py::Config`; `cli` popola un `Config`
+  completo e la firma dell'orchestrazione si riduce a `pipeline.run(cfg)` (legge tutto da `cfg`).
 
-### [ ] ⚪️ `assign_dialogue` O(shot × segmenti)
-- **File**: `align.py:14-19` — con shot ordinati diventa lineare con un puntatore. Trascurabile
+### [x] ⚪️ `assign_dialogue` O(shot × segmenti)
+- **File**: `transcription/align.py` — con shot ordinati diventa lineare con un puntatore. Trascurabile
   finché non si sale di scala.
+- **Fatto**: two-pointer (segmenti ordinati per punto medio + puntatore monotòno sugli shot
+  contigui) → O(shot + segmenti). Comportamento invariato; test `test_assign_unordered_segments_and_multi_shot`.
 
 ### [x] ⚪️ File spuri
 - `text.txt` (vuoto) e `.DS_Store` da rimuovere / ignorare.

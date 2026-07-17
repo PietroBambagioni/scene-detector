@@ -64,3 +64,29 @@ def test_caption_manifest_skips_micro_shots(monkeypatch):
     assert cap.calls == 1
     assert manifest["shots"][0]["description"] is None   # micro-shot saltato
     assert manifest["shots"][1]["description"] == "descr 1"
+
+
+class _FlakyCaptioner:
+    def __init__(self, fail_on):
+        self.fail_on = fail_on
+        self.calls = 0
+
+    def describe(self, frames, dialogue=None):
+        self.calls += 1
+        if self.calls == self.fail_on:
+            raise RuntimeError("boom")
+        return f"descr {self.calls}"
+
+
+def test_caption_manifest_resilient_per_shot(monkeypatch):
+    monkeypatch.setattr(caption, "sample_frames", lambda *a, **k: ["frame"])
+    manifest = {"shots": [
+        {"index": 0, "start_frame": 0, "end_frame": 100, "start_time": 0.0, "end_time": 4.0,
+         "description": None, "dialogue": None},
+        {"index": 1, "start_frame": 100, "end_frame": 200, "start_time": 4.0, "end_time": 8.0,
+         "description": None, "dialogue": None},
+    ]}
+    cap = _FlakyCaptioner(fail_on=1)   # esplode sul primo shot
+    caption_manifest(manifest, "video.mp4", cap, progress=False)
+    assert manifest["shots"][0]["description"] is None      # fallito: resta None (editabile in UI)
+    assert manifest["shots"][1]["description"] == "descr 2"  # il batch prosegue

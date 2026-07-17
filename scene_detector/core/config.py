@@ -30,3 +30,14 @@ class Config:
     agreement_tol: int = 5        # tolleranza (frame) per agreement in ensemble
     transnet_weights: Path | None = None
     autoshot_weights: Path | None = None
+    # trascrizione dialoghi (ASR)
+    asr: bool = False
+    asr_model: str = "large-v3-turbo"
+    asr_lang: str | None = None
+    asr_threads: int = 0
+    # descrizione visiva per shot (VLM)
+    vlm: bool = False
+    vlm_model: str = "mlx-community/Qwen2.5-VL-3B-Instruct-4bit"
+    vlm_frames: int = 3
+    # taglio clip
+    jobs: int = 0                 # processi ffmpeg paralleli (0 = auto)
