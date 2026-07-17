@@ -1,0 +1,47 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+from ..scene import scenes_from_ranges
+from ._neural import read_small_frames, probs_to_ranges
+
+
+class TransNetV2Detector:
+    """Detector primario (shot boundary neurale)."""
+
+    name = "transnet"
+    input_size = (27, 48)  # (H, W)
+
+    def __init__(self, weights=None, threshold=0.5, min_scene_len=15):
+        self.weights = Path(weights) if weights else None
+        self.threshold = threshold
+        self.min_scene_len = min_scene_len
+
+    def detect(self, video):
+        h, w = self.input_size
+        frames = read_small_frames(video.path, w, h, total=video.n_frames,
+                                   desc=f"[{self.name}] frames")
+        return self.detect_from_frames(frames, video)
+
+    def detect_from_frames(self, frames, video):
+        """Predizione da frame già decodificati (uint8[N,27,48,3]).
+
+        Separata da `detect` per condividere una singola decodifica in ensemble."""
+        model = self._load_model()  # espone .predict(uint8[N,27,48,3]) -> float[N]
+        probs = model.predict(frames)
+        ranges = probs_to_ranges(probs, self.threshold, self.min_scene_len)
+        return scenes_from_ranges(ranges, video.fps, self.name)
+
+    def _load_model(self):
+        """Costruisce il modello PyTorch e carica i pesi (predict con windowing)."""
+        try:
+            import torch  # noqa: F401
+        except ImportError as e:
+            raise RuntimeError("TransNetV2 richiede torch: pip install '.[neural]'") from e
+        if self.weights is None or not self.weights.exists():
+            raise RuntimeError(
+                "Pesi TransNetV2 mancanti. Vedi PLAN.md > 'Integrazione pesi neurali', "
+                "poi passa --transnet-weights PATH."
+            )
+        from ..models.wrapper import TransNetV2Predictor
+        return TransNetV2Predictor(self.weights)
