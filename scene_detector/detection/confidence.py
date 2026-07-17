@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .scene import Scene
+from ..core.scene import Scene
 
 
 def reconcile(a, b, total_frames, fps, tol=5):

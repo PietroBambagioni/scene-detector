@@ -4,7 +4,7 @@ import subprocess
 from io import BytesIO
 from pathlib import Path
 
-from .manifest import load_manifest, write_manifest
+from ..catalog.manifest import load_manifest, write_manifest
 
 
 # ---------------------------------------------------------------- sampling ---

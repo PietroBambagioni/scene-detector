@@ -206,7 +206,18 @@ così i run successivi non si sovrascrivono:
 
 ---
 
-## Piano 2 — Ristrutturazione in package per dominio 🟡
+## Piano 2 — Ristrutturazione in package per dominio 🟡 ✅ FATTO
+
+> **Stato**: eseguito. Layout piatto → package per stadio (`core/`, `io/`, `detection/` (+`models/`),
+> `segmentation/`, `transcription/`, `captioning/`, `catalog/`, `evaluation/`). File spostati con
+> `git mv` (history preservata). Orchestrazione estratta da `cli.py` a nuovo `pipeline.py`
+> (cli = solo parsing flag → `Config` → `pipeline.run`). `telemetry.py`→`core/`; `gallery.py`
+> (Piano 3, non nel tree originale)→`catalog/`. `scene_detector/__init__.py` espone `Scene`,
+> `Config`, `build_detector`. `pyproject` invariato (`packages.find` usa già il glob
+> `scene_detector*`; `entry_points` restano `scene_detector.cli:main`/`:main_index`). Import dei
+> test e README aggiornati. Verifica: **38/38 pytest verde**, compileall pulito, smoke end-to-end
+> reale (video sintetico 3-scene) su detector singolo **e** `--ensemble` (decode-once + AutoShot +
+> reconcile) → manifest + UI + clip + galleria + logs corretti.
 
 ### Obiettivo
 Passare dal layout piatto attuale (11 moduli nella root del package) a package per **stadio
@@ -347,16 +358,16 @@ PATH; gli altri sono pacchetti Python (vedi `pyproject.toml`).
 ### Runtime di sistema
 | Tool | Ruolo nel progetto | Dove |
 |---|---|---|
-| **ffmpeg** `[sistema]` | Decodifica frame a 48×27 (pipe rgb24) per la detection neurale; estrazione frame per il VLM; taglio delle clip (`copy`/`reencode`). | `detectors/_neural.py`, `caption.py`, `splitter.py` |
+| **ffmpeg** `[sistema]` | Decodifica frame a 48×27 (pipe rgb24) per la detection neurale; estrazione frame per il VLM; taglio delle clip (`copy`/`reencode`). | `detection/neural.py`, `captioning/caption.py`, `segmentation/splitter.py` |
 | **ffprobe** `[sistema]` | Metadati video (fps, n_frame, durata, risoluzione) → `VideoInfo`. | `io/video.py` |
 
 ### Detection (shot boundary)
 | Tool | Ruolo | Note |
 |---|---|---|
-| **TransNetV2** (vendor `soCzech`, MIT) | Detector neurale **primario**; robusto anche su dissolvenze. Gira su **MPS**. | `models/transnetv2.py`, wrapper con windowing 100/50. Pesi convertiti TF→PyTorch. |
-| **AutoShot** (vendor `wentaozhu`, CVPR-W 2023) | Seconda opinione neurale (NAS). Gira su **CPU** (op intere non supportate da MPS). | `models/autoshot/`. Pesi solo da Baidu. |
-| **PySceneDetect** (`scenedetect`, BSD-3) | Baseline classica content-based (nessun peso). Ottima su hard-cut. | `detectors/pyscenedetect_detector.py` |
-| **Ensemble** | `confidence.reconcile` incrocia TransNet+AutoShot: accordo = confidenza, disaccordo = flag. | `confidence.py` |
+| **TransNetV2** (vendor `soCzech`, MIT) | Detector neurale **primario**; robusto anche su dissolvenze. Gira su **MPS**. | `detection/models/transnetv2.py`, wrapper con windowing 100/50. Pesi convertiti TF→PyTorch. |
+| **AutoShot** (vendor `wentaozhu`, CVPR-W 2023) | Seconda opinione neurale (NAS). Gira su **CPU** (op intere non supportate da MPS). | `detection/models/autoshot/`. Pesi solo da Baidu. |
+| **PySceneDetect** (`scenedetect`, BSD-3) | Baseline classica content-based (nessun peso). Ottima su hard-cut. | `detection/pyscenedetect.py` |
+| **Ensemble** | `confidence.reconcile` incrocia TransNet+AutoShot: accordo = confidenza, disaccordo = flag. | `detection/confidence.py` |
 
 ### ML / numerico
 | Tool | Ruolo |

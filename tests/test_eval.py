@@ -1,5 +1,5 @@
-from scene_detector.eval import prf1, boundaries_from_scenes, boundaries_from_ranges, evaluate
-from scene_detector.scene import scenes_from_ranges
+from scene_detector.evaluation.eval import prf1, boundaries_from_scenes, boundaries_from_ranges, evaluate
+from scene_detector.core.scene import scenes_from_ranges
 
 
 def test_prf1_perfect():

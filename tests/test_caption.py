@@ -1,5 +1,5 @@
-from scene_detector import caption
-from scene_detector.caption import _timestamps, build_prompt, caption_manifest
+from scene_detector.captioning import caption
+from scene_detector.captioning.caption import _timestamps, build_prompt, caption_manifest
 
 
 def test_timestamps_within_range_and_ordered():

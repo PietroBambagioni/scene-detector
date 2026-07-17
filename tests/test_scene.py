@@ -1,5 +1,5 @@
-from scene_detector.scene import Scene, scenes_from_ranges, enforce_min_len
-from scene_detector.detectors._neural import probs_to_ranges
+from scene_detector.core.scene import Scene, scenes_from_ranges, enforce_min_len
+from scene_detector.detection.neural import probs_to_ranges
 
 
 def test_scene_properties():

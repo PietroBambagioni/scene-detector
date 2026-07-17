@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ..scene import scenes_from_ranges
+from ..core.scene import scenes_from_ranges
 
 
 class PySceneDetectDetector:

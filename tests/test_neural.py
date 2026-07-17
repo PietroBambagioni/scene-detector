@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from scene_detector.detectors._neural import FrameWindower
+from scene_detector.detection.neural import FrameWindower
 
 
 def _batch_windows(frames):

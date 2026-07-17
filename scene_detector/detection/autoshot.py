@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ..scene import scenes_from_ranges
-from ._neural import read_small_frames, stream_small_windows, probs_to_ranges
+from ..core.scene import scenes_from_ranges
+from .neural import read_small_frames, stream_small_windows, probs_to_ranges
 
 
 class AutoShotDetector:
@@ -49,5 +49,5 @@ class AutoShotDetector:
                 "Pesi AutoShot mancanti (ckpt_0_200_0.pth da Baidu). "
                 "Vedi README > 'AutoShot', poi passa --autoshot-weights PATH."
             )
-        from ..models.wrapper import AutoShotPredictor
+        from .models.wrapper import AutoShotPredictor
         return AutoShotPredictor(self.weights)

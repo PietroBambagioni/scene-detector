@@ -1,5 +1,5 @@
-from scene_detector.confidence import reconcile
-from scene_detector.scene import scenes_from_ranges
+from scene_detector.detection.confidence import reconcile
+from scene_detector.core.scene import scenes_from_ranges
 
 
 def test_reconcile_agreement():

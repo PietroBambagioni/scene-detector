@@ -1,6 +1,6 @@
 import json
 
-from scene_detector.gallery import build_index_html, scan_catalogs
+from scene_detector.catalog.gallery import build_index_html, scan_catalogs
 
 
 def _write_manifest(dir_path, video, n_shots, duration, detector):

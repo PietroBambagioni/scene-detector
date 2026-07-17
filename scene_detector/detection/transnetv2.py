@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ..scene import scenes_from_ranges
-from ._neural import read_small_frames, stream_small_windows, probs_to_ranges
+from ..core.scene import scenes_from_ranges
+from .neural import read_small_frames, stream_small_windows, probs_to_ranges
 
 
 class TransNetV2Detector:
@@ -49,5 +49,5 @@ class TransNetV2Detector:
                 "Pesi TransNetV2 mancanti. Vedi PLAN.md > 'Integrazione pesi neurali', "
                 "poi passa --transnet-weights PATH."
             )
-        from ..models.wrapper import TransNetV2Predictor
+        from .models.wrapper import TransNetV2Predictor
         return TransNetV2Predictor(self.weights)

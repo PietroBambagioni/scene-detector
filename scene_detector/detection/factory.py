@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from ..config import DetectorKind
+from ..core.config import DetectorKind
 from .base import SceneDetector
-from .pyscenedetect_detector import PySceneDetectDetector
-from .transnetv2_detector import TransNetV2Detector
-from .autoshot_detector import AutoShotDetector
+from .pyscenedetect import PySceneDetectDetector
+from .transnetv2 import TransNetV2Detector
+from .autoshot import AutoShotDetector
 
 __all__ = [
     "SceneDetector",

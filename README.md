@@ -121,11 +121,11 @@ l'unica fonte è Baidu.
 
 ## Valutazione (F1)
 
-Modulo `scene_detector.eval` per confrontare le scene predette con un ground-truth
+Modulo `scene_detector.evaluation.eval` per confrontare le scene predette con un ground-truth
 (file con `start end` per riga, in frame):
 
 ```python
-from scene_detector.eval import evaluate, read_scenes_txt
+from scene_detector.evaluation.eval import evaluate, read_scenes_txt
 gt = read_scenes_txt("gt.txt")
 metrics = evaluate(pred_scenes, gt, tol=5)   # {precision, recall, f1, tp, fp, fn}
 ```
@@ -146,26 +146,40 @@ python -m pytest tests/        # oppure il runner manuale se pytest non e' insta
 
 ## Struttura
 
+Package per stadio della pipeline:
+
 ```
 scene_detector/
-  cli.py                    # entrypoint typer
-  config.py                 # Config + enum DetectorKind / SplitMode
-  scene.py                  # datamodel Scene + builder + enforce_min_len
-  eval.py                   # F1 / precision / recall su boundary
-  caption.py                # VLM: sample_frames + backend MLX + caption_manifest (resumable)
-  confidence.py             # riconciliazione ensemble (agreement / flag)
-  splitter.py               # export clip via ffmpeg
+  cli.py                    # entrypoint typer (parse flag -> pipeline)
+  pipeline.py               # orchestrazione degli step (detection -> ... -> galleria)
+  core/
+    config.py               # Config + enum DetectorKind / SplitMode
+    scene.py                # datamodel Scene + builder + enforce_min_len
+    cpu.py                  # resolve_workers
+    telemetry.py            # osservabilità run (logs/run-<ts>/)
   io/video.py               # probe ffprobe -> VideoInfo
-  detectors/
+  detection/
     base.py                 # Protocol SceneDetector
-    _neural.py              # read_small_frames + probs_to_ranges
-    pyscenedetect_detector.py
-    transnetv2_detector.py
-    autoshot_detector.py
-  models/
-    transnetv2.py           # architettura (vendor soCzech/TransNetV2, MIT)
-    autoshot/               # architettura AutoShot (vendor wentaozhu/AutoShot) + einops
-    wrapper.py              # TransNetV2Predictor / AutoShotPredictor (load + windowing)
+    factory.py              # build_detector
+    neural.py               # read_small_frames + probs_to_ranges
+    pyscenedetect.py
+    transnetv2.py
+    autoshot.py
+    confidence.py           # riconciliazione ensemble (agreement / flag)
+    models/
+      transnetv2.py         # architettura (vendor soCzech/TransNetV2, MIT)
+      autoshot/             # architettura AutoShot (vendor wentaozhu/AutoShot) + einops
+      wrapper.py            # TransNetV2Predictor / AutoShotPredictor (load + windowing)
+  segmentation/splitter.py  # export clip via ffmpeg
+  transcription/
+    asr.py                  # faster-whisper
+    align.py                # assegna dialoghi agli shot
+  captioning/caption.py     # VLM: sample_frames + backend MLX + caption_manifest (resumable)
+  catalog/
+    manifest.py             # manifest.json del catalogo shot
+    ui.py                   # UI HTML per-film
+    gallery.py              # galleria multi-film (index.html)
+  evaluation/eval.py        # F1 / precision / recall su boundary
 ```
 
 ## Crediti

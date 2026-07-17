@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Protocol, runtime_checkable
 
 from ..io.video import VideoInfo
-from ..scene import Scene
+from ..core.scene import Scene
 
 
 @runtime_checkable

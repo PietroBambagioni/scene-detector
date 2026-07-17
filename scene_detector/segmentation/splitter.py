@@ -4,8 +4,8 @@ import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from .config import SplitMode
-from .cpu import resolve_workers
+from ..core.config import SplitMode
+from ..core.cpu import resolve_workers
 
 
 def split(video, scenes, output_dir, mode=SplitMode.copy, jobs=0):

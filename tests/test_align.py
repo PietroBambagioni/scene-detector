@@ -1,4 +1,4 @@
-from scene_detector.align import assign_dialogue
+from scene_detector.transcription.align import assign_dialogue
 
 
 def test_assign_by_midpoint():

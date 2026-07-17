@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .cpu import resolve_workers
+from ..core.cpu import resolve_workers
 
 
 def transcribe(video_path, model="large-v3-turbo", language=None, vad=True,
