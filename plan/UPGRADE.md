@@ -103,6 +103,13 @@ allucina, e il VAD attuale non lo regge.
 > (niente contesto accumulato) e perché `condition_on_previous_text=False` — che non trasporta
 > contesto — lo previene alla radice: sui 7 shot recupera il dialogo che il catalogo aveva
 > perso, tenendo il silenzio vero (shot 39) e il "Grazie mille" legittimo (shot 38).
+>
+> **Ri-collaudo sull'intero film** (12 thread, 41 min, `manifest.cleaned.json`): shot
+> interamente allucinati **76 → 1** (l'unico residuo, shot 74 `"Com'era? Com'era? Com'era?"`, è
+> plausibilmente parlato vero, non un artefatto); shot con dialogo **238 → 266**; parole di
+> dialogo totali **11 170 → 21 640 (+10 470)**. Dei 76 shot allucinati, 70 ora contengono
+> dialogo reale e 6 sono correttamente vuoti. Il loop stava **sopprimendo circa metà del
+> parlato del film**.
 
 ### 0.2 · VLM — vede a colori un film in bianco e nero
 
