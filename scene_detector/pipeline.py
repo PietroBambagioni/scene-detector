@@ -86,7 +86,7 @@ def run(cfg: Config) -> None:
                 frames = read_small_frames(info.path, w, h, total=info.n_frames, desc="[decode] frames")
                 a = t_det.detect_from_frames(frames, info)
                 b = a_det.detect_from_frames(frames, info)
-            scenes, flags = conf_mod.reconcile(a, b, info.n_frames, info.fps, cfg.agreement_tol)
+            scenes, flags = conf_mod.reconcile(a, b, info.n_frames, info.fps, t_det.probs, cfg.agreement_tol)
             if flags:
                 log.info("  %d boundary in disaccordo (rivedere): %s", len(flags), flags)
             o["n_flag"] = len(flags)

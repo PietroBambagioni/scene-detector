@@ -25,9 +25,15 @@ class Scene:
         return (self.end_frame + 1) / self.fps
 
 
-def scenes_from_ranges(ranges, fps, source=""):
-    """ranges = lista di (start, end) inclusivi, contigui. -> list[Scene]."""
-    return [Scene(i, s, e, fps, source) for i, (s, e) in enumerate(ranges)]
+def scenes_from_ranges(ranges, fps, source="", confidences=None):
+    """ranges = lista di (start, end) inclusivi, contigui. -> list[Scene].
+
+    `confidences` (opzionale) = confidenza per range, allineata a `ranges`; se assente
+    ogni scena usa il default 1.0.
+    """
+    if confidences is None:
+        return [Scene(i, s, e, fps, source) for i, (s, e) in enumerate(ranges)]
+    return [Scene(i, s, e, fps, source, confidences[i]) for i, (s, e) in enumerate(ranges)]
 
 
 def enforce_min_len(scenes, min_len):

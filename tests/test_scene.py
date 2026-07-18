@@ -1,5 +1,5 @@
 from scene_detector.core.scene import Scene, scenes_from_ranges, enforce_min_len
-from scene_detector.detection.neural import probs_to_ranges
+from scene_detector.detection.neural import probs_to_ranges, boundary_confidences
 
 
 def test_scene_properties():
@@ -14,6 +14,25 @@ def test_scenes_from_ranges():
     assert len(scenes) == 2
     assert scenes[1].start_time == 1.0
     assert scenes[0].source == "x"
+
+
+def test_scenes_from_ranges_with_confidences():
+    scenes = scenes_from_ranges([(0, 9), (10, 19)], fps=10.0, confidences=[1.0, 0.42])
+    assert [s.confidence for s in scenes] == [1.0, 0.42]
+
+
+def test_boundary_confidences():
+    probs = [0.0] * 40
+    probs[19] = 0.9  # taglio: apre lo shot che inizia a 20
+    ranges = probs_to_ranges(probs, threshold=0.5)  # [(0,19),(20,39)]
+    confs = boundary_confidences(ranges, probs)
+    assert confs[0] == 1.0        # primo shot: inizio film
+    assert confs[1] == 0.9        # prob del taglio a 19 (apre lo shot che inizia a 20)
+
+
+def test_boundary_confidences_single_range():
+    # nessun taglio -> un solo shot, confidenza inizio film
+    assert boundary_confidences([(0, 39)], [0.0] * 40) == [1.0]
 
 
 def test_enforce_min_len_merges_short():

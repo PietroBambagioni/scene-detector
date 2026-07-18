@@ -144,3 +144,20 @@ def probs_to_ranges(probs, threshold=0.5):
     elif not ranges:
         ranges.append((0, max(0, n - 1)))
     return ranges
+
+
+def boundary_confidences(ranges, probs):
+    """Confidenza continua per shot = prob boundary per-frame del taglio che lo apre.
+
+    Il taglio che apre lo shot con `start_frame = s` è il frame `s-1` (dove la prob supera la
+    soglia in `probs_to_ranges`), quindi la confidenza dello shot è `probs[s-1]`. Il primo shot
+    (inizio film, nessun taglio a monte) ha confidenza 1.0. Sostituisce il flag binario 1.0/0.5.
+    """
+    n = len(probs)
+    confs = []
+    for i, (start, _end) in enumerate(ranges):
+        if i == 0 or start <= 0:
+            confs.append(1.0)
+        else:
+            confs.append(float(probs[min(start - 1, n - 1)]))
+    return confs

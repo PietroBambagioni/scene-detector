@@ -44,7 +44,26 @@ def sample_frames(video, start_time, end_time, n=3, size=512):
 
 # ------------------------------------------------------------------ prompt ---
 
-def build_prompt(n_frames, dialogue=None, characters=None):
+def _is_grayscale(frames, tol=10.0):
+    """True se i frame (PIL RGB) sono in bianco e nero: chroma media (max-min tra canali) < tol.
+
+    Rilevato per-shot dai frame già campionati (nessun flag, nessuno stato di film): un film a
+    colori con un flashback in b/n viene ancorato correttamente inquadratura per inquadratura.
+    """
+    import numpy as np
+
+    if not frames:
+        return False
+    chroma = []
+    for im in frames:
+        a = np.asarray(im, dtype=np.int16)
+        if a.ndim < 3 or a.shape[2] < 3:
+            return True  # già a canale singolo
+        chroma.append(float((a.max(axis=2) - a.min(axis=2)).mean()))
+    return sum(chroma) / len(chroma) < tol
+
+
+def build_prompt(n_frames, dialogue=None, characters=None, grayscale=False):
     """Prompt IT: descrizione concreta di 1-2 frasi; personaggi (face-rec) e dialogo (ASR) come contesto."""
     imgs = "un fotogramma campionato" if n_frames == 1 else \
         f"{n_frames} fotogrammi campionati in ordine cronologico"
@@ -53,6 +72,10 @@ def build_prompt(n_frames, dialogue=None, characters=None):
         "Descrivi in italiano, in 1-2 frasi concise, cosa succede: chi è presente, dove si "
         "svolge la scena e l'azione principale. Sii concreto e non inventare dettagli non visibili.",
     ]
+    if grayscale:
+        parts.append(
+            "L'inquadratura è in bianco e nero: non menzionare colori (descrivi in scala di grigi)."
+        )
     if characters:
         parts.append(
             "Personaggi riconosciuti in questa inquadratura: " + ", ".join(characters)
@@ -84,7 +107,7 @@ class MlxVlmCaptioner:
         from mlx_vlm import generate
         from mlx_vlm.prompt_utils import apply_chat_template
 
-        prompt = build_prompt(len(frames), dialogue, characters)
+        prompt = build_prompt(len(frames), dialogue, characters, grayscale=_is_grayscale(frames))
         formatted = apply_chat_template(self.processor, self.config, prompt, num_images=len(frames))
 
         # mlx-vlm 0.6.5: generate vuole path di immagini, non PIL -> PNG temporanei

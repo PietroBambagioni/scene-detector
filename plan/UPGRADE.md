@@ -122,6 +122,14 @@ prova che **Qwen2.5-VL-3B a 4 bit sta riempiendo i vuoti** invece di descrivere.
 **Cosa fare:** ancoraggio nel prompt ("il film è in bianco e nero, non menzionare colori") come
 tampone immediato; la soluzione vera è il cambio modello in Fase 4.2.
 
+> **Stato: implementato.** In `captioning/caption.py`: `_is_grayscale(frames)` misura la chroma
+> media (max−min tra canali) dei frame *già campionati* per lo shot; se sotto soglia,
+> `build_prompt(..., grayscale=True)` aggiunge l'ancora "l'inquadratura è in bianco e nero: non
+> menzionare colori". **Rilevato per-shot, non hardcodato**: la pipeline è generale — inchiodare
+> "il film è in b/n" romperebbe i film a colori, e il per-shot ancora correttamente anche un
+> flashback in b/n dentro un film a colori. Test in `tests/test_caption.py`
+> (`_is_grayscale` b/n vs colore, `build_prompt` con/senza ancora).
+
 ### 0.3 · I personaggi non arrivano nel manifest — ~~aperto~~ **risolto (`117fd27`)**
 
 La diagnosi originale ("niente volti, niente cluster, niente nomi") era vera sul manifest di
@@ -149,6 +157,16 @@ Due soli valori: `1.0` (270 shot) e `0.5` (103). Non è una confidenza, è un bo
 degli stacchi**. La probabilità per-frame di TransNetV2 è già calcolata internamente e
 darebbe uno score continuo e calibrato al posto di questo binario. Vedi Fase 4.1 per il
 ripensamento completo dell'ensemble.
+
+> **Stato: implementato.** La confidenza di ogni shot è ora la **prob per-frame di TransNetV2
+> al taglio che lo apre** (`probs[start−1]`; primo shot = 1.0, inizio film), non più 1.0/0.5.
+> `boundary_confidences` in `detection/neural.py` la calcola per il detector singolo;
+> `reconcile` in `detection/confidence.py` la usa per l'ensemble — con un effetto che il binario
+> nascondeva: un boundary visto **solo da AutoShot** prende la prob (bassa) di TransNet a quel
+> frame, cioè "il detector primario non l'ha visto", invece di un opaco 0.5. **L'accordo tra i
+> due detector resta come segnale separato** in `flags` (la lista dei boundary da rivedere,
+> già loggata). Test in `tests/test_confidence.py` + `tests/test_scene.py`
+> (`boundary_confidences`, `scenes_from_ranges(confidences=…)`).
 
 ---
 
@@ -317,8 +335,8 @@ anche quando sbagli di 15 frame.
 |---|---|---|---|---|---|
 | ~~0.1~~ | ✅ Filtro allucinazioni ASR — *fatto, da validare su run* | alto | basso | nullo | 1, 2 |
 | ~~0.3~~ | ✅ Personaggi → manifest — *fatto (`117fd27`), da validare* | alto | — | basso | 2 |
-| **0.2** | VLM ancoraggio b/n | medio | basso | nullo | — |
-| **0.4** | Confidence continua | medio | basso | nullo | — |
+| ~~0.2~~ | ✅ VLM ancoraggio b/n — *fatto (auto-rilevato per-shot)* | medio | basso | nullo | — |
+| ~~0.4~~ | ✅ Confidence continua — *fatto (prob per-frame TransNet)* | medio | basso | nullo | — |
 | **3.1** | Decodifica una volta | alto (velocità) | medio | basso | 4 |
 | **3.2** | Media fragments / no cut | medio | medio | basso | — |
 | **3.3** | VLM server + APC | alto (velocità) | basso | basso | — |
@@ -329,10 +347,10 @@ anche quando sbagli di 15 frame.
 | **4.2** | Qwen3-VL | medio | basso | basso | — |
 | **4.4** | Clustering per traccia + licenza | medio | medio | basso | — |
 
-**Percorso minimo consigliato:** ~~0.1~~ → ~~0.3~~ → **3.1 + 3.3** → **1** → 2. Fase 0.1 e 0.3
-sono fatte (da validare con un ri-collaudo su *Anna*); il prossimo passo azionabile è
-l'infrastruttura di velocità (3.1 decodifica unica + 3.3 VLM server/APC), poi lo scene grouping.
-Il resto è opportunistico.
+**Percorso minimo consigliato:** ~~0.1~~ → ~~0.3~~ → **3.1 + 3.3** → **1** → 2. Fase 0 è ora
+**chiusa** (0.1/0.3 da validare con un ri-collaudo su *Anna*; 0.2/0.4 fatti). Il prossimo passo
+azionabile è l'infrastruttura di velocità (3.1 decodifica unica + 3.3 VLM server/APC), poi lo
+scene grouping. Il resto è opportunistico.
 
 ---
 
