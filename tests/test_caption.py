@@ -1,5 +1,5 @@
 from scene_detector.captioning import caption
-from scene_detector.captioning.caption import _is_grayscale, _timestamps, build_prompt, caption_manifest
+from scene_detector.captioning.caption import _timestamps, build_prompt, caption_manifest
 
 
 def test_timestamps_within_range_and_ordered():
@@ -20,6 +20,12 @@ def test_build_prompt_italian_and_dialogue():
     assert "Cosa fai qui?" in p
 
 
+def test_build_prompt_dialogue_is_context_not_content():
+    # il dialogo ha già un campo suo nel manifest: il VLM non deve parafrasarlo
+    p = build_prompt(3, dialogue="Cosa fai qui?")
+    assert "Non ripeterlo" in p
+
+
 def test_build_prompt_singular_no_dialogue():
     p = build_prompt(1)
     assert "un fotogramma" in p
@@ -30,24 +36,6 @@ def test_build_prompt_with_characters():
     p = build_prompt(3, characters=["Marco", "Giulia"])
     assert "Personaggi riconosciuti" in p
     assert "Marco, Giulia" in p
-
-
-def test_build_prompt_grayscale_anchor():
-    assert "bianco e nero" in build_prompt(3, grayscale=True)
-    assert "bianco e nero" not in build_prompt(3)   # default: nessun ancoraggio (film a colori)
-
-
-def test_is_grayscale_detects_bw_and_color():
-    import numpy as np
-    from PIL import Image
-
-    gray = Image.fromarray(np.full((16, 16, 3), 120, dtype=np.uint8))       # R=G=B -> b/n
-    color = Image.fromarray(np.dstack([                                      # canali divergenti
-        np.full((16, 16), 200, np.uint8), np.full((16, 16), 40, np.uint8),
-        np.full((16, 16), 10, np.uint8)]))
-    assert _is_grayscale([gray]) is True
-    assert _is_grayscale([color]) is False
-    assert _is_grayscale([]) is False               # nessun frame: non ancorare
 
 
 class _StubCaptioner:
