@@ -1,4 +1,6 @@
-from scene_detector.evaluation.eval import prf1, boundaries_from_scenes, boundaries_from_ranges, evaluate
+from scene_detector.evaluation.eval import (boundaries_from_ranges, boundaries_from_scenes,
+                                            evaluate, f1_curve, iou, prf1, transition_iou,
+                                            transitions_from_ranges)
 from scene_detector.core.scene import scenes_from_ranges
 
 
@@ -28,3 +30,65 @@ def test_evaluate_end_to_end():
     scenes = scenes_from_ranges([(0, 99), (100, 199), (200, 299)], fps=24.0)
     r = evaluate(scenes, [(0, 99), (100, 199), (200, 299)], tol=0)
     assert r["f1"] == 1.0
+
+
+# ------------------------------------------------------- tolleranza dichiarata ---
+
+def test_evaluate_riporta_sempre_la_tolleranza():
+    # un F1 sui boundary senza la sua tolleranza non è interpretabile: deve viaggiare col numero
+    scenes = scenes_from_ranges([(0, 99), (100, 199)], fps=24.0)
+    assert evaluate(scenes, [(0, 99), (100, 199)], tol=7)["tol"] == 7
+
+
+def test_f1_curve_mostra_quanto_e_slack():
+    # boundary predetto 4 frame più in là: perfetto a tol=5, zero a tol=0
+    curva = f1_curve([104], [100])
+    assert curva[5] == 1.0 and curva[10] == 1.0
+    assert curva[0] == 0.0 and curva[2] == 0.0
+
+
+# ------------------------------------------------------- transizioni (range) ---
+
+def test_transitions_hard_cut_e_graduale():
+    # shot contigui = hard cut (i due frame a cavallo); buco = transizione graduale
+    assert transitions_from_ranges([(0, 99), (100, 199)]) == [(99, 100)]
+    assert transitions_from_ranges([(0, 99), (124, 199)]) == [(100, 123)]
+
+
+def test_iou_intervalli():
+    assert iou((0, 9), (0, 9)) == 1.0
+    assert iou((0, 9), (10, 19)) == 0.0          # adiacenti ma disgiunti
+    assert iou((0, 9), (5, 14)) == 5 / 15        # 5 frame in comune su 15 di unione
+
+
+def test_transition_iou_perfetto():
+    r = transition_iou([(100, 123)], [(100, 123)])
+    assert r["mean_iou"] == 1.0 and r["f1"] == 1.0
+
+
+def test_f1_alto_ma_iou_pessimo_sulla_dissolvenza():
+    """Il caso per cui esiste questa metrica.
+
+    Ground truth: dissolvenza di 24 frame (100-123). Il detector piazza un punto secco a 111,
+    cioè **in mezzo** alla dissolvenza. Il matching sui boundary lo promuove — è a 11 frame dal
+    GT, dentro una tolleranza generosa — ma la transizione non è affatto delimitata.
+    """
+    gt = [(0, 99), (124, 299)]                    # buco 100-123 = dissolvenza
+    pred = scenes_from_ranges([(0, 110), (111, 299)], fps=24.0)   # taglio secco a 111
+
+    r = evaluate(pred, gt, tol=15)
+    assert r["f1"] == 1.0                         # i boundary dicono: perfetto
+    assert r["transition"]["mean_iou"] < 0.15     # le transizioni dicono: sbagliato
+    assert r["transition"]["f1"] == 0.0           # e sotto min_iou non è nemmeno un TP
+
+
+def test_transition_iou_ignora_le_coppie_disgiunte():
+    # una predizione lontanissima non si accoppia con nulla: 0 match, tutto FP/FN
+    r = transition_iou([(1000, 1010)], [(100, 123)])
+    assert r["matched"] == 0 and r["tp"] == 0 and r["fp"] == 1 and r["fn"] == 1
+
+
+def test_transition_iou_matching_indipendente_dall_ordine():
+    a = transition_iou([(100, 123), (200, 210)], [(200, 210), (100, 123)])
+    b = transition_iou([(200, 210), (100, 123)], [(100, 123), (200, 210)])
+    assert a["mean_iou"] == b["mean_iou"] == 1.0
