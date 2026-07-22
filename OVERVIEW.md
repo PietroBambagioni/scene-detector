@@ -65,7 +65,8 @@ scene_detector/
 - [TransNetV2](https://github.com/soCzech/TransNetV2) — Souček & Lokoč (MIT)
 - [AutoShot](https://github.com/wentaozhu/AutoShot) — Zhu et al., CVPR-W 2023
 - [PySceneDetect](https://github.com/Breakthrough/PySceneDetect) — Castellano (BSD-3)
-- [InsightFace](https://github.com/deepinsight/insightface) — SCRFD + ArcFace (`buffalo_l`)
+- [InsightFace](https://github.com/deepinsight/insightface) — SCRFD + ArcFace: codice MIT, ma il
+  model package `buffalo_l` è **solo per ricerca non commerciale** (licenza separata)
 - [faster-whisper](https://github.com/SYSTRAN/faster-whisper) — Whisper / CTranslate2
 - [Qwen3-VL](https://github.com/QwenLM/Qwen3-VL) — VLM via [mlx-vlm](https://github.com/Blaizzy/mlx-vlm)
 </content>

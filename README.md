@@ -22,11 +22,19 @@ Tre detector dietro un'interfaccia comune, intercambiabili:
 ## Installazione
 
 ```bash
+./install.sh            # venv + tutte le dipendenze + pesi neurali (88 MB)
+./install.sh --models   # anche Whisper / VLM / volti (~4 GB), altrimenti scaricati al primo run
+```
+
+Serve solo `ffmpeg` già nel PATH. Per un'installazione parziale, a mano:
+
+```bash
 python3.13 -m venv .venv
 source .venv/bin/activate
 pip install -e .              # base: scenedetect, numpy, typer
 pip install -e '.[neural]'    # per TransNetV2 / AutoShot: torch, pillow, einops
 pip install -e '.[faces]'     # riconoscimento personaggi: insightface, onnxruntime (CoreML)
+scene-detector-setup          # pesi in weights/, sha256 verificato
 ```
 
 ## Uso
@@ -86,7 +94,7 @@ scene-detector FILM.mp4 --all --asr-model medium
 | `--ensemble` | off | TransNet + AutoShot con riconciliazione + flag disaccordi |
 | `--transnet-weights` | `weights/transnetv2.pth` se c'è | pesi TransNetV2 |
 | `--autoshot-weights` | `weights/autoshot.pth` se c'è | pesi AutoShot |
-| `--split-mode` | `copy` | `copy` (veloce, snap keyframe) \| `reencode` (frame-accurate, lento) |
+| `--split-mode` | `copy` | `copy` (veloce, snap keyframe) \| `reencode` (frame-accurate, lento) \| `none` (non taglia: la UI riproduce il film intero a intervalli) |
 | `--threshold` | `0.5` | soglia boundary neurale |
 | `--min-scene-len` | `15` | frame minimi per shot |
 | `--asr` | off | trascrivi i dialoghi (faster-whisper) |
@@ -106,16 +114,25 @@ scene-detector FILM.mp4 --all --asr-model medium
 
 - `--split-mode copy` (default): `reencode` su migliaia di clip = ore.
 - ASR: `large-v3-turbo` + `--asr-threads 0` + VAD (attivo) → ~30-60 min. Job lungo (~1.5-2h): lascialo girare.
-- Spazio disco: migliaia di clip ≈ dimensione del film.
+- Spazio disco: migliaia di clip ≈ dimensione del film. Se le clip non servono —
+  primo passaggio esplorativo, collaudo, disco stretto — `--split-mode none` costruisce lo stesso
+  catalogo (manifest, dialoghi, descrizioni, personaggi) **senza duplicare il film**: la UI
+  riproduce gli shot come intervalli sul file originale.
 
 ## Pesi
 
-I pesi non sono nel repo (`weights/` è in `.gitignore`).
+I pesi non sono nel repo (`weights/` è in `.gitignore`): li scarica `scene-detector-setup`, che
+verifica lo **sha256** di ogni file e non installa nulla che non corrisponda. Il registro degli
+URL sta in [`core/weights.py`](scene_detector/core/weights.py).
 
-### TransNetV2 — `weights/transnetv2.pth`
+Nessuno dei due upstream pubblica un artefatto scaricabile — TransNetV2 va convertito da
+TensorFlow, AutoShot sta su Baidu con passcode — ma entrambi hanno un **mirror su HuggingFace**
+che serve gli stessi pesi: AutoShot identico byte per byte, TransNetV2 una conversione diversa
+ma con 90/90 tensori uguali (verificato).
 
-Convertiti dai pesi TensorFlow ufficiali. TF serve **solo** alla conversione (una-tantum);
-il runtime usa solo torch. Ricetta:
+### Conversione a mano di TransNetV2 (non serve più, ma resta valida)
+
+TF serve **solo** alla conversione (una-tantum); il runtime usa solo torch.
 
 ```bash
 git clone --depth 1 https://github.com/soCzech/TransNetV2.git
@@ -126,13 +143,10 @@ cd TransNetV2/inference-pytorch
 # -> transnetv2-pytorch-weights.pth   (copia in ../../weights/transnetv2.pth)
 ```
 
-### AutoShot — `weights/autoshot.pth`
+Un file già presente in `weights/` **non viene sovrascritto** dal setup, anche se il suo hash
+differisce da quello del mirror.
 
-Scarica `ckpt_0_200_0.pth` dal repo ufficiale [wentaozhu/AutoShot](https://github.com/wentaozhu/AutoShot)
-(link **Baidu**, passcode `sfkq`) e copialo in `weights/autoshot.pth`. Non esiste mirror diretto;
-l'unica fonte è Baidu.
-
-## Valutazione (F1)
+## Valutazione
 
 Modulo `scene_detector.evaluation.eval` per confrontare le scene predette con un ground-truth
 (file con `start end` per riga, in frame):
@@ -140,8 +154,27 @@ Modulo `scene_detector.evaluation.eval` per confrontare le scene predette con un
 ```python
 from scene_detector.evaluation.eval import evaluate, read_scenes_txt
 gt = read_scenes_txt("gt.txt")
-metrics = evaluate(pred_scenes, gt, tol=5)   # {precision, recall, f1, tp, fp, fn}
+m = evaluate(pred_scenes, gt, tol=5)
+# {precision, recall, f1, tp, fp, fn,          <- boundary, matching a punti
+#  tol: 5,                                     <- sempre riportata col numero
+#  f1_curve: {0: …, 1: …, 2: …, 5: …, 10: …},  <- quanto del punteggio è slack
+#  transition: {mean_iou, precision, recall, f1, matched, …}}
 ```
+
+**L'F1 sui boundary da solo inganna.** Confronta punti con punti, quindi è cieco alla *larghezza*
+delle transizioni: si può avere F1 1,00 e transition IoU 0,08 sullo stesso dato. Esempio reale —
+dissolvenza di 24 frame nel ground-truth, il detector piazza un taglio secco nel mezzo:
+
+| | |
+|---|---|
+| F1 boundary (tol 15) | **1,00** — «perfetto» |
+| `f1_curve` | `{0: 0, 1: 0, 2: 0, 5: 0, 10: 0}` — il punteggio è **tutto tolleranza** |
+| `transition.mean_iou` | **0,083** — la dissolvenza non è delimitata |
+
+Quindi: **cita sempre la tolleranza** insieme all'F1, guarda `f1_curve` per sapere quanto del
+punteggio regge senza slack, e usa `transition` se il materiale ha dissolvenze o fade. Su un film
+a soli hard cut la metrica range-based dice poco per costruzione (le transizioni sono tutte da
+2 frame): è sul materiale con transizioni graduali che separa i detector.
 
 ## Note & gotcha
 

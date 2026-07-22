@@ -1,0 +1,1 @@
+Voglio che questa applicazione diventi plug and play, adesso abbiamo fatto tanti passaggi manuali, ma voglio una volta finito che una volta fatto il clone della repo si faccia partire con un comando che permette di scaricare tutte le dependecies e i modelli con i pesi.

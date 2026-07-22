@@ -122,13 +122,31 @@ prova che **Qwen2.5-VL-3B a 4 bit sta riempiendo i vuoti** invece di descrivere.
 **Cosa fare:** ancoraggio nel prompt ("il film è in bianco e nero, non menzionare colori") come
 tampone immediato; la soluzione vera è il cambio modello in Fase 4.2.
 
-> **Stato: implementato.** In `captioning/caption.py`: `_is_grayscale(frames)` misura la chroma
-> media (max−min tra canali) dei frame *già campionati* per lo shot; se sotto soglia,
-> `build_prompt(..., grayscale=True)` aggiunge l'ancora "l'inquadratura è in bianco e nero: non
-> menzionare colori". **Rilevato per-shot, non hardcodato**: la pipeline è generale — inchiodare
-> "il film è in b/n" romperebbe i film a colori, e il per-shot ancora correttamente anche un
-> flashback in b/n dentro un film a colori. Test in `tests/test_caption.py`
-> (`_is_grayscale` b/n vs colore, `build_prompt` con/senza ancora).
+> **Stato: implementata, poi misurata inutile, poi rimossa.** L'ancora esisteva: `_is_grayscale`
+> misurava la chroma media dei frame già campionati e, sotto soglia, `build_prompt` aggiungeva
+> "l'inquadratura è in bianco e nero: non menzionare colori". Rilevata per-shot, non hardcodata.
+>
+> **A/B sul modello di produzione (Qwen3-VL-8B-4bit): non serve più.** Stessi 35 shot in b/n,
+> stessi frame congelati, greedy, unica variabile il flag `grayscale`:
+>
+> | | colori su b/n | dichiara b/n da sé | parole medie |
+> |---|---|---|---|
+> | con ancora | **0/35** | 26/35 | 45,3 |
+> | senza ancora | **0/35** | 23/35 | 46,8 |
+>
+> Zero menzioni di colore in entrambe le condizioni; su alcuni shot le due descrizioni coincidono
+> parola per parola. Il modello percepisce il b/n da solo e lo dichiara spontaneamente in 23 casi
+> su 35 **senza** istruzione. La 0.2 era una cura per Qwen2.5-VL-3B-4bit; uscendo da Qwen2.5 la
+> malattia è sparita (già visibile nella 4.2: *zero* colori su 35 shot in tutte e tre le taglie).
+>
+> **E la giustificazione per tenerla era falsa.** La 4.2 conservava l'ancora come rete per lo
+> **shot 0**, il cartello d'apertura che il modello miscolorava. Ma lo shot 0 è testo chiaro su
+> fondo: `_is_grayscale` lo classifica **a colori**, quindi l'ancora non si attivava mai proprio
+> sull'unico caso per cui la si teneva. Una rete che non copre il buco che doveva coprire.
+>
+> **Rimossa** (`_is_grayscale`, il ramo in `build_prompt`, il call site, 2 test). Resta aperto il
+> problema vero dietro lo shot 0: **un cartello di testo non è una scena** e andrebbe marcato come
+> tale, non descritto come inquadratura — vedi PUNTI-APERTI §3.3.
 
 ### 0.3 · I personaggi non arrivano nel manifest — ~~aperto~~ **risolto (`117fd27`)**
 
@@ -544,7 +562,7 @@ anche quando sbagli di 15 frame.
 |---|---|---|---|---|---|
 | ~~0.1~~ | ✅ Filtro allucinazioni ASR — *fatto, da validare su run* | alto | basso | nullo | 1, 2 |
 | ~~0.3~~ | ✅ Personaggi → manifest — *fatto (`117fd27`), da validare* | alto | — | basso | 2 |
-| ~~0.2~~ | ✅ VLM ancoraggio b/n — *fatto (auto-rilevato per-shot)* | medio | basso | nullo | — |
+| ~~0.2~~ | ⛔ VLM ancoraggio b/n — *fatto, poi misurato inutile su Qwen3-VL (0/35 in entrambe le condizioni) e **rimosso*** | — | — | — | — |
 | ~~0.4~~ | ✅ Confidence continua — *fatto (prob per-frame TransNet)* | medio | basso | nullo | — |
 | ~~3.1~~ | ⛔ Decodifica una volta — *verificato: premessa falsa, hwaccel 0.24×, non adottato* | — | — | — | — |
 | **3.2** | Media fragments / no cut | medio | medio | basso | — |
