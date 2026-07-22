@@ -46,5 +46,6 @@ class Config:
     faces_frames: int = 6
     faces_threshold: float = 0.5
     faces_min_score: float = 0.5
+    faces_min_px: int = 50        # lato minimo del bbox: sotto, l'embedding e' rumore
     # taglio clip
     jobs: int = 0                 # processi ffmpeg paralleli (0 = auto)

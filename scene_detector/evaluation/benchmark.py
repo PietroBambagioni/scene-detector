@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from ..core.config import Config, DetectorKind
+from ..core.config import DetectorKind
 from ..core.scene import enforce_min_len
 from ..detection import build_detector
 from ..detection import confidence as conf_mod
@@ -23,16 +23,18 @@ def evaluate_video(video_path, gt_ranges, cfg, ensemble=False, tol=5, min_iou=0.
     info = probe(video_path)
     vcfg = replace(cfg, video=video_path)
 
+    # decode-once anche per il detector singolo: `detect()` stamperebbe le sue barre per ogni
+    # video, e con 50 video l'output del benchmark diventa illeggibile
     t_det = build_detector(DetectorKind.transnet, vcfg)
+    h, w = t_det.input_size
+    frames = read_small_frames(info.path, w, h, total=info.n_frames, progress=False)
+    transnet = t_det.detect_from_frames(frames, info)
     if ensemble:
         a_det = build_detector(DetectorKind.autoshot, vcfg)
-        h, w = t_det.input_size
-        frames = read_small_frames(info.path, w, h, total=info.n_frames, progress=False)
-        scenes, _ = conf_mod.reconcile(t_det.detect_from_frames(frames, info),
-                                       a_det.detect_from_frames(frames, info),
+        scenes, _ = conf_mod.reconcile(transnet, a_det.detect_from_frames(frames, info),
                                        info.n_frames, info.fps, t_det.probs, vcfg.agreement_tol)
     else:
-        scenes = t_det.detect(info)
+        scenes = transnet
     scenes = enforce_min_len(scenes, vcfg.min_scene_len)
 
     b = prf1(boundaries_from_scenes(scenes), boundaries_from_ranges(gt_ranges), tol)

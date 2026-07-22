@@ -1,9 +1,12 @@
 import numpy as np
 
 from scene_detector.recognition.identify import (
+    average_embeddings,
     build_cast,
     centroids_of,
     cluster_faces,
+    cluster_two_stage,
+    cluster_within_shot,
     match_gallery,
 )
 
@@ -82,3 +85,73 @@ def test_build_cast_gallery_names_and_min_faces():
     assert [c["id"] for c in cast] == [0]     # cluster 1 (1 volto) scartato da min_faces
     assert cast[0]["name"] == "Alice"         # nome reale dalla gallery
     assert 2 not in per_shot                  # lo shot del cluster scartato non compare
+
+
+# ------------------------------------------- clustering a due stadi (4.4) ---
+
+def test_within_shot_must_not_link_stesso_frame():
+    # due volti quasi identici ma nello stesso frame: sono due persone, non una
+    a = _blob(1, 1)
+    quasi = a + 0.001 * np.ones_like(a)
+    quasi /= np.linalg.norm(quasi, axis=1, keepdims=True)
+    emb = np.vstack([a, quasi])
+    labels = cluster_within_shot(emb, frame_indices=[0, 0], threshold=0.5)
+    assert labels[0] != labels[1]
+
+
+def test_within_shot_unisce_frame_diversi():
+    # la stessa persona vista in tre frame diversi dello shot: un gruppo solo
+    emb = _blob(2, 3)
+    labels = cluster_within_shot(emb, frame_indices=[0, 1, 2], threshold=0.5)
+    assert len(set(labels)) == 1
+
+
+def test_within_shot_due_persone_su_piu_frame():
+    # campo/controcampo: A e B compaiono insieme in 3 frame -> 2 gruppi, non 1 ne' 6
+    a, b = _blob(3, 3), _blob(4, 3)
+    emb = np.vstack([a[0], b[0], a[1], b[1], a[2], b[2]])
+    labels = cluster_within_shot(emb, frame_indices=[0, 0, 1, 1, 2, 2], threshold=0.5)
+    assert len(set(labels)) == 2
+    assert labels[0] == labels[2] == labels[4]      # A resta A attraverso i frame
+    assert labels[1] == labels[3] == labels[5]
+
+
+def test_average_embeddings_normalizza_e_conta():
+    emb = np.vstack([_blob(5, 2), _blob(6, 3)])
+    means, ids, sizes = average_embeddings(emb, [0, 0, 1, 1, 1])
+    assert ids == [0, 1] and sizes == [2, 3]
+    assert np.allclose(np.linalg.norm(means, axis=1), 1.0)
+
+
+def test_average_embeddings_ignora_i_non_assegnati():
+    emb = _blob(7, 3)
+    means, ids, sizes = average_embeddings(emb, [-1, 0, 0])
+    assert ids == [0] and sizes == [2]
+
+
+def test_two_stage_riconosce_la_stessa_persona_fra_shot():
+    # la stessa identità in 3 shot, 2 volti per shot: un cluster solo
+    emb = _blob(8, 6)
+    labels = cluster_two_stage(emb, shot_indices=[0, 0, 1, 1, 2, 2],
+                               frame_indices=[0, 1, 0, 1, 0, 1], threshold=0.5)
+    assert len(set(labels)) == 1
+
+
+def test_two_stage_tiene_separate_due_identita():
+    a, b = _blob(9, 4), _blob(10, 4)
+    emb = np.vstack([a[0], b[0], a[1], b[1], a[2], b[2], a[3], b[3]])
+    labels = cluster_two_stage(emb, shot_indices=[0, 0, 0, 0, 1, 1, 1, 1],
+                               frame_indices=[0, 0, 1, 1, 0, 0, 1, 1], threshold=0.5)
+    assert len(set(labels)) == 2
+    assert labels[0] == labels[2] == labels[4] == labels[6]
+
+
+def test_two_stage_interfaccia_compatibile_con_cluster_faces():
+    # una etichetta per volto in ingresso, come cluster_faces: build_cast non cambia
+    emb = _blob(11, 5)
+    labels = cluster_two_stage(emb, [0] * 5, list(range(5)))
+    assert len(labels) == 5 and all(l >= 0 for l in labels)
+
+
+def test_two_stage_vuoto():
+    assert len(cluster_two_stage(np.zeros((0, 64)), [], [])) == 0

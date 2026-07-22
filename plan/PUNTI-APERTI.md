@@ -11,7 +11,7 @@
 
 | # | Punto | Stato dopo le verifiche | Sforzo | Dipende da |
 |---|---|---|---|---|
-| **4.4** | Clustering per tracklet | **promosso a prerequisito** | medio | — |
+| **4.4** | Clustering per tracklet | **scritto**, da validare con un run volti | medio | — |
 | **2** | Diarizzazione + linking | **molto più economico** del previsto | medio | 4.4 |
 | **1** | Scene grouping | **più caro** del previsto, e ora **non risparmia più VLM** | alto | 2º film |
 | ~~**3.2**~~ | Media fragments / no cut | ✅ **fatto** come `--split-mode none`, il default resta il taglio | basso | — |
@@ -28,11 +28,33 @@ reali**: la protagonista è isolata bene (73 shot), ma altri volti si ripetono i
 Finché una persona è spezzata in tre identità, **qualunque** cosa costruita sopra — nomi dal
 dialogo, "chi dice cosa", ricerca per personaggio — eredita la frammentazione.
 
-Ricetta: ByteTrack sui volti dentro ogni shot → un embedding mediato per tracklet → clustering sui
-tracklet con vincolo *must-not-link* (due volti nello stesso frame ≠ stessa persona) → pre-filtro
-per score, dimensione ≥ 50 px, blur. Sono ~100 righe, con due implementazioni MIT da cui copiare
-l'impianto (vedi §2.5). Baseline per il confronto prima/dopo: il `manifest.faces.json` prodotto
-dal run — **da salvare fuori dalla scratchpad di sessione**.
+**Implementato**, ma con un'adattamento che vale la pena spiegare: **ByteTrack non si applica**.
+Il tracking per IoU + Kalman presuppone video **denso**; noi campioniamo **6 frame sparsi per
+shot** via seek, e fra un campione e l'altro un volto attraversa l'inquadratura — non c'è
+continuità geometrica su cui agganciarsi. L'equivalente che regge con frame sparsi è raggruppare
+*dentro lo shot* per somiglianza di embedding, tenendo il vincolo che conta.
+
+Quello che c'è ora in `recognition/identify.py`:
+
+- `cluster_within_shot` — greedy dentro un singolo shot con **must-not-link per frame**: due
+  volti visti nello stesso fotogramma non possono finire nello stesso gruppo, per quanto si
+  somiglino. È il vincolo che impedisce a un campo/controcampo di collassare in un'identità sola.
+- `average_embeddings` — un vettore mediato e normalizzato per gruppo. È il passaggio che rende
+  robusto il secondo stadio: la media di più viste cancella il rumore di posa e fuoco che fa
+  deragliare il singolo frame.
+- `cluster_two_stage` — stadio 1 dentro gli shot, stadio 2 sui gruppi mediati, con i gruppi
+  grandi come seed invece del singolo volto più nitido. L'interfaccia resta quella di
+  `cluster_faces` (un'etichetta per volto), quindi `build_cast` e la gallery non cambiano.
+- Pre-filtro `min_face_px=50` (flag `--faces-min-px`) applicato **prima** di clusterizzare.
+
+Blur e yaw non sono stati fatti: richiedono di misurare sull'immagine, e senza un run che dica
+se serve sarebbe codice speculativo.
+
+**Non validato.** La baseline congelata (`prove/faces-anna/manifest.faces.json`) contiene cast e
+personaggi, **non gli embedding**: non si può ri-clusterizzare a tavolino, serve un nuovo run
+volti su *Anna* (~7 min) per il confronto 68 cluster → ? Il secondo stadio usa ancora il greedy
+a una passata che ha prodotto i 68: la media e il seeding per numerosità dovrebbero aiutare
+parecchio, ma è un'aspettativa, non una misura.
 
 ### 2 · Diarizzazione — cosa è cambiato
 

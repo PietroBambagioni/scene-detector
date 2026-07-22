@@ -39,6 +39,7 @@ def run(
     faces_frames: int = typer.Option(6, "--faces-frames", help="Frame campionati per shot per il riconoscimento volti"),
     faces_threshold: float = typer.Option(0.5, "--faces-threshold", help="Soglia coseno per clustering/gallery volti"),
     faces_min_score: float = typer.Option(0.5, "--faces-min-score", help="Soglia det_score: scarta i volti deboli"),
+    faces_min_px: int = typer.Option(50, "--faces-min-px", help="Lato minimo del volto in pixel: sotto, l'embedding è rumore"),
     run_all: bool = typer.Option(False, "--all", help="Fa tutto: detection + split + faces + ASR + VLM"),
     max_detail: bool = typer.Option(False, "--max", help="Massimo dettaglio + multi-core: --all + reencode frame-accurate + multi-core (2 core liberi)"),
     jobs: int = typer.Option(0, "-j", "--jobs", help="Processi ffmpeg paralleli per il taglio (0 = auto: tutti i core meno 2)"),
@@ -64,6 +65,7 @@ def run(
         vlm=vlm, vlm_model=vlm_model, vlm_frames=vlm_frames,
         faces=faces, faces_gallery=faces_gallery, faces_frames=faces_frames,
         faces_threshold=faces_threshold, faces_min_score=faces_min_score,
+        faces_min_px=faces_min_px,
         jobs=jobs,
     )
 

@@ -144,7 +144,7 @@ def run(cfg: Config) -> None:
                 gallery = load_gallery(faces_gallery, recognizer) if faces_gallery else None
                 n_faces, n_chars = recognize_characters(
                     manifest, video, recognizer, gallery=gallery, n_frames=faces_frames,
-                    threshold=faces_threshold, film_dir=out_dir,
+                    threshold=faces_threshold, min_face_px=cfg.faces_min_px, film_dir=out_dir,
                 )
             o["n_faces"] = n_faces
             o["n_characters"] = n_chars

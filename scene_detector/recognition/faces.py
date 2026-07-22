@@ -5,12 +5,13 @@ from pathlib import Path
 
 import numpy as np
 
-from .identify import build_cast, centroids_of, cluster_faces, match_gallery
+from .identify import build_cast, centroids_of, cluster_two_stage, match_gallery
 
 
 @dataclass
 class DetectedFace:
     shot_index: int
+    frame_index: int       # quale dei frame campionati dello shot (serve al must-not-link)
     embedding: np.ndarray  # ArcFace normed 512
     det_score: float
     thumb: object          # PIL.Image — crop del volto (per la card del cast)
@@ -80,12 +81,17 @@ def _crop_thumb(pil_rgb, bbox, pad=0.3, size=112):
 
 
 def recognize_characters(manifest, video, recognizer, *, gallery=None, n_frames=6, size=640,
-                         threshold=0.5, min_faces=1, film_dir=None, progress=True):
+                         threshold=0.5, min_faces=1, min_face_px=50, film_dir=None,
+                         progress=True):
     """Popola `manifest["cast"]` e `shot["characters"]` rilevando e clusterizzando i volti del film.
 
-    Campiona `n_frames` per shot (via `sample_frames`), rileva volti + embedding, clusterizza
-    sull'intero film (coseno `threshold`); con `gallery` mappa i cluster ai nomi reali. Salva una
+    Campiona `n_frames` per shot (via `sample_frames`), rileva volti + embedding e clusterizza
+    **a due stadi** (`cluster_two_stage`): prima dentro ogni shot col vincolo must-not-link, poi
+    sugli embedding mediati dei gruppi. Con `gallery` mappa i cluster ai nomi reali. Salva una
     thumbnail per personaggio in `<film_dir>/faces/`. Ritorna (n_volti, n_personaggi).
+
+    `min_face_px`: lato minimo del bbox. Nel cinema gran parte delle detection sono volti
+    lontani o di scorcio, il cui embedding e' rumore: si scartano prima di clusterizzare.
     """
     from tqdm import tqdm
 
@@ -94,9 +100,14 @@ def recognize_characters(manifest, video, recognizer, *, gallery=None, n_frames=
     shots = manifest["shots"]
     detected: list[DetectedFace] = []
     for shot in tqdm(shots, desc="[faces]", unit="shot", disable=not progress):
-        for pil in sample_frames(video, shot["start_time"], shot["end_time"], n_frames, size):
+        frames = sample_frames(video, shot["start_time"], shot["end_time"], n_frames, size)
+        for fi, pil in enumerate(frames):
             for emb, score, bbox in recognizer.detect(pil):
-                detected.append(DetectedFace(shot["index"], emb, score, _crop_thumb(pil, bbox)))
+                x1, y1, x2, y2 = bbox
+                if min(x2 - x1, y2 - y1) < min_face_px:
+                    continue  # volto troppo piccolo: l'embedding e' rumore che avvelena i cluster
+                detected.append(DetectedFace(shot["index"], fi, emb, score,
+                                             _crop_thumb(pil, bbox)))
 
     if not detected:
         manifest["cast"] = []
@@ -106,8 +117,9 @@ def recognize_characters(manifest, video, recognizer, *, gallery=None, n_frames=
 
     emb = np.stack([d.embedding for d in detected])
     scores = np.array([d.det_score for d in detected])
-    labels = cluster_faces(emb, threshold, det_scores=scores)
     shot_idx = [d.shot_index for d in detected]
+    labels = cluster_two_stage(emb, shot_idx, [d.frame_index for d in detected],
+                               threshold, det_scores=scores)
 
     names = match_gallery(centroids_of(emb, labels), gallery, threshold) if gallery else {}
     cast, per_shot = build_cast(labels, shot_idx, names, min_faces)
