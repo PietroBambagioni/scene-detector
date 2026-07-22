@@ -14,6 +14,7 @@ class DetectorKind(str, Enum):
 class SplitMode(str, Enum):
     copy = "copy"          # veloce, snap a keyframe
     reencode = "reencode"  # frame-accurate, lento
+    none = "none"          # non taglia: la UI riproduce il film intero con media fragments
 
 
 @dataclass

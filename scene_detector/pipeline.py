@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
 from .core import telemetry as tel_mod
-from .core.config import Config, DetectorKind
+from .core.config import Config, DetectorKind, SplitMode
 from .core.cpu import resolve_workers
 from .core.scene import enforce_min_len
 from .core.telemetry import log
@@ -98,16 +101,27 @@ def run(cfg: Config) -> None:
         o["threshold"] = threshold
     log.info("  %d shot", len(scenes))
 
-    log.info("[2/%d] Taglio %d clip…", n_steps, len(scenes))
+    cutting = split_mode is not SplitMode.none
     with tel.step("split") as o:
-        split(info, scenes, out_dir, split_mode, jobs=jobs)
-        o["n_clips"] = len(scenes)
+        if cutting:
+            log.info("[2/%d] Taglio %d clip…", n_steps, len(scenes))
+            split(info, scenes, out_dir, split_mode, jobs=jobs)
+            o["n_clips"] = len(scenes)
+        else:
+            log.info("[2/%d] Taglio saltato (--split-mode none): la UI usa i media fragments",
+                     n_steps)
+            o["n_clips"] = 0
         o["split_mode"] = split_mode.value
         o["workers"] = split_workers
 
     from .catalog.manifest import build_manifest, write_manifest
     label = "ensemble" if ensemble else detector.value
-    manifest = build_manifest(info, scenes, label)
+    # senza clip la UI riproduce il film originale a intervalli: le serve come raggiungerlo
+    # dalla cartella del catalogo (relativo: catalogo e film restano spostabili insieme)
+    video_src = None if cutting else os.path.relpath(Path(video).resolve(), out_dir.resolve())
+    manifest = build_manifest(info, scenes, label,
+                              clip_template=None if not cutting else "scene-{:03d}.mp4",
+                              video_src=video_src)
     manifest_path = out_dir / "manifest.json"
     step = 2
 

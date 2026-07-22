@@ -130,8 +130,11 @@ function select(i) {
   if (i < 0 || i >= shots.length) return;
   cur = i;
   const sh = shots[i];
-  $('player').src = sh.clip;
-  $('tc').textContent = `#${String(i).padStart(3,'0')}  ${fmt(sh.start_time)}–${fmt(sh.end_time)}  (${sh.clip})`;
+  // con --split-mode none non ci sono clip: si riproduce il film intero a intervallo
+  // (media fragment). Il '#t=' va rimesso ogni volta o il player resta sul frammento vecchio.
+  const src = sh.clip || `${DATA.video_src}#t=${sh.start_time},${sh.end_time}`;
+  $('player').src = src;
+  $('tc').textContent = `#${String(i).padStart(3,'0')}  ${fmt(sh.start_time)}–${fmt(sh.end_time)}  (${sh.clip || DATA.video})`;
   renderChips(sh);
   $('dialogue').value = sh.dialogue || '';
   $('description').value = sh.description || '';
