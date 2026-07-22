@@ -82,12 +82,72 @@ def index(output_dir: Path = typer.Option(Path("clips"), "--output-dir", "-o",
     typer.echo(f"→ {gallery_path}  ({n_films} film)")
 
 
+setup_app = typer.Typer(add_completion=False, help="Scarica pesi e modelli: prepara il progetto.")
+
+
+@setup_app.command()
+def setup(
+    weights_dir: Path = typer.Option(Path("weights"), "--weights-dir", "-w"),
+    force: bool = typer.Option(False, "--force", help="Riscarica anche i pesi già presenti"),
+    models: bool = typer.Option(False, "--models",
+                                help="Scarica anche i modelli grandi (Whisper, VLM, volti): ~4 GB"),
+):
+    """Scarica i pesi neurali e verifica gli eseguibili esterni.
+
+    I pesi piccoli (TransNetV2, AutoShot: 88 MB) arrivano da mirror con sha256 verificato.
+    I modelli grandi si scaricano da soli al primo uso: `--models` li anticipa qui.
+    """
+    from .core.weights import REGISTRY, fetch, missing_tools
+
+    missing = missing_tools()
+    if missing:
+        typer.secho(f"⚠  manca nel PATH: {', '.join(missing)}  →  brew install ffmpeg",
+                    fg=typer.colors.YELLOW)
+
+    for name in REGISTRY:
+        def progress(n, done, total, _last=[-1]):
+            pct = 100 * done // total if total else 0
+            if pct != _last[0]:
+                _last[0] = pct
+                typer.echo(f"\r  {n}: {pct}%", nl=False)
+        path = fetch(name, weights_dir, force=force, on_progress=progress)
+        typer.echo(f"\r→ {name}: {path}" + " " * 12)
+
+    if models:
+        _fetch_big_models()
+    typer.echo("Pronto." if not missing else "Pronto, ma installa prima ffmpeg.")
+
+
+def _fetch_big_models(asr_model="large-v3-turbo",
+                      vlm_model="mlx-community/Qwen3-VL-8B-Instruct-4bit"):
+    """Anticipa il download dei modelli che altrimenti arrivano al primo run.
+
+    Ognuno vive in un extra diverso: se l'extra non è installato lo si segnala e si prosegue,
+    perché `--asr` senza `--vlm` (o viceversa) è un uso legittimo.
+    """
+    steps = [
+        ("ASR", "'.[asr]'", lambda: __import__("faster_whisper").WhisperModel(asr_model, device="cpu")),
+        ("VLM", "'.[vlm]'", lambda: __import__("mlx_vlm").load(vlm_model)),
+        ("volti", "'.[faces]'", lambda: __import__("insightface").app.FaceAnalysis(name="buffalo_l").prepare(ctx_id=-1)),
+    ]
+    for label, extra, load in steps:
+        typer.echo(f"→ {label}…")
+        try:
+            load()
+        except ImportError:
+            typer.secho(f"   saltato: manca l'extra, `pip install -e {extra}`", fg=typer.colors.YELLOW)
+
+
 def main():
     app()
 
 
 def main_index():
     index_app()
+
+
+def main_setup():
+    setup_app()
 
 
 if __name__ == "__main__":

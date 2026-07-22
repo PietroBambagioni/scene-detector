@@ -14,3 +14,6 @@ weights/
 *.pth
 *.onnx
 Film/
+
+# baseline di misura per i confronti prima/dopo
+prove/

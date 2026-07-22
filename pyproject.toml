@@ -20,10 +20,12 @@ vlm = ["mlx-vlm>=0.1,<0.7", "pillow>=10.0"]              # VLM per shot (Apple S
 faces = ["insightface>=1.0", "onnxruntime>=1.20"]        # riconoscimento personaggi (SCRFD+ArcFace, CoreML)
 obs = ["psutil>=5.9"]                                    # telemetria run (CPU%/RSS live)
 dev = ["pytest>=8.0"]
+all = ["scene-detector[neural,asr,vlm,faces,obs]"]       # tutto ciò che serve a `--all`
 
 [project.scripts]
 scene-detector = "scene_detector.cli:main"
 scene-detector-index = "scene_detector.cli:main_index"
+scene-detector-setup = "scene_detector.cli:main_setup"
 
 [tool.setuptools.packages.find]
 include = ["scene_detector*"]
