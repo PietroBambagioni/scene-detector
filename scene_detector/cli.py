@@ -30,7 +30,7 @@ def run(
     asr_lang: str = typer.Option(None, "--asr-lang", help="Lingua ISO (es. it); default auto"),
     asr_threads: int = typer.Option(0, "--asr-threads", help="Thread CPU per l'ASR (0 = auto: tutti i core meno 2)"),
     vlm: bool = typer.Option(False, "--vlm", help="Descrizione visiva per shot (mlx-vlm)"),
-    vlm_model: str = typer.Option("mlx-community/Qwen2.5-VL-3B-Instruct-4bit", "--vlm-model",
+    vlm_model: str = typer.Option("mlx-community/Qwen3-VL-8B-Instruct-4bit", "--vlm-model",
                                   help="Modello VLM (repo mlx-community o path locale)"),
     vlm_frames: int = typer.Option(3, "--vlm-frames", help="Frame campionati per shot"),
     faces: bool = typer.Option(False, "--faces", help="Riconoscimento personaggi (InsightFace) per arricchire il VLM"),

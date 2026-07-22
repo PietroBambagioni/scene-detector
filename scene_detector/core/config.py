@@ -37,7 +37,7 @@ class Config:
     asr_threads: int = 0
     # descrizione visiva per shot (VLM)
     vlm: bool = False
-    vlm_model: str = "mlx-community/Qwen2.5-VL-3B-Instruct-4bit"
+    vlm_model: str = "mlx-community/Qwen3-VL-8B-Instruct-4bit"
     vlm_frames: int = 3
     # riconoscimento personaggi (faces)
     faces: bool = False

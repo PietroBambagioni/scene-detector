@@ -89,9 +89,9 @@ def build_prompt(n_frames, dialogue=None, characters=None, grayscale=False):
 # ------------------------------------------------------------- MLX backend ---
 
 class MlxVlmCaptioner:
-    """Backend VLM su MLX (Qwen2.5-VL 4-bit). Carica il modello una volta, descrive per shot."""
+    """Backend VLM su MLX (Qwen3-VL-8B 4-bit). Carica il modello una volta, descrive per shot."""
 
-    def __init__(self, model_path="mlx-community/Qwen2.5-VL-3B-Instruct-4bit",
+    def __init__(self, model_path="mlx-community/Qwen3-VL-8B-Instruct-4bit",
                  max_tokens=128, temperature=0.3):
         from mlx_vlm import load
         from mlx_vlm.utils import load_config

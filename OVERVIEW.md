@@ -33,7 +33,7 @@ trascrizione dialoghi (ASR) → descrizione visiva per shot (VLM) → manifest +
 - **Trascrizione dialoghi (ASR)** — [faster-whisper](https://github.com/SYSTRAN/faster-whisper)
   (Whisper via CTranslate2), default `large-v3-turbo`, con VAD; i segmenti vengono allineati agli shot.
 - **Descrizione visiva (VLM)** — [mlx-vlm](https://github.com/Blaizzy/mlx-vlm) su Apple Silicon,
-  modello **Qwen2.5-VL-3B-Instruct-4bit**. Campiona alcuni frame per shot e genera una descrizione;
+  modello **Qwen3-VL-8B-Instruct-4bit**. Campiona alcuni frame per shot e genera una descrizione;
   step resumable. I personaggi riconosciuti arricchiscono il prompt (descrizioni nominate).
 
 ### Stack di base
@@ -67,6 +67,6 @@ scene_detector/
 - [PySceneDetect](https://github.com/Breakthrough/PySceneDetect) — Castellano (BSD-3)
 - [InsightFace](https://github.com/deepinsight/insightface) — SCRFD + ArcFace (`buffalo_l`)
 - [faster-whisper](https://github.com/SYSTRAN/faster-whisper) — Whisper / CTranslate2
-- [Qwen2.5-VL](https://github.com/QwenLM/Qwen2.5-VL) — VLM via [mlx-vlm](https://github.com/Blaizzy/mlx-vlm)
+- [Qwen3-VL](https://github.com/QwenLM/Qwen3-VL) — VLM via [mlx-vlm](https://github.com/Blaizzy/mlx-vlm)
 </content>
 </invoke>

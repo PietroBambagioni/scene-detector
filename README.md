@@ -45,7 +45,7 @@ progetto, oppure passa i path.
 Output in `catalogo/<nome-film>/`: `scene-NNN.mp4`, `manifest.json`, `index.html` (apri quest'ultimo).
 Le fasi `[1/N]…[N/N]` con barre mostrano l'avanzamento.
 
-> La **descrizione visiva** per shot (VLM) è locale su Apple Silicon (`mlx-vlm` + Qwen2.5-VL-3B 4-bit).
+> La **descrizione visiva** per shot (VLM) è locale su Apple Silicon (`mlx-vlm` + Qwen3-VL-8B 4-bit).
 > È lo step più lungo (~5s/shot); è **resumable**: un run interrotto riparte saltando gli shot già
 > descritti. Installa con `pip install -e '.[vlm]'`; il modello si scarica al primo uso (~2 GB).
 >
@@ -94,7 +94,7 @@ scene-detector FILM.mp4 --all --asr-model medium
 | `--asr-lang` | auto | lingua ISO (es. `it`) |
 | `--asr-threads` | `0` | thread CPU per l'ASR (0 = tutti i core) |
 | `--vlm` | off | descrizione visiva per shot (mlx-vlm, Apple Silicon) |
-| `--vlm-model` | `Qwen2.5-VL-3B-Instruct-4bit` | repo `mlx-community` o path locale |
+| `--vlm-model` | `Qwen3-VL-8B-Instruct-4bit` | repo `mlx-community` o path locale |
 | `--vlm-frames` | `3` | frame campionati per shot (inizio/metà/fine) |
 | `--faces` | off | riconoscimento personaggi (InsightFace) per arricchire il VLM |
 | `--faces-gallery` | — | cartella `<Nome>/*.jpg` per etichettare i personaggi (opz.) |
