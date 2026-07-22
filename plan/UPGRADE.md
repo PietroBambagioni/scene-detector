@@ -143,12 +143,16 @@ Oggi lo step esiste ed è cablato end-to-end:
 - `recognition/` — SCRFD+ArcFace, clustering coseno, matching gallery; test in `tests/test_recognition.py`.
 
 Restano **due riserve**, nessuna bloccante:
-1. **Da validare su run.** La capability c'è, ma l'unica prova reale (Anna, 0 personaggi) la
-   precede. Un ri-collaudo con `--faces` è ancora da fare — e il run di Anna potrebbe
-   semplicemente non aver passato il flag.
-2. **Qualità grezza.** `recognition/identify.py` clusterizza i *singoli volti*, non i tracklet:
-   nel cinema questo avvelena i cluster. Il raffinamento (media sul tracklet, must-not-link,
-   pre-filtro blur/dimensione) è la **Fase 4.4**, non un bug di produzione.
+1. ~~**Da validare su run.**~~ ✅ **Validato su *Anna*** (6,9 min, 373 shot × 6 frame, CoreML):
+   **1634 volti → 68 cluster**, personaggi in **243/373 shot**. Lo step funziona end-to-end; il
+   run originale semplicemente non passava `--faces`.
+2. **Qualità grezza — confermata dal run.** `recognition/identify.py` clusterizza i *singoli
+   volti*, non i tracklet, e su *Anna* si vede: **68 cluster** per un film con una decina di
+   presenze reali. Le thumbnail dei primi cluster mostrano la protagonista correttamente isolata
+   (73 shot) ma anche volti che si ripetono in cluster distinti — la stessa persona spezzata in
+   più identità. **Questo rende la 4.4 un prerequisito della Fase 2**, non un raffinamento
+   opzionale: qualunque legame nome↔personaggio costruito su cluster frammentati eredita la
+   frammentazione.
 
 ### 0.4 · La confidence è un flag travestito
 
@@ -183,10 +187,28 @@ invece di 2000 per shot).
 | **TranS4mer** — 37M param, 1 GB, 0.24 s/shot | basso | 48.4 F1 / 60.8 AP | **scelta pragmatica per Mac** |
 | **Scene-VLM** — Qwen2.5-VL-7B LoRA (Amazon Prime Video, dic 2025) | alto | 62.1 F1 / 66.8 AP (SOTA) | riferimento, non commit |
 
-**Raccomandazione: TranS4mer.** Solo visivo, gira sul Mac senza accorgersene, miglior rapporto
-costo/beneficio. Scene-VLM è il tetto teorico ma **non ha codice né pesi rilasciati**:
-"usarlo" oggi significa reimplementarlo e fare fine-tuning (8×A100, 2-4 h, su MovieNet-318 da
-richiedere). Tienilo come misura di *quanto in alto si può arrivare*, non come prossimo passo.
+~~**Raccomandazione: TranS4mer.**~~ **Corretto dopo verifica dei repo (lug 2026): TranS4mer è
+nella stessa condizione di Scene-VLM.** Il repo ufficiale
+([md-mohaiminul/TranS4mer](https://github.com/md-mohaiminul/TranS4mer), 34 ⭐, Apache-2.0, fermo a
+giu 2023) ha la sezione *Pre-trained Models* con scritto **"TODO"**: nessun checkpoint. Il flusso
+documentato è pre-training BaSSL → finetune, su CUDA 11.3. "Adottarlo" significa **addestrarlo** —
+esattamente ciò per cui il piano scartava Scene-VLM. La riga "gira sul Mac senza accorgersene"
+valeva per il modello, non per la sua disponibilità.
+
+**Le due strade realmente percorribili:**
+
+- **[BaSSL](https://github.com/kakaobrain/bassl)** (Kakao Brain, 142 ⭐, **Apache-2.0**) — *ha* un
+  Model Zoo con checkpoint (56,26 / 57,40 AP su MovieNet). È il pre-training su cui TranS4mer si
+  appoggia. Restano da verificare due cose: se i pesi pubblicati siano quelli *finetuned* per lo
+  scene boundary o solo i self-supervised, e quanto costi il path di inferenza su un film nuovo
+  (il repo documenta pretrain/finetune, non un `predict` su file).
+- **[SceneSeg / LGSS](https://github.com/AnyiRao/SceneSeg)** (CVPR 2020, 237 ⭐) — ha modelli
+  pre-addestrati e un tool di segmentazione temporale pensato come "easy-to-use". Più vecchio e
+  meno accurato, ma è l'unico con un percorso di inferenza dichiarato. **Attenzione: nessuna
+  licenza dichiarata** — da chiarire prima di dipenderci.
+
+Scene-VLM resta il tetto teorico e resta senza codice né pesi. Il DIY (embedding SigLIP per shot +
+clustering con vincolo temporale) sale di conseguenza: non è più il ripiego, è il piano B serio.
 
 **Due trappole da conoscere prima di scrivere codice:**
 
@@ -236,6 +258,25 @@ TransNet vuole 48×27, AutoShot idem, i volti full-res, il VLM 3 frame/shot. Se 
 ri-decodifica, stai decodificando il film **quattro volte**. Un singolo passaggio ffmpeg
 multi-output con `-hwaccel videotoolbox` sposta i tempi più di qualsiasi cambio di modello.
 
+> **Stato: verificato su *Anna* (Mac/MPS) — premessa falsa, NON adottato.** La misura smentisce
+> due cose:
+>
+> - **Non ci sono 4 decode del film.** La detection è **già decode-once** (48×27 condiviso tra
+>   TransNet e AutoShot in ensemble, fix in `PLAN_FIXES`). Faces e VLM **non** decodificano il
+>   film: fanno estrazione *sparsa* a seek (`ffmpeg -ss -frames:v 1`, 6 e 3 frame/shot); l'ASR
+>   decodifica l'**audio**. Un unico passaggio multi-output che decodifica *tutti* i frame a
+>   piena risoluzione sarebbe **più lento** per i consumatori sparsi (a loro servono 3-6 frame per
+>   shot, non 320 000).
+> - **`-hwaccel videotoolbox` è una regressione 4× sul path detection.** Decode 48×27 di 60s di
+>   Anna: **1278 frame/s** software vs **309 frame/s** con videotoolbox (**0.24×**) — il readback
+>   GPU→CPU per frame supera il decode banale a 48×27. Film intero ~251 s (4 min), comunque
+>   marginale contro ASR (41 min) e VLM (~12 min).
+>
+> **Nucleo di verità rimasto (non fatto):** quando `--faces` e `--vlm` girano insieme campionano
+> gli **stessi shot** in modo indipendente (6 seek@640 + 3 seek@512). Condividere i frame
+> (campiona una volta, riusa a valle) vale ~2-3 min — piccolo, opportunistico, non l'ffmpeg
+> multi-output del piano.
+
 ### 3.2 · Non tagliare le clip di default
 
 373 (o 2000) file duplicano il film su disco, e con `-c copy` i tagli si allineano ai keyframe:
@@ -249,6 +290,22 @@ export on-demand e il dilemma copy/reencode sparisce. Se devi tagliare davvero: 
 Oggi rifai il prefill dello stesso system prompt ~2000 volte per film. **mlx-vlm ha ora prefix
 caching automatico (APC) e una modalità server:** server persistente + APC = il prompt di
 sistema lo paghi una volta sola. È un guadagno maggiore del cambio modello stesso.
+
+> **Stato: verificato su *Anna* (Mac/MPS) — capability presente ma NON ripaga, non adottato.**
+> Server e APC **esistono** in mlx-vlm 0.6.5 (`mlx_vlm/apc.py`, `mlx_vlm/server/`). Ma l'APC è
+> prefix-cache a blocchi la cui chiave **include il contenuto dell'immagine** (`extra_hash`),
+> quindi tra shot con immagini diverse riusa solo i blocchi *prima* della prima immagine. Misura
+> su uno shot reale:
+>
+> - prefill = **741 token**: **540 immagine (73%)** + 201 testo; il prefisso condivisibile prima
+>   della 1ª immagine è **15 token (2%)** (Qwen mette le immagini *prima* dell'istruzione).
+> - `generate` per shot ≈ **2,05 s**, dominato dal **decode dell'output** (~100 token) che l'APC
+>   **non tocca**; il prefill è una minoranza.
+> - il modello lo teniamo **già residente** (`load` una volta in `__init__`, riusato per ogni
+>   shot): il server non aggiunge nulla, solo IPC.
+>
+> Best case ~2-5% per shot (27% *del solo prefill* ristrutturando l'istruzione come system).
+> **Il vero moltiplicatore sul VLM è fare meno chiamate → Fase 1** (scene grouping), non l'APC.
 
 ### 3.4 · Catalogo interrogabile
 
@@ -279,6 +336,41 @@ disaccordo puramente binario del manifest). Meglio: usare la probabilità per-fr
 come confidenza continua; se serve una seconda opinione vera, prenderla architetturalmente
 diversa (non un cugino di TransNet).
 
+> **Stato: verificato su *Anna* (Mac/MPS) — il caveat CUDA è falso, gira. Fattibile, non
+> ancora adottato.** Il modello è stato scaricato, patchato e fatto girare davvero.
+>
+> - **MPS funziona.** Il "richiede CUDA" del README è superficiale: **3 righe** `.to("cuda")`
+>   hardcoded in `omnishotcut/engine.py`, nessun kernel custom (niente deformable attention).
+>   L'architettura è DETR standard — **ResNet18 + 6 layer encoder/decoder, 41 M param**, input
+>   **128×96**, finestra 100 frame, 24 query. Sostituite quelle 3 righe con un device
+>   parametrico, gira su MPS senza fallback CPU. Checkpoint 164 MB, **MIT anche i pesi**.
+> - **Costo (Anna, 5 min di film reale):** decode **930 fps**, inference **522 fps** su MPS
+>   → film intero ≈ **16 min** (5,7 decode + 10,2 inference) contro i ~4 min del path attuale.
+>   Peak RSS 1,52 GB. Su CPU l'inference è ~3× più lenta.
+> - **Accuratezza sugli stacchi netti: pari, non superiore.** Su 5 boundary di *Anna* confrontati
+>   col manifest: **3 esatti al frame** (delta 0), 1 a **2 frame**. Nessuna sovra-segmentazione.
+> - **Dove si vede la differenza:** nell'unico punto ambiguo del campione (frame 2270-2294 del
+>   segmento 1200-1500 s: un movimento rapido di camera, non un taglio) OmniShotCut restituisce un
+>   **range di transizione etichettato** (`Wipes` / `Transition_Source`), mentre il manifest piazza
+>   un punto secco 69 frame più avanti con confidenza 0,5. È esattamente il transition IoU: i tipi
+>   disponibili sono Dissolve/Wipes/Push/Slide/Zoom/Fade/Doorway (intra) e New_Start/Hard_Cut/
+>   Transition_Source/Transition/Sudden_Jump (inter).
+> - **Numeri del paper (corretti):** su *OmniShotCutBench* — Range F1 **0,883** contro 0,814 di
+>   TransNetV2 e AutoShot (**+7 punti**), transition IoU **0,632** contro **0,192** di TransNetV2
+>   (**3,3×**). Il guadagno vero è tutto sulle transizioni graduali; sui cut netti il margine è
+>   modesto. *Caveat:* il benchmark **non è rilasciato** ed è costruito con la loro pipeline di
+>   transizioni sintetiche — i numeri non sono riproducibili in locale.
+> - **Due ostacoli di integrazione, entrambi risolvibili:** (a) `inference(path)` decodifica
+>   l'**intero** video in RAM — **11,8 GB** per Anna a 128×96: va chunkato passando array numpy
+>   (l'API li accetta) gestendo l'offset a mano, ~40 righe; (b) serve **torchvision** (14 MB, oggi
+>   assente) e un fork/vendor per il `.to("cuda")`, su un repo di ricerca senza training code.
+>
+> **Verdetto: rimandare, non scartare.** Su *Anna* non ripagherebbe — stacchi netti, dove il
+> vantaggio è di 7 punti F1 al prezzo di 4× il tempo di detection e una dipendenza da un repo di
+> ricerca. Diventa interessante su materiale **con dissolvenze e fade**, dove il transition IoU
+> 3,3× e le etichette di transizione entrano nel manifest come metadati nuovi. Da riprendere
+> insieme al collaudo su cinema a montaggio serrato già previsto per la Fase 1.
+
 ### 4.2 · VLM — Qwen3-VL
 
 Qwen2.5-VL-3B-4bit è due generazioni indietro (ed è la causa delle descrizioni a colori della
@@ -286,6 +378,66 @@ Qwen2.5-VL-3B-4bit è due generazioni indietro (ed è la causa delle descrizioni
 percezione spaziale e comprensione delle dinamiche video migliorate (il caso d'uso esatto) —
 è supportato nativamente da mlx-vlm. **Passare a 4B in 8-bit o 8B in 4-bit:** a 3B in 4-bit si
 paga la quantizzazione due volte. Si combina con il server + APC della 3.3.
+
+> **Stato: A/B misurato su *Anna* → adottato `Qwen3-VL-4B-Instruct-8bit` come default.**
+> Confermato prima che mlx-vlm 0.6.5 supporta `qwen3_vl` (il pin `<0.7` non blocca). A/B sugli
+> shot che il modello attuale aveva allucinato a colori (dal `manifest.json` reale), **senza
+> l'ancora b/n** di 0.2, per isolare il comportamento *nativo*:
+>
+> - **Colori risolti 4/5.** Shot 14 ("capelli rossi") → "immagine nera con logo Rai"; shot 61
+>   ("nastro rosso") → "due uomini… **in bianco e nero**"; shot 53/87 ("capelli biondi") → puliti.
+>   Il candidato **dichiara spontaneamente "in bianco e nero"** in 5/7 descrizioni senza ancora —
+>   esattamente la radice che 0.2 prevedeva. Residuo: shot 0 (cartello di apertura) migliora la
+>   content-accuracy (legge il testo vero) ma miscolora il grafico → **l'ancora 0.2 resta** come
+>   rete per questi casi (cintura + bretelle).
+> - **Qualità generale migliore** (meno fabbricazioni tipo "donna con lunghi baffi").
+> - **Costo:** s/shot **2,11 → 2,94 (+39%)**, RAM di picco **3,48 → 5,38 GB (+55%)**. Accettabile
+>   (il VLM è uno step isolato, non gira in parallelo alle reti).
+>
+> Cablato in `core/config.py`, `cli.py`, `captioning/caption.py` (+ README/OVERVIEW); percorso di
+> produzione `MlxVlmCaptioner` verificato end-to-end su Anna, 63/63 test verdi. **3.3 (server+APC)
+> resta scartato** — non si combina con nulla.
+>
+> **A/B fra taglie (4B-8bit · 8B-4bit · 8B-8bit) su *Anna* → adottato `8B-4bit` come default.**
+> **36 shot stratificati** su tutto il film (shot 0→358; sei celle da sei: corto/medio/lungo ×
+> con dialogo/muto, seed fisso), frame estratti **una volta** con `sample_frames` di produzione e
+> riusati identici dai tre modelli, greedy (`temperature=0`) per attribuire le differenze al
+> modello e non al sampling, un processo per modello. Un primo giro su 8 shot aveva dato
+> indicazioni che il campione ampio ha in parte **smentito** — vedi sotto.
+>
+> | | s/shot | peak RAM | 373 shot | colori su b/n | deriva dial. | meta-rif. | troncate |
+> |---|---|---|---|---|---|---|---|
+> | 4B-8bit | **4,42 s** | **6,21 GB** | 27,5 min | 0/35 | 6,2% | **7/36** | **3/36** |
+> | **8B-4bit** | 5,50 s (+24%) | 6,75 GB (+9%) | 34,2 min | 0/35 | **1,4%** | **0/36** | **0/36** |
+> | 8B-8bit | 8,83 s (+100%) | 10,85 GB (+75%) | 54,9 min | 0/35 | 2,9% | 2/36 | 0/36 |
+>
+> **Il problema dei colori è chiuso per tutta la famiglia:** *zero* menzioni di colore su 35 shot
+> b/n, in tutte e tre le taglie. Non serviva un modello più grande per risolvere la 0.2 — bastava
+> uscire da Qwen2.5.
+>
+> **Quello che separa 4B e 8B è la fabbricazione, e si vede sui fotogrammi.** Shot 3 è un
+> **cartello di testo** sul restauro digitale: il 4B descrive *"un uomo in piedi, vestito con un
+> abito formale, la testa leggermente inclinata, luce frontale che crea ombre nette sul volto"* —
+> sessanta parole inventate su un'inquadratura che non contiene persone; entrambi gli 8B leggono
+> il testo e lo riassumono. Shot 191: il 4B vede *"una donna che parla al telefono"* (nessun
+> telefono nell'inquadratura), gli 8B leggono il riflesso nell'acqua increspata e la mano vicino
+> alla bocca. Le metriche dicono la stessa cosa in aggregato: il 4B apre con "le tre immagini
+> mostrano…" nel **19% dei casi** (l'8B-4bit mai) ed è l'unico che si fa **troncare** da
+> `max_tokens=128`, perché è anche il più verboso (56 parole contro 47 e 43).
+>
+> **Due conclusioni del giro piccolo, corrette dal campione ampio:** il nome "Emma" **non era
+> un'allucinazione** — è nel dialogo ASR ("Tu che dici, Emma?") e tutti e tre lo usano
+> correttamente. E la **deriva narrativa non cresce con la taglia**: sui 36 shot il massimo è del
+> **4B (6,2%)** e il minimo dell'8B-4bit (1,4%). L'inferenza opposta, tratta da 8 shot, era
+> sbagliata.
+>
+> **Verdetto: `8B-4bit`.** Domina il 4B su ogni metrica di qualità al prezzo di **+24% di tempo e
+> +9% di RAM** — sul film sono 7 minuti. L'`8B-8bit` costa **il doppio** del 4B in tempo e +75% di
+> RAM per un margine sottile sull'8B-4bit (qualche dettaglio in più: l'ombrello dello shot 191, la
+> sigaretta dello shot 47): tenerlo come opzione via `--vlm-model` se il catalogo punta sulla
+> descrizione fine, non come default. Con lo scene grouping (Fase 1) tutte le proiezioni si
+> dimezzano. Cablato in `core/config.py`, `cli.py`, `captioning/caption.py` + README/OVERVIEW;
+> 63/63 test verdi.
 
 ### 4.3 · ASR — restare o Parakeet
 
@@ -295,6 +447,63 @@ audio cinematografico degradato come quello di *Anna*. Il vero problema dell'ASR
 ma le allucinazioni (Fase 0.1). Su memoria unificata conviene comunque **non** far girare ASR e
 reti neurali in parallelo: lo split attuale (ASR su CPU, reti su MPS) potrebbe già essere la
 scelta giusta. Misurare, non intuire.
+
+> **Stato: WhisperX e speech-swift provati su *Anna* (lug 2026).** Segmento 1530-1710 s (shot
+> 47+48, 180 s, intervista a più voci), confronto diretto col dialogo del manifest attuale.
+>
+> - **[WhisperX](https://github.com/m-bain/whisperX) 3.8.6 — meglio del nostro ASR su tre fronti.**
+>   **487 parole contro 445 (+9,4%)**; **zero** 4-grammi ripetuti ≥3× contro i tre del manifest
+>   attuale (`"non ti puoi parlare"` ×3 — residuo dello stesso loop della 0.1); **487/487 parole
+>   con timestamp e score**. Il motivo è architetturale: WhisperX segmenta con VAD *prima* di
+>   trascrivere (Cut & Merge + batched inference), quindi il runaway di
+>   `condition_on_previous_text` non può innescarsi. **Costo:** 49,9 s per 180 s = **3,6× realtime**
+>   su CPU contro i 5,2× del nostro setup → film intero ≈ **59 min contro 41**.
+>   *Va isolato:* porta `torch 2.8` e `transformers 4.57`, incompatibili col venv del progetto
+>   (2.13 / 5.14.1). La sua diarizzazione usa pyannote **gated** (serve token HF) — ma
+>   l'allineamento gira benissimo da solo.
+> - **[speech-swift](https://github.com/soniqo/speech-swift) — nessun conflitto possibile.** È
+>   Swift, si installa con `brew install speech`: binario separato, non tocca il venv.
+>   **`speech diarize --engine sortformer`: 0,90 s per 180 s di audio (~200× realtime) sul Neural
+>   Engine**, 3 parlanti con sovrapposizioni, **senza token HF**. Ha anche `align` (forced
+>   alignment MLX/CoreML), `transcribe` (Qwen3-ASR/Parakeet/Whisper) e **`denoise`/`restore`** —
+>   quest'ultimo interessante proprio per *Anna*, il cui restauro ha conservato fruscio e ronzio.
+>
+> **Verdetto dopo due prove decisive: WhisperX non serve — il suo vantaggio è il *chunking*, non
+> il modello.**
+>
+> **Prova 1 — chunking VAD col nostro faster-whisper** (stesso modello, stesso venv, nessuna
+> dipendenza nuova): VAD → finestre indipendenti ≤30 s → `transcribe` per finestra.
+>
+> | | parole | tempo (180 s) | loop |
+> |---|---|---|---|
+> | baseline (file intero, come `asr.py` oggi) | 455 | 31,1 s | 0 |
+> | **chunked (finestre VAD)** | **488** | 36,7 s | 0 |
+> | WhisperX | 487 | 49,9 s | 0 |
+>
+> Il chunking **recupera per intero** il divario (488 contro 487) a **+18%** di tempo invece del
+> +45%, ed è **26% più veloce di WhisperX**. Il guadagno viene dal decodificare finestre brevi e
+> indipendenti, non dal codice di WhisperX: ogni finestra riparte da zero e Whisper non ha spazio
+> per avvitarsi. *Nota:* su 180 s isolati nemmeno la baseline produce loop — il
+> `"non ti puoi parlare"` ×3 del manifest nasce sulla lunga distanza, quindi la conferma finale
+> richiede un run sull'intero film.
+>
+> **Prova 2 — `speech align`** (forced alignment nativo MLX): **487/487 parole in 3,38 s**, scarto
+> **mediano 0,24 s** rispetto a WhisperX preso come secondo parere (non è ground truth). Sul caso
+> reale del taglio a 87,2 s i due allineatori concordano su quale parola sta da che parte.
+> **Riserve:** il **21% delle parole ha durata nulla** (start = end) e 5 parole finiscono *oltre*
+> la durata dell'audio (fino a 204 s su 180). Basta per assegnare le parole agli shot — che è il
+> nostro uso — non per una durata affidabile della singola parola.
+>
+> **Conclusione operativa:** ASR = faster-whisper **+ chunking VAD** (modifica interna, ~20 righe);
+> word timestamps e diarizzazione = `speech` via subprocess. **WhisperX si chiude qui**: un venv
+> parallelo da 1,3 GB con `torch`/`transformers` incompatibili, per un vantaggio che sappiamo
+> riprodurre in casa.
+>
+> **Effetto collaterale utile per la Fase 1:** incrociando diarizzazione e confini shot, lo
+> Speaker 2 parla da 83,8 s a 111,8 s **attraversando il taglio a 87,2 s**. Un parlante che
+> continua attraverso uno stacco è un indizio di *stessa scena* (campo/controcampo). È un segnale
+> diverso dai "sottotitoli" dell'ablation Scene-VLM — non richiede di capire *cosa* si dice — e
+> arriva gratis dalla diarizzazione. Da misurare.
 
 ### 4.4 · Volti — clustering per traccia + licenza
 
@@ -337,20 +546,21 @@ anche quando sbagli di 15 frame.
 | ~~0.3~~ | ✅ Personaggi → manifest — *fatto (`117fd27`), da validare* | alto | — | basso | 2 |
 | ~~0.2~~ | ✅ VLM ancoraggio b/n — *fatto (auto-rilevato per-shot)* | medio | basso | nullo | — |
 | ~~0.4~~ | ✅ Confidence continua — *fatto (prob per-frame TransNet)* | medio | basso | nullo | — |
-| **3.1** | Decodifica una volta | alto (velocità) | medio | basso | 4 |
+| ~~3.1~~ | ⛔ Decodifica una volta — *verificato: premessa falsa, hwaccel 0.24×, non adottato* | — | — | — | — |
 | **3.2** | Media fragments / no cut | medio | medio | basso | — |
-| **3.3** | VLM server + APC | alto (velocità) | basso | basso | — |
+| ~~3.3~~ | ⛔ VLM server + APC — *verificato: prefisso cacheable 2%, non ripaga* | — | — | — | — |
 | **1** | Scene grouping (TranS4mer) | **massimo** | medio | medio | — |
 | **2** | Diarizzazione + linking | alto | medio | basso | — |
 | **3.4** | Ricerca sul catalogo | medio | medio | basso | — |
-| **4.1** | OmniShotCut | medio | medio | **MPS da verificare** | — |
-| **4.2** | Qwen3-VL | medio | basso | basso | — |
+| **4.1** | OmniShotCut — *MPS verificato: gira; rimandato a un film con dissolvenze* | medio | medio | basso | — |
+| ~~4.2~~ | ✅ Qwen3-VL — *A/B su 36 shot: adottato `8B-4bit` come default* | medio | basso | basso | — |
 | **4.4** | Clustering per traccia + licenza | medio | medio | basso | — |
 
-**Percorso minimo consigliato:** ~~0.1~~ → ~~0.3~~ → **3.1 + 3.3** → **1** → 2. Fase 0 è ora
-**chiusa** (0.1/0.3 da validare con un ri-collaudo su *Anna*; 0.2/0.4 fatti). Il prossimo passo
-azionabile è l'infrastruttura di velocità (3.1 decodifica unica + 3.3 VLM server/APC), poi lo
-scene grouping. Il resto è opportunistico.
+**Percorso minimo consigliato:** ~~0.1~~ → ~~0.3~~ → ~~3.1 + 3.3~~ → **1** → 2. Fase 0 è ora
+**chiusa** (0.1/0.3 da validare con un ri-collaudo su *Anna*; 0.2/0.4 fatti). **3.1 e 3.3 sono
+stati verificati e scartati** (le misure smentiscono le premesse su Mac/MPS — vedi i rispettivi
+blocchi di stato): il prossimo passo azionabile è direttamente lo **scene grouping (Fase 1)**,
+l'unico vero moltiplicatore sul costo VLM. Il resto è opportunistico.
 
 ---
 
