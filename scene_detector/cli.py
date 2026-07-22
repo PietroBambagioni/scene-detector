@@ -138,6 +138,56 @@ def _fetch_big_models(asr_model="large-v3-turbo",
             typer.secho(f"   saltato: manca l'extra, `pip install -e {extra}`", fg=typer.colors.YELLOW)
 
 
+bench_app = typer.Typer(add_completion=False, help="Valuta il detector su un ground truth pubblico.")
+
+
+@bench_app.command()
+def benchmark(
+    data_dir: Path = typer.Option(Path("prove/shot-dataset"), "--data-dir",
+                                  help="Dove tenere ground truth e video scaricati"),
+    limit: int = typer.Option(50, "--limit", help="Quanti video di test usare (0 = tutti i 200)"),
+    ensemble: bool = typer.Option(False, "--ensemble", help="TransNet + AutoShot invece del solo TransNet"),
+    tol: int = typer.Option(5, "--tol", help="Tolleranza in frame per il match sui boundary"),
+    min_iou: float = typer.Option(0.5, "--min-iou", help="IoU minimo perché una transizione sia un TP"),
+):
+    """Scarica il test set di SHOT (200 video annotati) e ci misura il detector.
+
+    Niente annotazione a mano: il ground truth è pubblico e arriva dal mirror HF da cui
+    prendiamo già i pesi. Dei ~20 GB di archivi scarica **solo** i video del test set, letti
+    dagli zip remoti via range HTTP.
+    """
+    from .core.weights import missing_tools
+    from .evaluation import benchmark as bench
+    from .evaluation.shot_dataset import fetch_ground_truth, fetch_videos
+
+    if missing_tools():
+        typer.secho("⚠  serve ffmpeg/ffprobe nel PATH", fg=typer.colors.YELLOW)
+        raise typer.Exit(1)
+
+    gt = fetch_ground_truth(data_dir)
+    typer.echo(f"ground truth: {len(gt)} video, {sum(len(v) for v in gt.values())} shot")
+
+    videos = fetch_videos(gt, data_dir / "videos", limit=limit or None,
+                          on_progress=lambda v, n, tot: typer.echo(f"\r  scaricati {n}/{tot or len(gt)}",
+                                                                   nl=False))
+    typer.echo(f"\rvideo pronti: {len(videos)}" + " " * 20)
+
+    cfg = Config(video=Path("."),
+                 transnet_weights=Path("weights/transnetv2.pth"),
+                 autoshot_weights=Path("weights/autoshot.pth"))
+    with typer.progressbar(length=len(videos), label="[bench]") as bar:
+        res = bench.run(videos, gt, cfg, ensemble=ensemble, tol=tol, min_iou=min_iou,
+                        on_video=lambda *a: bar.update(1))
+
+    b, t = res["boundary"], res["transition"]
+    typer.echo(f"\n{res['n_videos']} video · detector: {'ensemble' if ensemble else 'transnet'}")
+    typer.echo(f"boundary   (tol {res['tol']})  P {b['precision']:.3f}  R {b['recall']:.3f}  "
+               f"F1 {b['f1']:.3f}   tp {b['tp']} fp {b['fp']} fn {b['fn']}")
+    typer.echo(f"transizioni (IoU>={res['min_iou']})  P {t['precision']:.3f}  R {t['recall']:.3f}  "
+               f"F1 {t['f1']:.3f}   mean IoU {t['mean_iou']:.3f}")
+    typer.echo(f"  ({res['n_gt_graduali']} transizioni graduali nel ground truth di questi video)")
+
+
 def main():
     app()
 
@@ -148,6 +198,10 @@ def main_index():
 
 def main_setup():
     setup_app()
+
+
+def main_benchmark():
+    bench_app()
 
 
 if __name__ == "__main__":

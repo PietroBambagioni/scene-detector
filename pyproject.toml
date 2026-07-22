@@ -26,6 +26,7 @@ all = ["scene-detector[neural,asr,vlm,faces,obs]"]       # tutto ciò che serve 
 scene-detector = "scene_detector.cli:main"
 scene-detector-index = "scene_detector.cli:main_index"
 scene-detector-setup = "scene_detector.cli:main_setup"
+scene-detector-benchmark = "scene_detector.cli:main_benchmark"
 
 [tool.setuptools.packages.find]
 include = ["scene_detector*"]
