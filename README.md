@@ -205,12 +205,9 @@ scene_detector/
     telemetry.py            # osservabilità run (logs/run-<ts>/)
   io/video.py               # probe ffprobe -> VideoInfo
   detection/
-    base.py                 # Protocol SceneDetector
-    factory.py              # build_detector
-    neural.py               # read_small_frames + probs_to_ranges
+    __init__.py             # build_detector
+    neural.py               # decode + probs_to_ranges + TransNetV2Detector / AutoShotDetector
     pyscenedetect.py
-    transnetv2.py
-    autoshot.py
     confidence.py           # riconciliazione ensemble (agreement / flag)
     models/
       transnetv2.py         # architettura (vendor soCzech/TransNetV2, MIT)

@@ -20,112 +20,95 @@ def run(cfg: Config) -> None:
 
     Tutti i parametri del run vivono in `cfg` (`cli` lo popola dai flag Typer).
     """
-    video = cfg.video
-    output_dir = cfg.output_dir
-    detector = cfg.detector
-    ensemble = cfg.ensemble
-    split_mode = cfg.split_mode
-    threshold = cfg.threshold
-    min_scene_len = cfg.min_scene_len
-    low_mem = cfg.low_mem
-    transnet_weights = cfg.transnet_weights
-    autoshot_weights = cfg.autoshot_weights
-    jobs = cfg.jobs
-    asr, asr_model, asr_lang, asr_threads = cfg.asr, cfg.asr_model, cfg.asr_lang, cfg.asr_threads
-    vlm, vlm_model, vlm_frames = cfg.vlm, cfg.vlm_model, cfg.vlm_frames
-    faces, faces_gallery, faces_frames = cfg.faces, cfg.faces_gallery, cfg.faces_frames
-    faces_threshold, faces_min_score = cfg.faces_threshold, cfg.faces_min_score
-
-    info = probe(video)
-    out_dir = output_dir / video.stem
+    info = probe(cfg.video)
+    out_dir = cfg.output_dir / cfg.video.stem
 
     tel = tel_mod.Telemetry(out_dir)
     log.info("[probe] %d frame @ %.3f fps, %.1fs", info.n_frames, info.fps, info.duration)
 
-    split_workers = resolve_workers(jobs)
-    asr_workers = resolve_workers(asr_threads) if asr else None
+    split_workers = resolve_workers(cfg.jobs)
+    asr_workers = resolve_workers(cfg.asr_threads) if cfg.asr else None
     env = tel_mod.collect_env()
     tel.write_config({
         "command": tel_mod.command_snapshot(),
         "flags": {
-            "detector": detector.value, "ensemble": ensemble,
-            "split_mode": split_mode.value, "threshold": threshold,
-            "min_scene_len": min_scene_len, "low_mem": low_mem,
-            "asr": asr, "asr_model": asr_model, "asr_lang": asr_lang, "asr_threads": asr_threads,
-            "vlm": vlm, "vlm_model": vlm_model, "vlm_frames": vlm_frames,
-            "faces": faces, "faces_gallery": str(faces_gallery) if faces_gallery else None,
-            "faces_frames": faces_frames, "faces_threshold": faces_threshold,
-            "faces_min_score": faces_min_score,
-            "jobs": jobs, "output_dir": str(output_dir),
-            "transnet_weights": str(transnet_weights) if transnet_weights else None,
-            "autoshot_weights": str(autoshot_weights) if autoshot_weights else None,
+            "detector": cfg.detector.value, "ensemble": cfg.ensemble,
+            "split_mode": cfg.split_mode.value, "threshold": cfg.threshold,
+            "min_scene_len": cfg.min_scene_len,
+            "asr": cfg.asr, "asr_model": cfg.asr_model, "asr_lang": cfg.asr_lang,
+            "asr_threads": cfg.asr_threads,
+            "vlm": cfg.vlm, "vlm_model": cfg.vlm_model, "vlm_frames": cfg.vlm_frames,
+            "faces": cfg.faces,
+            "faces_gallery": str(cfg.faces_gallery) if cfg.faces_gallery else None,
+            "faces_frames": cfg.faces_frames, "faces_threshold": cfg.faces_threshold,
+            "faces_min_score": cfg.faces_min_score,
+            "jobs": cfg.jobs, "output_dir": str(cfg.output_dir),
+            "transnet_weights": str(cfg.transnet_weights) if cfg.transnet_weights else None,
+            "autoshot_weights": str(cfg.autoshot_weights) if cfg.autoshot_weights else None,
         },
         "mode": {
-            "detector": "ensemble" if ensemble else detector.value,
-            "split_mode": split_mode.value,
+            "detector": "ensemble" if cfg.ensemble else cfg.detector.value,
+            "split_mode": cfg.split_mode.value,
             "device": "mps" if env.get("mps_available") else "cpu",
             "split_workers": split_workers, "asr_workers": asr_workers,
         },
         "video": {
-            "name": video.name, "fps": info.fps, "n_frames": info.n_frames,
+            "name": cfg.video.name, "fps": info.fps, "n_frames": info.n_frames,
             "duration": info.duration, "width": info.width, "height": info.height,
         },
         "env": env,
     })
 
-    n_steps = 3 + (1 if faces else 0) + (1 if asr else 0) + (1 if vlm else 0)
+    n_steps = 3 + (1 if cfg.faces else 0) + (1 if cfg.asr else 0) + (1 if cfg.vlm else 0)
 
     log.info("[1/%d] Rilevamento shot…", n_steps)
     with tel.step("detection") as o:
-        if ensemble:
+        if cfg.ensemble:
             t_det = build_detector(DetectorKind.transnet, cfg)
             a_det = build_detector(DetectorKind.autoshot, cfg)
             assert t_det.input_size == a_det.input_size, "ensemble: input dei due detector diverso"
-            if low_mem:
-                a = t_det.detect(info)  # streaming: decodifica indipendente (RAM bounded)
-                b = a_det.detect(info)
-            else:
-                h, w = t_det.input_size  # (H, W) — decodifica condivisa una sola volta
-                frames = read_small_frames(info.path, w, h, total=info.n_frames, desc="[decode] frames")
-                a = t_det.detect_from_frames(frames, info)
-                b = a_det.detect_from_frames(frames, info)
-            scenes, flags = conf_mod.reconcile(a, b, info.n_frames, info.fps, t_det.probs, cfg.agreement_tol)
+            h, w = t_det.input_size  # (H, W) — decodifica condivisa una sola volta
+            frames = read_small_frames(info.path, w, h, total=info.n_frames, desc="[decode] frames")
+            a = t_det.detect_from_frames(frames, info)
+            b = a_det.detect_from_frames(frames, info)
+            scenes, flags = conf_mod.reconcile(a, b, info.n_frames, info.fps, t_det.probs,
+                                               cfg.agreement_tol)
             if flags:
                 log.info("  %d boundary in disaccordo (rivedere): %s", len(flags), flags)
             o["n_flag"] = len(flags)
             o["flags"] = list(flags)
         else:
-            scenes = build_detector(detector, cfg).detect(info)
+            scenes = build_detector(cfg.detector, cfg).detect(info)
         scenes = enforce_min_len(scenes, cfg.min_scene_len)
         o["n_shots"] = len(scenes)
-        o["threshold"] = threshold
+        o["threshold"] = cfg.threshold
     log.info("  %d shot", len(scenes))
 
-    cutting = split_mode is not SplitMode.none
+    cutting = cfg.split_mode is not SplitMode.none
     with tel.step("split") as o:
         if cutting:
             log.info("[2/%d] Taglio %d clip…", n_steps, len(scenes))
-            split(info, scenes, out_dir, split_mode, jobs=jobs)
+            split(info, scenes, out_dir, cfg.split_mode, jobs=cfg.jobs)
             o["n_clips"] = len(scenes)
         else:
             log.info("[2/%d] Taglio saltato (--split-mode none): la UI usa i media fragments",
                      n_steps)
             o["n_clips"] = 0
-        o["split_mode"] = split_mode.value
+        o["split_mode"] = cfg.split_mode.value
         o["workers"] = split_workers
 
     from .catalog.manifest import build_manifest, write_manifest
-    label = "ensemble" if ensemble else detector.value
+    label = "ensemble" if cfg.ensemble else cfg.detector.value
     # senza clip la UI riproduce il film originale a intervalli: le serve come raggiungerlo
     # dalla cartella del catalogo (relativo: catalogo e film restano spostabili insieme)
-    video_src = None if cutting else os.path.relpath(Path(video).resolve(), out_dir.resolve())
+    video_src = None if cutting else os.path.relpath(Path(cfg.video).resolve(), out_dir.resolve())
     manifest = build_manifest(info, scenes, label,
                               clip_template=None if not cutting else "scene-{:03d}.mp4",
                               video_src=video_src)
     manifest_path = out_dir / "manifest.json"
     step = 2
 
-    if faces:
+    if cfg.faces:
         step += 1
         log.info("[%d/%d] Riconoscimento personaggi…", step, n_steps)
         with tel.step("faces") as o:
@@ -140,46 +123,48 @@ def run(cfg: Config) -> None:
             else:
                 write_manifest(manifest, manifest_path)  # persisti prima (crash-safe)
                 from .recognition import FaceRecognizer, load_gallery, recognize_characters
-                recognizer = FaceRecognizer(min_score=faces_min_score)
-                gallery = load_gallery(faces_gallery, recognizer) if faces_gallery else None
+                recognizer = FaceRecognizer(min_score=cfg.faces_min_score)
+                gallery = load_gallery(cfg.faces_gallery, recognizer) if cfg.faces_gallery else None
                 n_faces, n_chars = recognize_characters(
-                    manifest, video, recognizer, gallery=gallery, n_frames=faces_frames,
-                    threshold=faces_threshold, min_face_px=cfg.faces_min_px, film_dir=out_dir,
+                    manifest, cfg.video, recognizer, gallery=gallery, n_frames=cfg.faces_frames,
+                    threshold=cfg.faces_threshold, min_face_px=cfg.faces_min_px, film_dir=out_dir,
                 )
             o["n_faces"] = n_faces
             o["n_characters"] = n_chars
-            o["gallery"] = str(faces_gallery) if faces_gallery else None
+            o["gallery"] = str(cfg.faces_gallery) if cfg.faces_gallery else None
         log.info("  %d volti → %d personaggi", n_faces, n_chars)
 
-    if asr:
+    if cfg.asr:
         step += 1
-        log.info("[%d/%d] Trascrizione dialoghi (%s)…", step, n_steps, asr_model)
+        log.info("[%d/%d] Trascrizione dialoghi (%s)…", step, n_steps, cfg.asr_model)
         with tel.step("asr") as o:
             from .transcription.asr import transcribe
             from .transcription.align import assign_dialogue
-            segments, lang = transcribe(video, asr_model, language=asr_lang, cpu_threads=asr_threads)
+            segments, lang = transcribe(cfg.video, cfg.asr_model, language=cfg.asr_lang,
+                                        cpu_threads=cfg.asr_threads)
             assign_dialogue(manifest["shots"], segments)
             o["language"] = lang
             o["n_segments"] = len(segments)
             o["n_shots_with_dialogue"] = sum(1 for s in manifest["shots"] if s.get("dialogue"))
-            o["model"] = asr_model
+            o["model"] = cfg.asr_model
             o["threads"] = asr_workers
         log.info("  lingua=%s, %d segmenti", lang, len(segments))
 
-    if vlm:
+    if cfg.vlm:
         step += 1
-        log.info("[%d/%d] Descrizione visiva (%s)…", step, n_steps, vlm_model)
+        log.info("[%d/%d] Descrizione visiva (%s)…", step, n_steps, cfg.vlm_model)
         with tel.step("vlm") as o:
             write_manifest(manifest, manifest_path)  # persisti prima del VLM (resume)
             from .captioning.caption import MlxVlmCaptioner, caption_manifest
             before = sum(1 for s in manifest["shots"] if s.get("description"))
-            captioner = MlxVlmCaptioner(vlm_model)
-            caption_manifest(manifest, video, captioner, n_frames=vlm_frames, manifest_path=manifest_path)
+            captioner = MlxVlmCaptioner(cfg.vlm_model)
+            caption_manifest(manifest, cfg.video, captioner, n_frames=cfg.vlm_frames,
+                             manifest_path=manifest_path)
             after = sum(1 for s in manifest["shots"] if s.get("description"))
             o["described"] = after - before
             o["total_described"] = after
-            o["model"] = vlm_model
-            o["vlm_frames"] = vlm_frames
+            o["model"] = cfg.vlm_model
+            o["vlm_frames"] = cfg.vlm_frames
 
     log.info("[%d/%d] Manifest + UI", n_steps, n_steps)
     with tel.step("manifest") as o:
@@ -191,6 +176,6 @@ def run(cfg: Config) -> None:
     log.info("  → %s/  (manifest.json, index.html)", out_dir)
 
     from .catalog.gallery import write_gallery
-    gallery_path, n_films = write_gallery(output_dir)
+    gallery_path, n_films = write_gallery(cfg.output_dir)
     log.info("  → %s  (galleria: %d film)", gallery_path, n_films)
     tel.close()

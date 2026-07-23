@@ -19,9 +19,6 @@ def run(
     split_mode: SplitMode = typer.Option(SplitMode.copy, "--split-mode"),
     threshold: float = typer.Option(0.5, "--threshold"),
     min_scene_len: int = typer.Option(15, "--min-scene-len"),
-    low_mem: bool = typer.Option(False, "--low-mem",
-                                 help="Detection neurale in streaming: RAM da GB a MB "
-                                      "(in ensemble decodifica due volte, niente decode-once)"),
     transnet_weights: Path = typer.Option(None, "--transnet-weights"),
     autoshot_weights: Path = typer.Option(None, "--autoshot-weights"),
     asr: bool = typer.Option(False, "--asr", help="Trascrivi i dialoghi (faster-whisper)"),
@@ -59,7 +56,6 @@ def run(
     cfg = Config(
         video=video, output_dir=output_dir, detector=detector, ensemble=ensemble,
         split_mode=split_mode, threshold=threshold, min_scene_len=min_scene_len,
-        low_mem=low_mem,
         transnet_weights=transnet_weights, autoshot_weights=autoshot_weights,
         asr=asr, asr_model=asr_model, asr_lang=asr_lang, asr_threads=asr_threads,
         vlm=vlm, vlm_model=vlm_model, vlm_frames=vlm_frames,
@@ -190,21 +186,5 @@ def benchmark(
     typer.echo(f"  ({res['n_gt_graduali']} transizioni graduali nel ground truth di questi video)")
 
 
-def main():
-    app()
-
-
-def main_index():
-    index_app()
-
-
-def main_setup():
-    setup_app()
-
-
-def main_benchmark():
-    bench_app()
-
-
 if __name__ == "__main__":
-    main()
+    app()

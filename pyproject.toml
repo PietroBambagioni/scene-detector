@@ -11,6 +11,7 @@ dependencies = [
     "scenedetect>=0.7",   # opencv-python e' dep base in 0.7
     "numpy>=1.24",
     "typer>=0.12",
+    "tqdm>=4.66",         # progress bar di decode/inference/split/asr/vlm/faces
 ]
 
 [project.optional-dependencies]
@@ -23,10 +24,11 @@ dev = ["pytest>=8.0"]
 all = ["scene-detector[neural,asr,vlm,faces,obs]"]       # tutto ciò che serve a `--all`
 
 [project.scripts]
-scene-detector = "scene_detector.cli:main"
-scene-detector-index = "scene_detector.cli:main_index"
-scene-detector-setup = "scene_detector.cli:main_setup"
-scene-detector-benchmark = "scene_detector.cli:main_benchmark"
+# gli oggetti Typer sono callable: nessun wrapper `main_*` in mezzo
+scene-detector = "scene_detector.cli:app"
+scene-detector-index = "scene_detector.cli:index_app"
+scene-detector-setup = "scene_detector.cli:setup_app"
+scene-detector-benchmark = "scene_detector.cli:bench_app"
 
 [tool.setuptools.packages.find]
 include = ["scene_detector*"]
