@@ -202,12 +202,51 @@ cavallo), buco = transizione graduale. Test in `tests/test_eval.py`, incluso il 
 giustifica tutto: dissolvenza di 24 frame, taglio secco nel mezzo → **F1 1,00 · f1_curve tutta a
 zero · transition IoU 0,083**.
 
-**Restano due cose, entrambe di dati e non di codice:**
-- **il ground truth non esiste.** Le metriche ci sono, non c'è niente da misurare. Bastano ~20
-  boundary annotati a mano (§3.4) — e su *Rogue One* vanno annotati anche i **range** delle
-  transizioni graduali, o la metrica nuova resta inerte.
-- **i volti hanno bisogno di una metrica loro.** Oggi non sapremmo dire se 68 → 15 cluster è un
-  miglioramento: serve VPCD (§2.5), non l'IoU sulle transizioni.
+**Il ground truth non serve annotarlo:** `scene-detector-benchmark` scarica il test set di SHOT
+(200 video, 2716 shot, 438 transizioni graduali col range) dal mirror HF dei pesi. Vedi §5 bis.
+
+**Resta una cosa di dati:** i volti hanno bisogno di una metrica loro. Il confronto 68 → 47 di
+oggi è un conteggio di cluster, non una misura di purezza: serve VPCD (§2.5).
+
+### 5 bis · Cosa ha detto il primo benchmark (50 video di SHOT)
+
+**Sweep della soglia** — decodifica una volta per video, poi `probs_to_ranges` è puro, quindi
+sette soglie costano quanto una:
+
+| soglia | P | R | F1 |
+|---|---|---|---|
+| 0,20 | 0,830 | 0,849 | 0,839 |
+| **0,30** | 0,868 | 0,820 | **0,843** |
+| **0,50** (default) | 0,885 | 0,755 | 0,815 |
+
+Il default è leggermente conservativo: **2,8 punti** sotto l'ottimo, più preciso e meno sensibile.
+Non abbastanza per cambiarlo, e comunque questo è short-form cinese — sul cinema è un'altra
+distribuzione, da misurare su *Rogue One*.
+
+> **Correzione di una misura precedente.** Un primo giro su **3 video** dava 0,554 contro 0,792:
+> ventiquattro punti. Su 50 il divario è 2,8. Il primo numero era rumore di campionamento — ed è
+> la ragione per cui vale la pena scaricare 50 video invece di tre.
+
+**Il risultato vero è un altro: separando i tipi di transizione, sulle graduali siamo a zero.**
+
+| soglia | hard cut F1 · IoU | graduali F1 · IoU |
+|---|---|---|
+| 0,20 | 0,780 · 0,972 | **0,008 · 0,220** |
+| 0,30 | 0,798 · 0,972 | **0,004 · 0,210** |
+| 0,50 | 0,785 · 0,974 | **0,005 · 0,236** |
+
+Aggregate insieme le graduali (55 su ~2500) si annegano nei cut e il meanIoU sembra 0,94:
+**la metrica va sempre letta per tipo**, o misura i casi facili.
+
+**Non è taratura, è architettura.** `probs_to_ranges` produce shot contigui: il nostro output non
+sa *esprimere* una transizione che dura. Su una dissolvenza da 24 frame piazziamo un punto,
+l'IoU fa 2/24 = 0,08, sotto la soglia di 0,5 non è un TP. Non le manchiamo — le **schiacciamo**.
+Ecco perché nessuna soglia cambia il risultato.
+
+**Questo sposta la 4.1.** OmniShotCut dichiara transition IoU **0,192** per TransNetV2; noi ne
+misuriamo **0,21** su un dataset diverso. Due misure indipendenti che convergono: il loro
+vantaggio dichiarato (0,632) è su un difetto nostro reale e ora quantificato. Resta condizionato
+al materiale — su un film a soli hard cut non cambia niente.
 
 ---
 
