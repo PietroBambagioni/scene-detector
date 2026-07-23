@@ -16,6 +16,7 @@ class AutoShotDetector:
         self.weights = Path(weights) if weights else None
         self.threshold = threshold
         self.low_mem = low_mem
+        self.probs = None  # prob per-frame dell'ultima detect, come TransNetV2
 
     def detect(self, video):
         h, w = self.input_size
@@ -23,6 +24,7 @@ class AutoShotDetector:
             streamer = stream_small_windows(video.path, w, h, total=video.n_frames,
                                             desc=f"[{self.name}] stream")
             probs = self._load_model().predict_stream(streamer)
+            self.probs = probs
             ranges = probs_to_ranges(probs, self.threshold)
             return scenes_from_ranges(ranges, video.fps, self.name)
         frames = read_small_frames(video.path, w, h, total=video.n_frames,
@@ -35,6 +37,7 @@ class AutoShotDetector:
         Separata da `detect` per condividere una singola decodifica in ensemble."""
         model = self._load_model()  # espone .predict(uint8[N,27,48,3]) -> float[N]
         probs = model.predict(frames)
+        self.probs = probs
         ranges = probs_to_ranges(probs, self.threshold)
         return scenes_from_ranges(ranges, video.fps, self.name)
 
@@ -46,8 +49,8 @@ class AutoShotDetector:
             raise RuntimeError("AutoShot richiede torch: pip install '.[neural]'") from e
         if self.weights is None or not self.weights.exists():
             raise RuntimeError(
-                "Pesi AutoShot mancanti (ckpt_0_200_0.pth da Baidu). "
-                "Vedi README > 'AutoShot', poi passa --autoshot-weights PATH."
+                "Pesi AutoShot mancanti: lancia `scene-detector-setup` "
+                "(oppure passa --autoshot-weights PATH)."
             )
         from .models.wrapper import AutoShotPredictor
         return AutoShotPredictor(self.weights)
