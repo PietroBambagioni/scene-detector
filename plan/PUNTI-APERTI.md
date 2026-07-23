@@ -50,11 +50,27 @@ Quello che c'è ora in `recognition/identify.py`:
 Blur e yaw non sono stati fatti: richiedono di misurare sull'immagine, e senza un run che dica
 se serve sarebbe codice speculativo.
 
-**Non validato.** La baseline congelata (`prove/faces-anna/manifest.faces.json`) contiene cast e
-personaggi, **non gli embedding**: non si può ri-clusterizzare a tavolino, serve un nuovo run
-volti su *Anna* (~7 min) per il confronto 68 cluster → ? Il secondo stadio usa ancora il greedy
-a una passata che ha prodotto i 68: la media e il seeding per numerosità dovrebbero aiutare
-parecchio, ma è un'aspettativa, non una misura.
+**Validato su *Anna*** (run completo, stessi 373 shot in ensemble). A parità di `min_faces=3` —
+la soglia del run originale:
+
+| | cluster | shot coperti |
+|---|---|---|
+| baseline (per volto) | 68 | 243 |
+| **due stadi** | **47** (−31%) | 238 (−2%) |
+
+Regge a ogni soglia: −31% / −19% / −22% di cluster a `min_faces` 3 / 5 / 10, contro −1÷3% di
+copertura. È l'esito voluto: **meno identità, stesse persone**. Si vede anche nei cluster grandi —
+la protagonista passa da 73 shot/209 volti a **76/262**, il secondo da 44/129 a **51/150**: sono i
+frammenti riassorbiti nell'identità principale.
+
+> **Trappola in cui sono cascato leggendo i numeri la prima volta.** Il run nuovo girava col
+> default `min_faces=1` e mostrava **230 cluster**: sembrava un peggioramento del 238%. Ma 168 di
+> quei 230 hanno **un solo volto** — la baseline li scartava perché usava `min_faces=3`. Confrontare
+> conteggi di cluster fra run con `min_faces` diverso non misura niente. È lo stesso genere di
+> errore della 0.4: un numero plausibile letto senza la sua condizione.
+
+**Resta aperto:** `min_faces` è ancora un parametro ereditato, non scelto (§3.2), e ora pesa di
+più — il due stadi produce molti gruppi da un volto solo, quindi la soglia che li taglia conta.
 
 ### 2 · Diarizzazione — cosa è cambiato
 
