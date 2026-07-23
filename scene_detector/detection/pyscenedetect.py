@@ -6,24 +6,17 @@ from ..core.scene import scenes_from_ranges
 class PySceneDetectDetector:
     name = "pyscenedetect"
 
-    def __init__(self, threshold=27.0, min_scene_len=15, adaptive=False):
+    def __init__(self, threshold=27.0, min_scene_len=15):
         self.threshold = threshold
         self.min_scene_len = min_scene_len
-        self.adaptive = adaptive
 
     def detect(self, video):
-        from scenedetect import (
-            open_video, SceneManager, ContentDetector, AdaptiveDetector,
-        )
+        from scenedetect import ContentDetector, SceneManager, open_video
 
         v = open_video(str(video.path))
         sm = SceneManager()
-        det = (
-            AdaptiveDetector(min_scene_len=self.min_scene_len)
-            if self.adaptive
-            else ContentDetector(threshold=self.threshold, min_scene_len=self.min_scene_len)
-        )
-        sm.add_detector(det)
+        sm.add_detector(ContentDetector(threshold=self.threshold,
+                                        min_scene_len=self.min_scene_len))
         sm.detect_scenes(v, show_progress=False)
 
         # scene_list: (start, end) FrameTimecode, end = start della scena successiva (esclusivo)
