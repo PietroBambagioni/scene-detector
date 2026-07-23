@@ -125,12 +125,11 @@ class MlxVlmCaptioner:
 # ------------------------------------------------------------- manifest -----
 
 def caption_manifest(manifest, video, captioner, n_frames=3, size=512,
-                     min_shot_frames=0, manifest_path=None, save_every=1, progress=True):
+                     manifest_path=None, progress=True):
     """Riempie `description` per ogni shot. Incrementale e resumable.
 
     Salta gli shot che hanno già una descrizione (resume da un run precedente su disco, se
-    `manifest_path` esiste). Salva il manifest ogni `save_every` shot: un crash non perde lavoro.
-    `min_shot_frames` > 0 salta i micro-shot (restano senza descrizione).
+    `manifest_path` esiste). Salva il manifest a ogni shot descritto: un crash non perde lavoro.
     """
     from tqdm import tqdm
 
@@ -146,13 +145,9 @@ def caption_manifest(manifest, video, captioner, n_frames=3, size=512,
 
     done = sum(1 for s in shots if s.get("description"))
     bar = tqdm(total=len(shots), initial=done, desc="[vlm]", unit="shot", disable=not progress)
-    since = 0
     failed = 0
     for shot in shots:
         if shot.get("description"):
-            continue
-        if min_shot_frames and (shot["end_frame"] - shot["start_frame"]) < min_shot_frames:
-            bar.update(1)
             continue
         try:
             frames = sample_frames(video, shot["start_time"], shot["end_time"], n_frames, size)
@@ -163,14 +158,10 @@ def caption_manifest(manifest, video, captioner, n_frames=3, size=512,
             log.warning("shot %s: descrizione fallita (%s) — proseguo", shot.get("index"), e)
             bar.update(1)
             continue
-        since += 1
-        if manifest_path and since >= save_every:
+        if manifest_path:
             write_manifest(manifest, manifest_path)
-            since = 0
         bar.update(1)
 
-    if manifest_path and since:
-        write_manifest(manifest, manifest_path)
     bar.close()
     if failed:
         log.warning("VLM: %d shot su %d falliti (descrizione mancante)", failed, len(shots))

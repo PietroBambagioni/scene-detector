@@ -1,6 +1,5 @@
 from scene_detector.evaluation.eval import (boundaries_from_ranges, boundaries_from_scenes,
-                                            evaluate, f1_curve, iou, prf1, transition_iou,
-                                            transitions_from_ranges)
+                                            iou, prf1, transition_iou, transitions_from_ranges)
 from scene_detector.core.scene import scenes_from_ranges
 
 
@@ -24,27 +23,6 @@ def test_boundaries():
     scenes = scenes_from_ranges([(0, 99), (100, 199), (200, 299)], fps=24.0)
     assert boundaries_from_scenes(scenes) == [100, 200]
     assert boundaries_from_ranges([(0, 99), (100, 199), (200, 299)]) == [100, 200]
-
-
-def test_evaluate_end_to_end():
-    scenes = scenes_from_ranges([(0, 99), (100, 199), (200, 299)], fps=24.0)
-    r = evaluate(scenes, [(0, 99), (100, 199), (200, 299)], tol=0)
-    assert r["f1"] == 1.0
-
-
-# ------------------------------------------------------- tolleranza dichiarata ---
-
-def test_evaluate_riporta_sempre_la_tolleranza():
-    # un F1 sui boundary senza la sua tolleranza non è interpretabile: deve viaggiare col numero
-    scenes = scenes_from_ranges([(0, 99), (100, 199)], fps=24.0)
-    assert evaluate(scenes, [(0, 99), (100, 199)], tol=7)["tol"] == 7
-
-
-def test_f1_curve_mostra_quanto_e_slack():
-    # boundary predetto 4 frame più in là: perfetto a tol=5, zero a tol=0
-    curva = f1_curve([104], [100])
-    assert curva[5] == 1.0 and curva[10] == 1.0
-    assert curva[0] == 0.0 and curva[2] == 0.0
 
 
 # ------------------------------------------------------- transizioni (range) ---
@@ -76,10 +54,12 @@ def test_f1_alto_ma_iou_pessimo_sulla_dissolvenza():
     gt = [(0, 99), (124, 299)]                    # buco 100-123 = dissolvenza
     pred = scenes_from_ranges([(0, 110), (111, 299)], fps=24.0)   # taglio secco a 111
 
-    r = evaluate(pred, gt, tol=15)
-    assert r["f1"] == 1.0                         # i boundary dicono: perfetto
-    assert r["transition"]["mean_iou"] < 0.15     # le transizioni dicono: sbagliato
-    assert r["transition"]["f1"] == 0.0           # e sotto min_iou non è nemmeno un TP
+    b = prf1(boundaries_from_scenes(pred), boundaries_from_ranges(gt), tol=15)
+    t = transition_iou(transitions_from_ranges([(s.start_frame, s.end_frame) for s in pred]),
+                       transitions_from_ranges(gt))
+    assert b["f1"] == 1.0                         # i boundary dicono: perfetto
+    assert t["mean_iou"] < 0.15                   # le transizioni dicono: sbagliato
+    assert t["f1"] == 0.0                         # e sotto min_iou non è nemmeno un TP
 
 
 def test_transition_iou_ignora_le_coppie_disgiunte():

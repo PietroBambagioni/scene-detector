@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import json
 
 _TEMPLATE = """<!doctype html>
@@ -212,5 +213,4 @@ def build_html(manifest, title=None):
     """Genera la UI HTML self-contained del catalogo dal manifest."""
     data = json.dumps(manifest, ensure_ascii=False).replace("</", "<\\/")
     title = title or manifest.get("video") or "Catalogo scene"
-    safe_title = title.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-    return _TEMPLATE.replace("__DATA__", data).replace("__TITLE__", safe_title)
+    return _TEMPLATE.replace("__DATA__", data).replace("__TITLE__", html.escape(title))

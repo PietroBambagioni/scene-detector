@@ -14,7 +14,7 @@ from ..detection import build_detector
 from ..detection import confidence as conf_mod
 from ..detection.neural import read_small_frames
 from ..io.video import probe
-from .eval import boundaries_from_ranges, boundaries_from_scenes, prf1, transition_iou, \
+from .eval import boundaries_from_ranges, boundaries_from_scenes, prf, prf1, transition_iou, \
     transitions_from_ranges
 
 
@@ -62,12 +62,6 @@ def run(videos, gt, cfg, ensemble=False, tol=5, min_iou=0.5, on_video=None):
         n_gt_grad += sum(1 for (_, e1), (s2, _) in zip(gt[vid], gt[vid][1:]) if s2 != e1 + 1)
         if on_video:
             on_video(vid, b, t, n)
-
-    def prf(tp, fp, fn):
-        p = tp / (tp + fp) if tp + fp else 0.0
-        r = tp / (tp + fn) if tp + fn else 0.0
-        return {"precision": p, "recall": r,
-                "f1": 2 * p * r / (p + r) if p + r else 0.0, "tp": tp, "fp": fp, "fn": fn}
 
     matched = sum(m for _, m in ious)
     return {

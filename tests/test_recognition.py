@@ -6,7 +6,6 @@ from scene_detector.recognition.identify import (
     centroids_of,
     cluster_faces,
     cluster_two_stage,
-    cluster_within_shot,
     match_gallery,
 )
 
@@ -95,14 +94,14 @@ def test_within_shot_must_not_link_stesso_frame():
     quasi = a + 0.001 * np.ones_like(a)
     quasi /= np.linalg.norm(quasi, axis=1, keepdims=True)
     emb = np.vstack([a, quasi])
-    labels = cluster_within_shot(emb, frame_indices=[0, 0], threshold=0.5)
+    labels = cluster_faces(emb, threshold=0.5, frame_indices=[0, 0])
     assert labels[0] != labels[1]
 
 
 def test_within_shot_unisce_frame_diversi():
     # la stessa persona vista in tre frame diversi dello shot: un gruppo solo
     emb = _blob(2, 3)
-    labels = cluster_within_shot(emb, frame_indices=[0, 1, 2], threshold=0.5)
+    labels = cluster_faces(emb, threshold=0.5, frame_indices=[0, 1, 2])
     assert len(set(labels)) == 1
 
 
@@ -110,7 +109,7 @@ def test_within_shot_due_persone_su_piu_frame():
     # campo/controcampo: A e B compaiono insieme in 3 frame -> 2 gruppi, non 1 ne' 6
     a, b = _blob(3, 3), _blob(4, 3)
     emb = np.vstack([a[0], b[0], a[1], b[1], a[2], b[2]])
-    labels = cluster_within_shot(emb, frame_indices=[0, 0, 1, 1, 2, 2], threshold=0.5)
+    labels = cluster_faces(emb, threshold=0.5, frame_indices=[0, 0, 1, 1, 2, 2])
     assert len(set(labels)) == 2
     assert labels[0] == labels[2] == labels[4]      # A resta A attraverso i frame
     assert labels[1] == labels[3] == labels[5]

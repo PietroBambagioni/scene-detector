@@ -11,6 +11,15 @@ def boundaries_from_ranges(ranges):
     return [r[0] for r in sorted(ranges)[1:]]
 
 
+def prf(tp, fp, fn):
+    """Precision/Recall/F1 da tp/fp/fn. -> dict con le sei chiavi."""
+    precision = tp / (tp + fp) if tp + fp else 0.0
+    recall = tp / (tp + fn) if tp + fn else 0.0
+    return {"precision": precision, "recall": recall,
+            "f1": 2 * precision * recall / (precision + recall) if precision + recall else 0.0,
+            "tp": tp, "fp": fp, "fn": fn}
+
+
 def prf1(pred, gt, tol=0):
     """Precision/Recall/F1 su boundary con tolleranza `tol` frame (matching 1-a-1).
 
@@ -32,22 +41,7 @@ def prf1(pred, gt, tol=0):
         if best is not None:
             matched.add(best)
             tp += 1
-    fp = len(pred) - tp
-    fn = len(gt) - tp
-    precision = tp / (tp + fp) if tp + fp else 0.0
-    recall = tp / (tp + fn) if tp + fn else 0.0
-    f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
-    return {"precision": precision, "recall": recall, "f1": f1, "tp": tp, "fp": fp, "fn": fn}
-
-
-def f1_curve(pred, gt, tols=(0, 1, 2, 5, 10)):
-    """F1 al variare della tolleranza: {tol: f1}.
-
-    Un solo F1 non dice quanto del punteggio venga dallo slack. Se F1 crolla passando da 5 a 0
-    frame, i confini sono solo *vicini* a quelli veri — e su una transizione graduale "vicino"
-    può voler dire in mezzo alla dissolvenza invece che al suo inizio.
-    """
-    return {t: prf1(pred, gt, t)["f1"] for t in tols}
+    return prf(tp, len(pred) - tp, len(gt) - tp)
 
 
 # ------------------------------------------------------- transizioni (range) ---
@@ -102,45 +96,9 @@ def transition_iou(pred, gt, min_iou=0.5):
         ious.append(v)
 
     tp = sum(1 for v in ious if v >= min_iou)
-    fp, fn = len(pred) - tp, len(gt) - tp
-    precision = tp / (tp + fp) if tp + fp else 0.0
-    recall = tp / (tp + fn) if tp + fn else 0.0
     return {
+        **prf(tp, len(pred) - tp, len(gt) - tp),
         "mean_iou": sum(ious) / len(ious) if ious else 0.0,
         "min_iou": min_iou,
         "matched": len(ious),
-        "precision": precision,
-        "recall": recall,
-        "f1": 2 * precision * recall / (precision + recall) if precision + recall else 0.0,
-        "tp": tp, "fp": fp, "fn": fn,
     }
-
-
-def evaluate(pred_scenes, gt_ranges, tol=5, min_iou=0.5):
-    """Valuta le Scene predette contro un ground-truth (lista di (start, end)).
-
-    Ritorna precision/recall/f1 sui boundary (chiavi in cima, come prima) più:
-    - `tol` — la tolleranza usata, **sempre riportata**: un F1 sui boundary senza la sua
-      tolleranza non è un numero interpretabile;
-    - `f1_curve` — F1 alle tolleranze 0/1/2/5/10, per vedere quanto del punteggio è slack;
-    - `transition` — la metrica range-based, l'unica che vede gli errori di *larghezza*.
-    """
-    out = prf1(boundaries_from_scenes(pred_scenes), boundaries_from_ranges(gt_ranges), tol)
-    pred_ranges = [(s.start_frame, s.end_frame) for s in pred_scenes]
-    out["tol"] = tol
-    out["f1_curve"] = f1_curve(boundaries_from_scenes(pred_scenes),
-                               boundaries_from_ranges(gt_ranges))
-    out["transition"] = transition_iou(transitions_from_ranges(pred_ranges),
-                                       transitions_from_ranges(gt_ranges), min_iou)
-    return out
-
-
-def read_scenes_txt(path):
-    """Legge un ground-truth: una riga per shot con 'start end' (frame). -> list[(start, end)]."""
-    ranges = []
-    with open(path) as f:
-        for line in f:
-            parts = line.split()
-            if len(parts) >= 2:
-                ranges.append((int(parts[0]), int(parts[1])))
-    return ranges

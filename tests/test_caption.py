@@ -65,21 +65,6 @@ def test_caption_manifest_skips_already_done(monkeypatch):
     assert manifest["shots"][1]["description"] == "descr 1"
 
 
-def test_caption_manifest_skips_micro_shots(monkeypatch):
-    monkeypatch.setattr(caption, "sample_frames", lambda *a, **k: ["frame"])
-    manifest = {"shots": [
-        {"index": 0, "start_frame": 0, "end_frame": 5, "start_time": 0.0, "end_time": 0.2,
-         "description": None, "dialogue": None},   # 5 frame < soglia
-        {"index": 1, "start_frame": 5, "end_frame": 100, "start_time": 0.2, "end_time": 4.0,
-         "description": None, "dialogue": None},
-    ]}
-    cap = _StubCaptioner()
-    caption_manifest(manifest, "video.mp4", cap, min_shot_frames=15, progress=False)
-    assert cap.calls == 1
-    assert manifest["shots"][0]["description"] is None   # micro-shot saltato
-    assert manifest["shots"][1]["description"] == "descr 1"
-
-
 class _FlakyCaptioner:
     def __init__(self, fail_on):
         self.fail_on = fail_on

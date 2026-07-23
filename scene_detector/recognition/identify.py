@@ -5,13 +5,18 @@ from collections import defaultdict
 import numpy as np
 
 
-def cluster_faces(embeddings, threshold=0.5, det_scores=None):
+def cluster_faces(embeddings, threshold=0.5, det_scores=None, frame_indices=None):
     """Clustering greedy agglomerativo su distanza coseno (embedding L2-normalizzati [N,512]).
 
     Un passaggio: ogni volto entra nel cluster più simile se il coseno col suo centroide è
     ≥ `threshold`, altrimenti apre un nuovo cluster. Con `det_scores` i volti più nitidi vengono
     processati per primi (seed più affidabili). Ritorna `labels[N]` (id cluster per volto,
     nell'ordine d'ingresso). Zero dip esterne — coerente con l'ethos minimale del progetto.
+
+    Con `frame_indices` vale il vincolo *must-not-link*: un volto non può entrare in un cluster
+    che contiene già un volto dello **stesso frame**, perché due facce compresenti sono due
+    persone per quanto si somiglino. È il vincolo che impedisce a un campo/controcampo di
+    collassare in un'identità sola, e serve allo stadio 1 di `cluster_two_stage`.
     """
     emb = np.asarray(embeddings, dtype=np.float64)
     n = len(emb)
@@ -19,24 +24,31 @@ def cluster_faces(embeddings, threshold=0.5, det_scores=None):
     if n == 0:
         return labels
     emb = emb / (np.linalg.norm(emb, axis=1, keepdims=True) + 1e-9)
+    frames = None if frame_indices is None else [int(f) for f in frame_indices]
     order = np.arange(n) if det_scores is None else np.argsort(-np.asarray(det_scores))
 
     sums: list[np.ndarray] = []  # somma incrementale dei vettori per cluster
     counts: list[int] = []
+    seen: list[set] = []         # seen[j] = frame gia' rappresentati nel cluster j
     for idx in order:
         v = emb[idx]
         if sums:
             cents = np.stack([s / c for s, c in zip(sums, counts)])
             cents = cents / (np.linalg.norm(cents, axis=1, keepdims=True) + 1e-9)
             sims = cents @ v
+            if frames is not None:
+                sims = np.where([frames[idx] in s for s in seen], -np.inf, sims)
             j = int(np.argmax(sims))
             if sims[j] >= threshold:
                 sums[j] += v
                 counts[j] += 1
                 labels[idx] = j
+                if frames is not None:
+                    seen[j].add(frames[idx])
                 continue
         sums.append(v.copy())
         counts.append(1)
+        seen.append({frames[idx]} if frames is not None else set())
         labels[idx] = len(sums) - 1
     return labels
 
@@ -47,48 +59,7 @@ def cluster_faces(embeddings, threshold=0.5, det_scores=None):
 # le *tracce* invece dei frame, ma le tracce presuppongono video denso: noi campioniamo 6 frame
 # sparsi per shot via seek, e fra un campione e l'altro un volto attraversa l'inquadratura —
 # IoU e Kalman (ByteTrack) non hanno appiglio. L'equivalente che regge con frame sparsi e'
-# raggruppare *dentro lo shot* per somiglianza, con il vincolo che due volti visti nello stesso
-# frame non possono essere la stessa persona.
-
-def cluster_within_shot(embeddings, frame_indices, threshold=0.5, det_scores=None):
-    """Raggruppa i volti di un singolo shot, con vincolo *must-not-link* per frame.
-
-    Come `cluster_faces`, ma un volto non puo' entrare in un gruppo che contiene gia' un volto
-    dello **stesso frame**: due facce compresenti sono due persone, per quanto si somiglino.
-    E' il vincolo che impedisce a un campo/controcampo di collassare in un'identita' sola.
-    -> `labels[N]` nell'ordine d'ingresso.
-    """
-    emb = np.asarray(embeddings, dtype=np.float64)
-    n = len(emb)
-    labels = np.full(n, -1, dtype=int)
-    if n == 0:
-        return labels
-    emb = emb / (np.linalg.norm(emb, axis=1, keepdims=True) + 1e-9)
-    frames = [int(f) for f in frame_indices]
-    order = np.arange(n) if det_scores is None else np.argsort(-np.asarray(det_scores))
-
-    sums, counts, seen = [], [], []          # seen[j] = frame gia' rappresentati nel gruppo j
-    for idx in order:
-        v, f = emb[idx], frames[idx]
-        best, best_sim = None, threshold
-        for j, (s, c) in enumerate(zip(sums, counts)):
-            if f in seen[j]:
-                continue                     # must-not-link
-            cent = s / c
-            sim = float(cent @ v / (np.linalg.norm(cent) + 1e-9))
-            if sim >= best_sim:
-                best, best_sim = j, sim
-        if best is None:
-            sums.append(v.copy())
-            counts.append(1)
-            seen.append({f})
-            labels[idx] = len(sums) - 1
-        else:
-            sums[best] += v
-            counts[best] += 1
-            seen[best].add(f)
-            labels[idx] = best
-    return labels
+# raggruppare *dentro lo shot* per somiglianza, con il vincolo must-not-link per frame.
 
 
 def average_embeddings(embeddings, labels):
@@ -114,7 +85,7 @@ def average_embeddings(embeddings, labels):
 def cluster_two_stage(embeddings, shot_indices, frame_indices, threshold=0.5, det_scores=None):
     """Clustering a due stadi: dentro lo shot, poi sui gruppi mediati. -> `labels[N]` per volto.
 
-    Stadio 1: `cluster_within_shot` per ogni shot (vincolo must-not-link).
+    Stadio 1: `cluster_faces` per ogni shot con `frame_indices` (vincolo must-not-link).
     Stadio 2: `cluster_faces` sugli embedding **mediati** dei gruppi, ordinati per numerosita' —
     i gruppi grandi fanno da seed, che e' piu' affidabile del singolo volto piu' nitido.
     L'interfaccia resta quella di `cluster_faces`: un'etichetta per volto in ingresso, quindi
@@ -132,8 +103,8 @@ def cluster_two_stage(embeddings, shot_indices, frame_indices, threshold=0.5, de
     n_groups = 0
     for shot in sorted(set(shots)):
         idx = [i for i, s in enumerate(shots) if s == shot]
-        local = cluster_within_shot(emb[idx], [frame_indices[i] for i in idx], threshold,
-                                    None if scores is None else scores[idx])
+        local = cluster_faces(emb[idx], threshold, None if scores is None else scores[idx],
+                              frame_indices=[frame_indices[i] for i in idx])
         for i, lab in zip(idx, local):
             group_of[i] = n_groups + int(lab)
         n_groups += int(local.max()) + 1 if len(local) else 0
@@ -147,14 +118,8 @@ def cluster_two_stage(embeddings, shot_indices, frame_indices, threshold=0.5, de
 
 def centroids_of(embeddings, labels):
     """Centroide (normalizzato) di ogni cluster ≥ 0. -> {cluster_id: vec}."""
-    emb = np.asarray(embeddings, dtype=np.float64)
-    emb = emb / (np.linalg.norm(emb, axis=1, keepdims=True) + 1e-9)
-    labels = np.asarray(labels)
-    out = {}
-    for lab in sorted({int(l) for l in labels if l >= 0}):
-        m = emb[labels == lab].mean(axis=0)
-        out[lab] = m / (np.linalg.norm(m) + 1e-9)
-    return out
+    means, ids, _ = average_embeddings(embeddings, labels)
+    return dict(zip(ids, means))
 
 
 def match_gallery(centroids, gallery, threshold=0.5):
