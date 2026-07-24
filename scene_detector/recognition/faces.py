@@ -25,7 +25,15 @@ class FaceRecognizer:
     """
 
     def __init__(self, model_name="buffalo_l", det_size=640, min_score=0.5, providers=None):
+        import warnings
+
         from insightface.app import FaceAnalysis
+
+        # insightface chiama `SimilarityTransform.estimate`, deprecata in scikit-image: emette un
+        # FutureWarning **a ogni volto** (migliaia per film) che spezza la progress bar tqdm e
+        # sommerge il log. È codice di terze parti, non nostro. Zittito solo questo, per messaggio.
+        warnings.filterwarnings("ignore", message=".*estimate.*is deprecated.*",
+                                category=FutureWarning)
 
         self.min_score = min_score
         self.app = FaceAnalysis(

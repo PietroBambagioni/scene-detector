@@ -81,6 +81,12 @@ class MlxVlmCaptioner:
         from mlx_vlm import load
         from mlx_vlm.utils import load_config
 
+        # transformers ristampa "Kwargs passed to processor.__call__…" a **ogni** shot (migliaia
+        # per film): spezza la progress bar tqdm e sommerge il log. È un avviso di terze parti
+        # sul modo in cui mlx-vlm chiama il processor, non un problema nostro. Solo error+.
+        from transformers.utils import logging as hf_logging
+        hf_logging.set_verbosity_error()
+
         self.model, self.processor = load(model_path)
         self.config = load_config(model_path)
         self.max_tokens = max_tokens
