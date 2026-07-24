@@ -15,7 +15,9 @@
 | **2** | Diarizzazione + linking | **molto più economico** del previsto | medio | 4.4 |
 | **1** | Scene grouping | **più caro** del previsto, e ora **non risparmia più VLM** | alto | 2º film |
 | ~~**3.2**~~ | Media fragments / no cut | ✅ **fatto** come `--split-mode none`, il default resta il taglio | basso | — |
-| — | AutoShot: tenerlo o buttarlo | **sospeso in attesa del 2º film** | — | 2º film |
+| — | AutoShot: tenerlo o buttarlo | **sospeso**, e i dati sono contraddittori: su RAI trova più boundary di TransNet (0,836 vs 0,802), sulla delimitazione è indistinguibile (0,083 vs 0,088). Decide `annota_boundary.py` | — | 15 min di annotazione |
+| **4.1** | OmniShotCut | **misurato** ([TRANSIZIONI-GRADUALI.md](TRANSIZIONI-GRADUALI.md)): complementare, non sostitutivo. Ma serve materiale con dissolvenze, e *Rogue One* ne ha **5** sopra i 10 frame | medio | un film con dissolvenze |
+| — | ~~Le graduali: taratura o architettura~~ | ✅ **chiuso**: `runs_to_ranges` adottato, recall 0,088 → 0,270, stacchi netti 0,81 → 0,93 | — | — |
 | **3.4** | Ricerca sul catalogo | invariato, rende molto di più dopo la Fase 1 | medio | 1 |
 | — | ~~Licenza InsightFace nei crediti~~ | ✅ fatto | minimo | — |
 | — | ~~Metriche di valutazione (tolleranza + IoU)~~ | ✅ fatto, resta il ground truth da annotare | medio | — |
@@ -96,9 +98,14 @@ non sono decidibili su questo film e aspettano il prossimo, possibilmente a mont
 2. **Scene grouping (Fase 1): funziona o è solo plausibile?** Con pochi stacchi netti tra riprese
    stabili, qualunque raggruppamento sembra ragionevole. È la stessa trappola della 0.1, dove un
    output plausibile nascondeva metà del parlato distrutto.
-3. **OmniShotCut**, ma solo **se** il film ha dissolvenze o fade: è lì che il transition IoU
-   3,3× si vede. Su hard cut è già stato misurato pari a TransNet (3 boundary esatti al frame
-   su 4) al prezzo di 4× il tempo di detection.
+3. ~~**OmniShotCut**, ma solo **se** il film ha dissolvenze o fade~~ ✅ **misurato**
+   ([SESSIONE-2026-07-23.md](SESSIONE-2026-07-23.md) §5.10-5.12), su tre banchi. Il verdetto non
+   è «meglio» o «peggio» ma **complementare**: sui cut fa 0,33 di recall contro lo 0,91 delle
+   nostre corse, sopra i 50 frame fa 0,62 contro 0,10, e delimita a IoU 0,72-0,76 dove noi
+   stiamo a 0,27-0,43. Da solo non è adottabile come primario; come secondo detector sulle
+   graduali copre esattamente il buco che ci resta. Il «4× il tempo» non regge alla misura
+   diretta (660 f/s con decode incluso contro 390 f/s di sola inference di TransNet, ma su
+   4950 frame — da rifare su un film intero).
 
 ### AutoShot — sospeso, non assolto
 
@@ -204,6 +211,17 @@ zero · transition IoU 0,083**.
 
 **Il ground truth non serve annotarlo:** `scene-detector-benchmark` scarica il test set di SHOT
 (200 video, 2716 shot, 438 transizioni graduali col range) dal mirror HF dei pesi. Vedi §5 bis.
+
+**E ora ce n'è un secondo, in locale e molto più ricco sulle graduali.** `prove/clipshots/` —
+257 video di ClipShots `only_gradual` con **5991 transizioni annotate col range**, contro le 89
+graduali dei 50 video di SHOT. Le annotazioni stanno nel repo GitHub, i video in un tar.gz da
+46 GB su Drive spezzato in tre: ma `only_gradual` e `test` stanno **entrambi all'inizio del
+primo pezzo**, quindi ne bastano 18 GB, e dei 257 video estratti restano **2,8 GB** su disco.
+Attenzione: il Drive va in quota, e riscaricare non è dato per scontato.
+
+**Limite di entrambi i GT «reali»:** RAI annota solo i confini di *scena*, ClipShots
+`only_gradual` solo le *graduali*. In nessuno dei due la precision è interpretabile — un
+predetto non accoppiato è quasi sempre un taglio vero mai annotato.
 
 **Resta una cosa di dati:** i volti hanno bisogno di una metrica loro. Il confronto 68 → 47 di
 oggi è un conteggio di cluster, non una misura di purezza: serve VPCD (§2.5).

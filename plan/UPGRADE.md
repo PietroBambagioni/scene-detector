@@ -389,6 +389,40 @@ diversa (non un cugino di TransNet).
 > 3,3× e le etichette di transizione entrano nel manifest come metadati nuovi. Da riprendere
 > insieme al collaudo su cinema a montaggio serrato già previsto per la Fase 1.
 
+> ### ⬆️ Aggiornamento 23 luglio 2026 — misurato su tre banchi
+>
+> Vedi [SESSIONE-2026-07-23.md](SESSIONE-2026-07-23.md) §5.10-5.12. Tre cose di questa sezione
+> non reggono alla misura diretta, e la quarta ribalta la domanda.
+>
+> - **Il «4× il tempo» era pessimistico.** Misurato: **660 f/s con decode incluso**, contro i
+>   390 f/s di *sola* inference di TransNet (494 s per i 192 701 frame di *Rogue One*).
+>   ⚠️ Su 4950 frame — su un film intero va rifatto, e il dato di questa sezione (16 min su
+>   *Anna*) suggerisce che il throughput cali con la durata.
+> - **I numeri del paper sono ottimistici quanto il loro benchmark.** Sul nostro banco sintetico
+>   (§5.10) OmniShotCut fa F1 **0,680** contro 0,356 del nostro meglio — coerente col loro
+>   +7. Ma su broadcast reale (§5.11) **pareggia** con le nostre corse, 0,853 entrambi: metà del
+>   divario era **vantaggio di campo**, perché è addestrato su transizioni sintetiche della
+>   stessa famiglia che `xfade` genera.
+> - **Sui cut è peggio di noi, non «pari».** Su ClipShots (§5.12) fa **0,33** di recall sui 172
+>   stacchi netti, contro lo 0,91 delle corse. La stima «3 esatti al frame su 4» veniva da un
+>   campione di 5 boundary.
+> - **Ma sulle graduali larghe non ha rivali, ed è lì che serve.** Sopra i 50 frame: recall
+>   **0,62** contro 0,10, IoU **0,76** contro 0,27. E ci arriva con **1429 predizioni contro
+>   3722** — 2,6× meno rumore.
+>
+> **Aggiornamento dopo l'adozione delle corse.** La pipeline nostra è migliorata sotto i piedi
+> a questo confronto: recall 0,088 → **0,270** su ClipShots, stacchi netti 0,81 → **0,93**. Il
+> divario su cui si basava il caso per OmniShotCut si è ridotto, e resta concentrato dove lui è
+> imbattibile: **sopra i 15 frame**. ⚠️ Su *Rogue One* le transizioni sopra i 10 frame sono
+> **cinque in tutto il film** — su quel materiale non ripagherebbe.
+>
+> **La domanda non è più «sostituisce TransNet».** I due profili sono opposti e coprono metà
+> del problema ciascuno: stacchi e transizioni strette alle corse, dissolvenze lunghe e
+> delimitazione a OmniShotCut. **La decisione da prendere è sull'ensemble**, non sullo swap —
+> e a differenza di quello attuale (TransNet + AutoShot, errori correlati per costruzione,
+> vedi sopra) qui la seconda opinione è davvero architetturalmente diversa: DETR con query di
+> shot contro CNN 3D per-frame.
+
 ### 4.2 · VLM — Qwen3-VL
 
 Qwen2.5-VL-3B-4bit è due generazioni indietro (ed è la causa delle descrizioni a colori della

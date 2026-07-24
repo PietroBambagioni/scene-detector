@@ -24,8 +24,16 @@ class Config:
     detector: DetectorKind = DetectorKind.transnet
     ensemble: bool = False
     split_mode: SplitMode = SplitMode.copy
-    threshold: float = 0.5        # soglia boundary neurale
-    min_scene_len: int = 15       # frame minimi per scena
+    # Soglia boundary neurale. 0,05 e non 0,5: con `runs_to_ranges` una corsa di frame caldi è
+    # una transizione sola, quindi la soglia bassa non moltiplica i tagli — recupera le
+    # dissolvenze. Misurato su 1634 transizioni reali (ClipShots): recall 0,088 → 0,325, e sui
+    # soli stacchi netti 0,81 → 0,95. Costo: +35% di shot su un film.
+    threshold: float = 0.05
+    # Frame minimi per scena. 5 e non 15, ma **solo** perché la soglia è scesa a 0,05: a soglia
+    # alta i due valori sono equivalenti (misurato in §5.7: +1 punto di F1), a soglia bassa
+    # nascono più shot brevi legittimi e la fusione cieca ne mangia di veri — sui soli stacchi
+    # netti 0,77 con 15 contro 0,93 con 5. Le due tarature non sono separabili.
+    min_scene_len: int = 5
     agreement_tol: int = 5        # tolleranza (frame) per agreement in ensemble
     transnet_weights: Path | None = None
     autoshot_weights: Path | None = None

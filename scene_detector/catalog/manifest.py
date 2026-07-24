@@ -30,6 +30,10 @@ def build_manifest(video_info, scenes, detector, clip_template="scene-{:03d}.mp4
                 "end_time": round(s.end_time, 3),
                 "clip": clip_template.format(s.index + 1) if clip_template else None,
                 "confidence": s.confidence,
+                # presente solo quando lo shot si apre con una transizione graduale
+                **({"transition": {"start_frame": s.transition[0], "end_frame": s.transition[1],
+                                   "n_frames": s.transition[1] - s.transition[0] + 1}}
+                   if s.transition else {}),
                 "description": None,
                 "dialogue": None,
                 "characters": [],

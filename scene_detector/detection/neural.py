@@ -65,6 +65,54 @@ def probs_to_ranges(probs, threshold=0.5):
     return ranges
 
 
+def runs_to_ranges(probs, threshold=0.05):
+    """Prob per-frame -> (ranges contigui, transizioni). Come `probs_to_ranges`, ma non
+    scambia una dissolvenza per una fila di tagli.
+
+    `probs_to_ranges` chiude uno shot a **ogni** frame sopra soglia: durante una dissolvenza i
+    frame caldi sono molti e consecutivi, quindi produce una fila di scene da 1 frame che
+    `enforce_min_len` poi rifonde. La larghezza della transizione è nelle `probs` e la buttiamo
+    noi. Qui una **corsa contigua** di frame caldi è *una* transizione: lo shot uscente la
+    include e finisce a `j`, quello entrante parte a `j+1`.
+
+    I range restano contigui e coprono tutti i frame — stesso contratto di `probs_to_ranges`,
+    quindi `boundary_confidences`, `confidence.reconcile` e lo splitter non cambiano. Ciò che si
+    guadagna è il secondo valore: `transitions[k]` è l'intervallo `(start, end)` della giunta
+    che **apre** `ranges[k]`, oppure `None` per il primo shot e per gli stacchi netti (corsa da
+    un frame solo, dove non c'è larghezza da riportare).
+
+    Misurato su ClipShots (1634 transizioni reali con il range annotato): a soglia 0,05 il
+    recall passa da 0,088 a 0,325, e sui soli stacchi netti *migliora* — 0,95 contro 0,81 —
+    quindi non è un baratto fra graduali e cut.
+    """
+    n = len(probs)
+    hot = [i for i in range(n) if probs[i] >= threshold]
+    if not hot:
+        return [(0, max(0, n - 1))], [None]
+
+    runs, start = [], hot[0]
+    for prev, cur in zip(hot, hot[1:]):
+        if cur != prev + 1:
+            runs.append((start, prev))
+            start = cur
+    runs.append((start, hot[-1]))
+
+    ranges = []
+    pos = 0
+    for _a, b in runs:
+        ranges.append((pos, b))
+        pos = b + 1
+    if pos <= n - 1:
+        ranges.append((pos, n - 1))
+
+    # la giunta che apre `ranges[k]` è la corsa `k-1`: il primo shot non ne ha una a monte, e
+    # una corsa da un frame solo è uno stacco netto, che non ha larghezza da riportare
+    transitions = [None]
+    for a, b in runs[:len(ranges) - 1]:
+        transitions.append((a, b) if b > a else None)
+    return ranges, transitions
+
+
 def boundary_confidences(ranges, probs):
     """Confidenza continua per shot = prob boundary per-frame del taglio che lo apre.
 
@@ -94,7 +142,7 @@ class NeuralDetector:
     name = ""
     input_size = (27, 48)  # (H, W)
 
-    def __init__(self, weights=None, threshold=0.5):
+    def __init__(self, weights=None, threshold=0.05):
         self.weights = Path(weights) if weights else None
         self.threshold = threshold
         self.probs = None  # prob boundary per-frame dell'ultima detection (per l'ensemble)
@@ -110,9 +158,9 @@ class NeuralDetector:
 
         Separata da `detect` per condividere una singola decodifica in ensemble."""
         self.probs = self._predictor().predict(frames)  # float[N]
-        ranges = probs_to_ranges(self.probs, self.threshold)
+        ranges, transitions = runs_to_ranges(self.probs, self.threshold)
         return scenes_from_ranges(ranges, video.fps, self.name,
-                                  boundary_confidences(ranges, self.probs))
+                                  boundary_confidences(ranges, self.probs), transitions)
 
     def _predictor(self):
         try:

@@ -11,6 +11,9 @@ class Scene:
     fps: float
     source: str = ""
     confidence: float = 1.0
+    # (start, end) inclusivi della giunta che **apre** questa scena, se è una transizione
+    # graduale; None per il primo shot e per gli stacchi netti. Vedi `runs_to_ranges`.
+    transition: tuple | None = None
 
     @property
     def n_frames(self) -> int:
@@ -25,15 +28,17 @@ class Scene:
         return (self.end_frame + 1) / self.fps
 
 
-def scenes_from_ranges(ranges, fps, source="", confidences=None):
+def scenes_from_ranges(ranges, fps, source="", confidences=None, transitions=None):
     """ranges = lista di (start, end) inclusivi, contigui. -> list[Scene].
 
-    `confidences` (opzionale) = confidenza per range, allineata a `ranges`; se assente
-    ogni scena usa il default 1.0.
+    `confidences` e `transitions` (opzionali) sono allineate a `ranges`; se assenti si usano i
+    default di `Scene` (1.0 e None).
     """
-    if confidences is None:
-        return [Scene(i, s, e, fps, source) for i, (s, e) in enumerate(ranges)]
-    return [Scene(i, s, e, fps, source, confidences[i]) for i, (s, e) in enumerate(ranges)]
+    def at(seq, i, default):
+        return default if seq is None else seq[i]
+
+    return [Scene(i, s, e, fps, source, at(confidences, i, 1.0), at(transitions, i, None))
+            for i, (s, e) in enumerate(ranges)]
 
 
 def enforce_min_len(scenes, min_len):

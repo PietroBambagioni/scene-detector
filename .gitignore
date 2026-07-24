@@ -17,3 +17,8 @@ Film/
 
 # baseline di misura per i confronti prima/dopo
 prove/
+.claude
+CLAUDE.md
+
+# log dei run
+*.log

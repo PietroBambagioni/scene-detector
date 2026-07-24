@@ -1,5 +1,6 @@
 from scene_detector.core.scene import Scene, scenes_from_ranges, enforce_min_len
-from scene_detector.detection.neural import probs_to_ranges, boundary_confidences
+from scene_detector.detection.neural import (probs_to_ranges, boundary_confidences,
+                                             runs_to_ranges)
 
 
 def test_scene_properties():
@@ -70,3 +71,49 @@ def test_enforce_min_len_keeps_leading_short_scene():
 
 def test_enforce_min_len_empty():
     assert enforce_min_len([], min_len=15) == []
+
+
+# ------------------------------------------------------- runs_to_ranges -----
+
+def test_runs_to_ranges_gradual_is_one_transition():
+    """Una dissolvenza (frame caldi consecutivi) è UNA giunta, non una fila di tagli."""
+    probs = [0.0] * 10 + [0.9] * 5 + [0.0] * 10          # corsa 10..14
+    ranges, transitions = runs_to_ranges(probs, threshold=0.5)
+    assert ranges == [(0, 14), (15, 24)]                  # contigui, coprono tutti i frame
+    assert transitions == [None, (10, 14)]                # larghezza 5, sull'apertura del 2°
+
+
+def test_runs_to_ranges_hard_cut_has_no_width():
+    """Una corsa da un frame solo è uno stacco netto: nessuna larghezza da riportare."""
+    probs = [0.0] * 10 + [0.9] + [0.0] * 9
+    ranges, transitions = runs_to_ranges(probs, threshold=0.5)
+    assert ranges == [(0, 10), (11, 19)]
+    assert transitions == [None, None]
+
+
+def test_runs_to_ranges_matches_probs_to_ranges_on_isolated_peaks():
+    """Con picchi isolati il contratto coincide con quello di `probs_to_ranges`."""
+    probs = [0.0] * 5 + [0.9] + [0.0] * 5 + [0.9] + [0.0] * 5
+    ranges, _ = runs_to_ranges(probs, threshold=0.5)
+    assert ranges == probs_to_ranges(probs, threshold=0.5)
+
+
+def test_runs_to_ranges_all_below_threshold():
+    ranges, transitions = runs_to_ranges([0.0] * 10, threshold=0.5)
+    assert ranges == [(0, 9)] and transitions == [None]
+
+
+def test_runs_to_ranges_run_at_end():
+    """Corsa che tocca l'ultimo frame: nessuno shot vuoto in coda."""
+    probs = [0.0] * 8 + [0.9] * 2
+    ranges, transitions = runs_to_ranges(probs, threshold=0.5)
+    assert ranges == [(0, 9)] and transitions == [None]
+
+
+def test_scene_carries_transition_through_merge():
+    """`enforce_min_len` fonde: sopravvive la giunta della scena che resta."""
+    scenes = scenes_from_ranges([(0, 19), (20, 24), (25, 60)], fps=24.0,
+                                transitions=[None, (18, 19), (23, 24)])
+    out = enforce_min_len(scenes, 10)                     # la 2ª (5 frame) viene assorbita
+    assert [(s.start_frame, s.end_frame) for s in out] == [(0, 24), (25, 60)]
+    assert [s.transition for s in out] == [None, (23, 24)]
