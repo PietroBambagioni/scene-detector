@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-neural = ["torch>=2.1", "pillow>=10.0"]                  # inference TransNetV2
+neural = ["torch>=2.1", "pillow>=10.0", "transformers>=4.45"]  # TransNetV2 + SigLIP (grouping); transformers arrivava solo di rimbalzo da mlx-vlm
 asr = ["faster-whisper>=1.0"]                            # trascrizione dialoghi
 vlm = ["mlx-vlm>=0.1,<0.7", "pillow>=10.0"]              # VLM per shot (Apple Silicon); <0.7: firma generate() testata (0.6.x)
 faces = ["insightface>=1.0", "onnxruntime>=1.20"]        # riconoscimento personaggi (SCRFD+ArcFace, CoreML)

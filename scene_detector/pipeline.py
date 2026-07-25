@@ -40,6 +40,7 @@ def run(cfg: Config) -> None:
             "faces_gallery": str(cfg.faces_gallery) if cfg.faces_gallery else None,
             "faces_frames": cfg.faces_frames, "faces_threshold": cfg.faces_threshold,
             "faces_min_score": cfg.faces_min_score,
+            "scenes": cfg.scenes, "n_scenes": cfg.n_scenes,
             "jobs": cfg.jobs, "output_dir": str(cfg.output_dir),
             "transnet_weights": str(cfg.transnet_weights) if cfg.transnet_weights else None,
         },
@@ -56,7 +57,8 @@ def run(cfg: Config) -> None:
         "env": env,
     })
 
-    n_steps = 3 + (1 if cfg.faces else 0) + (1 if cfg.asr else 0) + (1 if cfg.vlm else 0)
+    n_steps = (3 + (1 if cfg.scenes else 0) + (1 if cfg.faces else 0)
+               + (1 if cfg.asr else 0) + (1 if cfg.vlm else 0))
 
     log.info("[1/%d] Rilevamento shot…", n_steps)
     with tel.step("detection") as o:
@@ -89,6 +91,31 @@ def run(cfg: Config) -> None:
                               video_src=video_src)
     manifest_path = out_dir / "manifest.json"
     step = 2
+
+    if cfg.scenes:
+        step += 1
+        log.info("[%d/%d] Raggruppamento in scene…", step, n_steps)
+        if cfg.n_scenes is None:
+            # misurato su RAI: il gomito dei valori singolari dà in media 7,2 scene dove ce ne
+            # sono 12,6, e non segue il video (GT 22 -> stima 5). Vedi plan/DA-FARE.md §5.
+            log.warning("  --n-scenes non impostato: la stima automatica sottostima di ~40%%")
+        with tel.step("grouping") as o:
+            from .detection.neural import read_small_frames
+            from .grouping import build_scene_entries, group_shots, shot_signatures
+            # Feature: istogrammi HSV finché il banco RAI (`prove/rai_scene_ab.py`) non dice che
+            # `siglip_signatures` vince — a quel punto cambia solo questa riga.
+            # ponytail: seconda passata di decode a 48×27. Sono gli stessi frame della detection,
+            # ma solo il detector neurale li espone (`detect_from_frames`): condividerli costa più
+            # plumbing del minuto che risparmia.
+            frames = read_small_frames(cfg.video, 48, 27, total=info.n_frames,
+                                       desc="[grouping] frames")
+            groups = group_shots(scenes, shot_signatures(frames, scenes), cfg.n_scenes)
+            manifest["n_scenes"] = len(groups)
+            manifest["scenes"] = build_scene_entries(groups, scenes)
+            o["n_scenes"] = len(groups)
+            o["n_scenes_richiesto"] = cfg.n_scenes
+            o["shot_per_scena"] = round(len(scenes) / len(groups), 2)
+        log.info("  %d shot → %d scene", len(scenes), len(groups))
 
     if cfg.faces:
         step += 1

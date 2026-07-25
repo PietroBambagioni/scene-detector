@@ -108,7 +108,8 @@ def recognize_characters(manifest, video, recognizer, *, gallery=None, n_frames=
     shots = manifest["shots"]
     detected: list[DetectedFace] = []
     for shot in tqdm(shots, desc="[faces]", unit="shot", disable=not progress):
-        frames = sample_frames(video, shot["start_time"], shot["end_time"], n_frames, size)
+        frames = sample_frames(video, shot["start_time"], shot["end_time"], n_frames, size,
+                               manifest.get("fps"))
         for fi, pil in enumerate(frames):
             for emb, score, bbox in recognizer.detect(pil):
                 x1, y1, x2, y2 = bbox

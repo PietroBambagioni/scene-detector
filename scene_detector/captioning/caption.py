@@ -12,13 +12,22 @@ log = logging.getLogger("scene_detector")
 
 # ---------------------------------------------------------------- sampling ---
 
-def _timestamps(start, end, n):
-    """n istanti in [start, end), leggermente rientrati per evitare i frame di taglio."""
+def _timestamps(start, end, n, fps=None):
+    """n istanti in [start, end), leggermente rientrati per evitare i frame di taglio.
+
+    `end` è **esclusivo** (`(end_frame + 1) / fps`): con `fps` noto l'ultimo istante utile è
+    `end - 1/fps`, il PTS dell'ultimo frame dello shot. Senza quel tetto ffmpeg, che con `-ss`
+    prende il primo frame *a partire da* t, oltre quel punto non torna niente (fine file) o torna
+    il primo frame dello shot **successivo**. Il rientro del 15% non basta: su uno shot da 5 frame
+    vale 0,03 s, meno della durata di un frame.
+    """
     dur = max(0.0, end - start)
+    top = end - 1.0 / fps if fps else end
     if n <= 1:
-        return [start + dur / 2]
+        return [max(start, min(start + dur / 2, top))]
     inset = min(0.15 * dur, 0.3)
-    a, b = start + inset, end - inset
+    a = min(start + inset, max(start, top))
+    b = max(a, min(end - inset, top))
     return [a + (b - a) * i / (n - 1) for i in range(n)]
 
 
@@ -37,9 +46,13 @@ def _extract_frame(video, t, size):
     return Image.open(BytesIO(out)).convert("RGB")
 
 
-def sample_frames(video, start_time, end_time, n=3, size=512):
-    """Estrae n frame PIL campionati in ordine cronologico dallo shot [start_time, end_time)."""
-    return [_extract_frame(video, t, size) for t in _timestamps(start_time, end_time, n)]
+def sample_frames(video, start_time, end_time, n=3, size=512, fps=None):
+    """Estrae n frame PIL campionati in ordine cronologico dallo shot [start_time, end_time).
+
+    Passa `fps` quando ce l'hai: senza, sugli shot corti si finisce sul frame dello shot dopo
+    (vedi `_timestamps`).
+    """
+    return [_extract_frame(video, t, size) for t in _timestamps(start_time, end_time, n, fps)]
 
 
 # ------------------------------------------------------------------ prompt ---
@@ -156,7 +169,8 @@ def caption_manifest(manifest, video, captioner, n_frames=3, size=512,
         if shot.get("description"):
             continue
         try:
-            frames = sample_frames(video, shot["start_time"], shot["end_time"], n_frames, size)
+            frames = sample_frames(video, shot["start_time"], shot["end_time"], n_frames, size,
+                                   manifest.get("fps"))
             chars = [cast_names[c] for c in shot.get("characters", []) if c in cast_names]
             shot["description"] = captioner.describe(frames, shot.get("dialogue"), chars or None)
         except Exception as e:  # uno shot "velenoso" non deve fermare il batch (resume-friendly)

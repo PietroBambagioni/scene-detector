@@ -13,6 +13,25 @@ def test_timestamps_single_is_midpoint():
     assert _timestamps(4.0, 8.0, 1) == [6.0]
 
 
+def test_timestamps_non_superano_lultimo_frame():
+    """Shot da 5 frame a 25 fps: il rientro del 15% (0,03 s) è meno di un frame (0,04 s).
+
+    Senza il tetto `end - 1/fps` l'ultimo istante cade sul frame dello shot **successivo** — o su
+    niente, se lo shot chiude il video.
+    """
+    start, fps = 100.0, 25.0
+    end = start + 5 / fps            # end_frame + 1: esclusivo
+    ts = _timestamps(start, end, 3, fps)
+    assert max(ts) <= end - 1 / fps + 1e-9
+    assert min(ts) >= start - 1e-9
+    assert ts == sorted(ts)
+
+
+def test_timestamps_shot_da_un_frame():
+    """Caso degenere: un solo frame disponibile, tutti gli istanti ci cadono sopra."""
+    assert _timestamps(10.0, 10.04, 3, 25.0) == [10.0, 10.0, 10.0]
+
+
 def test_build_prompt_italian_and_dialogue():
     p = build_prompt(3, dialogue="Cosa fai qui?")
     assert "italiano" in p

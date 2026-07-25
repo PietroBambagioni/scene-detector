@@ -38,6 +38,8 @@ def run(
     faces_min_score: float = typer.Option(0.5, "--faces-min-score", help="Soglia det_score: scarta i volti deboli"),
     faces_min_px: int = typer.Option(50, "--faces-min-px", help="Lato minimo del volto in pixel: sotto, l'embedding è rumore"),
     faces_min_shots: int = typer.Option(3, "--faces-min-shots", help="Un personaggio entra nel cast se ricorre in >=N shot distinti (taglia le comparse)"),
+    scenes: bool = typer.Option(False, "--scenes", help="Raggruppa gli shot in scene (OSG, solo visivo)"),
+    n_scenes: int = typer.Option(None, "--n-scenes", help="Numero di scene. Passalo: la stima automatica sottostima di ~40% (misurato su RAI)"),
     run_all: bool = typer.Option(False, "--all", help="Fa tutto: detection + split + faces + ASR + VLM"),
     max_detail: bool = typer.Option(False, "--max", help="Massimo dettaglio + multi-core: --all + reencode frame-accurate + multi-core (2 core liberi)"),
     jobs: int = typer.Option(0, "-j", "--jobs", help="Processi ffmpeg paralleli per il taglio (0 = auto: tutti i core meno 2)"),
@@ -46,6 +48,11 @@ def run(
         run_all = True
         split_mode = SplitMode.reencode
     if run_all:
+        # `--scenes` resta **fuori** da `--all`, e non per il costo (una decodifica in più, 47 s
+        # su un film di 2 h: niente accanto ai 45 min di ASR+VLM). È che `--all` non può passare
+        # `--n-scenes`, e senza quello la stima automatica sbaglia di ~40% (misurato su RAI):
+        # metterlo qui significherebbe spedire scene note-sbagliate a chiunque scriva `--all`.
+        # Rientra quando la stima di k funziona, o quando la UI le rende ispezionabili.
         asr = True
         vlm = True
         faces = True
@@ -61,6 +68,7 @@ def run(
         faces=faces, faces_gallery=faces_gallery, faces_frames=faces_frames,
         faces_threshold=faces_threshold, faces_min_score=faces_min_score,
         faces_min_px=faces_min_px, faces_min_shots=faces_min_shots,
+        scenes=scenes, n_scenes=n_scenes,
         jobs=jobs,
     )
 
@@ -116,16 +124,20 @@ def setup(
 
 
 def _fetch_big_models(asr_model="large-v3-turbo",
-                      vlm_model="mlx-community/Qwen3-VL-8B-Instruct-4bit"):
+                      vlm_model="mlx-community/Qwen3-VL-8B-Instruct-4bit",
+                      siglip_model=None):
     """Anticipa il download dei modelli che altrimenti arrivano al primo run.
 
     Ognuno vive in un extra diverso: se l'extra non è installato lo si segnala e si prosegue,
     perché `--asr` senza `--vlm` (o viceversa) è un uso legittimo.
     """
+    from .grouping import SIGLIP_MODEL
+    siglip_model = siglip_model or SIGLIP_MODEL
     steps = [
         ("ASR", "'.[asr]'", lambda: __import__("faster_whisper").WhisperModel(asr_model, device="cpu")),
         ("VLM", "'.[vlm]'", lambda: __import__("mlx_vlm").load(vlm_model)),
         ("volti", "'.[faces]'", lambda: __import__("insightface").app.FaceAnalysis(name="buffalo_l").prepare(ctx_id=-1)),
+        ("SigLIP", "'.[neural]'", lambda: __import__("transformers").AutoModel.from_pretrained(siglip_model)),
     ]
     for label, extra, load in steps:
         typer.echo(f"→ {label}…")

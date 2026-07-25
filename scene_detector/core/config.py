@@ -50,5 +50,10 @@ class Config:
     faces_min_score: float = 0.5
     faces_min_px: int = 50        # lato minimo del bbox: sotto, l'embedding e' rumore
     faces_min_shots: int = 3      # un personaggio del cast ricorre in >=N shot distinti (non volti)
+    # raggruppamento shot -> scene (Optimal Sequential Grouping, solo visivo)
+    scenes: bool = False
+    # None: stimato dal gomito dei valori singolari — ma la stima **sottostima di ~40%** (media
+    # 7,2 contro 12,6 reali su RAI) e non segue il video. In pratica va passato.
+    n_scenes: int | None = None
     # taglio clip
     jobs: int = 0                 # processi ffmpeg paralleli (0 = auto)
