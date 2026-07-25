@@ -77,13 +77,21 @@ def test_build_cast_counts_shots_and_faces():
     assert cast[0]["id"] == 0                     # ordinato per n_shots desc
 
 
-def test_build_cast_gallery_names_and_min_faces():
+def test_build_cast_gallery_names_and_min_shots():
     labels = np.array([0, 0, 1])
     shots = [0, 1, 2]
-    cast, per_shot = build_cast(labels, shots, names={0: "Alice"}, min_faces=2)
-    assert [c["id"] for c in cast] == [0]     # cluster 1 (1 volto) scartato da min_faces
+    cast, per_shot = build_cast(labels, shots, names={0: "Alice"}, min_shots=2)
+    assert [c["id"] for c in cast] == [0]     # cluster 1 (1 shot solo) scartato da min_shots
     assert cast[0]["name"] == "Alice"         # nome reale dalla gallery
     assert 2 not in per_shot                  # lo shot del cluster scartato non compare
+
+
+def test_build_cast_min_shots_counts_distinct_shots_not_faces():
+    # stesso volto in 3 frame di UN solo shot: 3 volti ma 1 shot -> scartato da min_shots=2
+    labels = np.array([0, 0, 0])
+    shots = [5, 5, 5]
+    cast, _ = build_cast(labels, shots, min_shots=2)
+    assert cast == []                          # ricorre in 1 shot solo, non e' cast
 
 
 # ------------------------------------------- clustering a due stadi (4.4) ---

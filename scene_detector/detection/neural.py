@@ -76,7 +76,7 @@ def runs_to_ranges(probs, threshold=0.05):
     include e finisce a `j`, quello entrante parte a `j+1`.
 
     I range restano contigui e coprono tutti i frame — stesso contratto di `probs_to_ranges`,
-    quindi `boundary_confidences`, `confidence.reconcile` e lo splitter non cambiano. Ciò che si
+    quindi `boundary_confidences` e lo splitter non cambiano. Ciò che si
     guadagna è il secondo valore: `transitions[k]` è l'intervallo `(start, end)` della giunta
     che **apre** `ranges[k]`, oppure `None` per il primo shot e per gli stacchi netti (corsa da
     un frame solo, dove non c'è larghezza da riportare).
@@ -135,8 +135,7 @@ def boundary_confidences(ranges, probs):
 class NeuralDetector:
     """Detector neurale: decodifica a 27x48, inference a finestre, probs -> scene.
 
-    TransNetV2 e AutoShot condividono tutto tranne il predictor e il nome: le sottoclassi
-    forniscono solo quelli.
+    La sottoclasse fornisce solo il predictor e il nome.
     """
 
     name = ""
@@ -145,7 +144,7 @@ class NeuralDetector:
     def __init__(self, weights=None, threshold=0.05):
         self.weights = Path(weights) if weights else None
         self.threshold = threshold
-        self.probs = None  # prob boundary per-frame dell'ultima detection (per l'ensemble)
+        self.probs = None  # prob boundary per-frame dell'ultima detection
 
     def detect(self, video):
         h, w = self.input_size
@@ -154,9 +153,7 @@ class NeuralDetector:
         return self.detect_from_frames(frames, video)
 
     def detect_from_frames(self, frames, video):
-        """Predizione da frame già decodificati (uint8[N,27,48,3]).
-
-        Separata da `detect` per condividere una singola decodifica in ensemble."""
+        """Predizione da frame già decodificati (uint8[N,27,48,3])."""
         self.probs = self._predictor().predict(frames)  # float[N]
         ranges, transitions = runs_to_ranges(self.probs, self.threshold)
         return scenes_from_ranges(ranges, video.fps, self.name,
@@ -184,13 +181,3 @@ class TransNetV2Detector(NeuralDetector):
     def _build(self):
         from .models.wrapper import TransNetV2Predictor
         return TransNetV2Predictor(self.weights)
-
-
-class AutoShotDetector(NeuralDetector):
-    """[OPZIONALE] Seconda opinione neurale (NAS-based). Stesso contratto di TransNetV2."""
-
-    name = "autoshot"
-
-    def _build(self):
-        from .models.wrapper import AutoShotPredictor
-        return AutoShotPredictor(self.weights)

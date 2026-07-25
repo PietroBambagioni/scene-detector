@@ -21,9 +21,7 @@ trascrizione dialoghi (ASR) → descrizione visiva per shot (VLM) → manifest +
 | Modello | Tipo | Device | Ruolo |
 |---|---|---|---|
 | **TransNetV2** (soCzech, MIT) | neurale, CNN 3D | MPS/GPU | primario, robusto anche su dissolvenze |
-| **AutoShot** (Zhu et al., CVPR-W 2023) | neurale, NAS | CPU | seconda opinione / cross-check |
 | **PySceneDetect** (Castellano, BSD-3) | classico content-based | CPU | baseline veloce su hard-cut |
-| **Ensemble** | TransNet + AutoShot | MPS+CPU | agreement = confidenza, disaccordo = flag |
 
 ### Arricchimento del catalogo
 - **Riconoscimento personaggi** — [InsightFace](https://github.com/deepinsight/insightface):
@@ -39,7 +37,7 @@ trascrizione dialoghi (ASR) → descrizione visiva per shot (VLM) → manifest +
 ### Stack di base
 - **Python ≥ 3.10** (testato su 3.13)
 - **Typer** — CLI
-- **PyTorch** — inference dei modelli neurali (TransNetV2 / AutoShot), `einops` per il windowing
+- **PyTorch** — inference del modello neurale (TransNetV2)
 - **NumPy / OpenCV** (via `scenedetect`) — elaborazione frame
 - **ffmpeg / ffprobe** — probe video e taglio/export delle clip (`copy` veloce o `reencode` frame-accurate)
 - **psutil** — telemetria run (CPU% / RSS live)
@@ -52,7 +50,7 @@ scene_detector/
   cli.py / pipeline.py      # entrypoint + orchestrazione step
   core/                     # Config, datamodel Scene, workers, telemetria
   io/video.py               # probe ffprobe -> VideoInfo
-  detection/                # detector (transnet/autoshot/pyscenedetect) + ensemble + modelli vendored
+  detection/                # detector (transnet/pyscenedetect) + modello vendored
   segmentation/splitter.py  # export clip via ffmpeg
   transcription/            # ASR (faster-whisper) + allineamento agli shot
   captioning/caption.py     # VLM (MLX) resumable
@@ -63,8 +61,8 @@ scene_detector/
 
 ## Crediti modelli
 - [TransNetV2](https://github.com/soCzech/TransNetV2) — Souček & Lokoč (MIT)
-- [AutoShot](https://github.com/wentaozhu/AutoShot) — Zhu et al., CVPR-W 2023
 - [PySceneDetect](https://github.com/Breakthrough/PySceneDetect) — Castellano (BSD-3)
+- [SHOT dataset](https://github.com/wentaozhu/AutoShot) — Zhu et al., CVPR-W 2023 (solo per il benchmark)
 - [InsightFace](https://github.com/deepinsight/insightface) — SCRFD + ArcFace: codice MIT, ma il
   model package `buffalo_l` è **solo per ricerca non commerciale** (licenza separata)
 - [faster-whisper](https://github.com/SYSTRAN/faster-whisper) — Whisper / CTranslate2

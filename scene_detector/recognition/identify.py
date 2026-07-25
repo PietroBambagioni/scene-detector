@@ -152,11 +152,15 @@ def match_gallery(centroids, gallery, threshold=0.5):
     return assigned
 
 
-def build_cast(labels, shot_indices, names=None, min_faces=1):
+def build_cast(labels, shot_indices, names=None, min_shots=2):
     """Assembla il cast e i personaggi per shot da (label per volto, shot per volto).
 
-    `names`: {cluster_id: nome reale} dalla gallery (fallback "Personaggio N"). `min_faces` scarta
-    i cluster con meno volti (comparse/rumore). Ritorna:
+    `names`: {cluster_id: nome reale} dalla gallery (fallback "Personaggio N"). `min_shots` scarta
+    i cluster visti in meno di N **shot distinti** — non in meno di N *volti*: un personaggio del
+    cast e' chi *ricorre fra gli shot*, mentre lo stesso volto in due frame di un solo shot resta
+    un'apparizione unica. Misurato su Rogue One (8839 volti): il taglio per volti a >=2 lascia 274
+    "personaggi", quello per shot a >=2 ne lascia 113, tagliando netto i 548 apparsi una volta.
+    Ritorna:
       - `cast`: lista di {id, name, n_faces, n_shots, shots}, ordinata per n_shots desc.
       - `per_shot`: {shot_index: set(cluster_id)} limitato ai cluster tenuti nel cast.
     """
@@ -169,9 +173,9 @@ def build_cast(labels, shot_indices, names=None, min_faces=1):
 
     cast = []
     for cid, sis in faces_per.items():
-        if len(sis) < min_faces:
-            continue
         shots = sorted(set(sis))
+        if len(shots) < min_shots:
+            continue
         cast.append({
             "id": cid,
             "name": names.get(cid) or f"Personaggio {cid + 1}",

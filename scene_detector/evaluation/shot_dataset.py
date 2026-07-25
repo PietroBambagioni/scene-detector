@@ -5,8 +5,8 @@ sparato, non vedi quelli che ha mancato. Il test set di SHOT risolve entrambi i 
 200 video annotati per intero, 2716 shot, **2516 boundary di cui 438 (17%) transizioni graduali
 col loro range**, che è ciò che serve a `transition_iou` per non essere inerte.
 
-Tutto arriva dal mirror HuggingFace da cui prendiamo già `autoshot.pth`: niente Baidu, niente
-Google Drive, niente auth. Gli archivi video sono ~20 GB in totale, ma non si scaricano interi:
+Tutto arriva dal mirror HuggingFace degli autori di SHOT (repo `backseollgi/AutoShot`): niente
+Baidu, niente Google Drive, niente auth. Gli archivi video sono ~20 GB in totale, ma non si scaricano interi:
 si legge l'indice dello zip remoto via range HTTP e si estraggono **solo** i video del test set.
 
 Licenza: AutoShot è MIT. Il mirror HF non dichiara licenza — lo usiamo per scaricare in locale,

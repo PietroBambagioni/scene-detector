@@ -71,8 +71,14 @@ frammenti riassorbiti nell'identità principale.
 > conteggi di cluster fra run con `min_faces` diverso non misura niente. È lo stesso genere di
 > errore della 0.4: un numero plausibile letto senza la sua condizione.
 
-**Resta aperto:** `min_faces` è ancora un parametro ereditato, non scelto (§3.2), e ora pesa di
-più — il due stadi produce molti gruppi da un volto solo, quindi la soglia che li taglia conta.
+~~**Resta aperto:** `min_faces` è ancora un parametro ereditato, non scelto~~ ✅ **scelto e
+misurato** (Rogue One, 8839 volti in cache). Due scoperte: (1) l'asse era sbagliato — `min_faces`
+contava i *volti*, ma un personaggio del cast è chi *ricorre fra gli shot*; il taglio ora è
+`--faces-min-shots` (default 2). (2) La soglia di clustering **non** è il problema: i personaggi
+ricorrenti (≥3 shot) sono ~65 stabili a ogni soglia da 0,3 a 0,6, e il crollo 661→208 abbassandola
+sono quasi solo singleton. Su Rogue One il cast passa da **661 a 113**. Resta **una** frammentazione
+vera fra i grandi (cluster 22↔85, coseno 0,764: stesso volto in due cluster) che il greedy a passo
+singolo non fonde — un caso, non un problema diffuso.
 
 ### 2 · Diarizzazione — cosa è cambiato
 

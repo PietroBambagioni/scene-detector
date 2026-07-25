@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Installazione da zero: venv, dipendenze, pesi.
 #
-#   ./install.sh              base + pesi neurali (88 MB)
+#   ./install.sh              base + peso neurale (31 MB)
 #   ./install.sh --models     anche Whisper / VLM / volti (~4 GB, altrimenti al primo run)
 set -euo pipefail
 cd "$(dirname "$0")"

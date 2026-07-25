@@ -15,14 +15,12 @@ def run(
     video: Path = typer.Argument(..., exists=True, dir_okay=False, help="Film in ingresso"),
     output_dir: Path = typer.Option(Path("clips"), "--output-dir", "-o"),
     detector: DetectorKind = typer.Option(DetectorKind.transnet, "--detector", "-d"),
-    ensemble: bool = typer.Option(False, "--ensemble", help="TransNet + AutoShot con confidence"),
     split_mode: SplitMode = typer.Option(SplitMode.copy, "--split-mode"),
     threshold: float = typer.Option(0.05, "--threshold",
                                     help="Soglia boundary neurale (0,05: vedi core/config.py)"),
     min_scene_len: int = typer.Option(5, "--min-scene-len",
                                       help="Frame minimi per shot (5: vedi core/config.py)"),
     transnet_weights: Path = typer.Option(None, "--transnet-weights"),
-    autoshot_weights: Path = typer.Option(None, "--autoshot-weights"),
     asr: bool = typer.Option(False, "--asr", help="Trascrivi i dialoghi (faster-whisper)"),
     asr_model: str = typer.Option("large-v3-turbo", "--asr-model",
                                   help="Modello Whisper: tiny/base/small/medium/large-v3/large-v3-turbo o path"),
@@ -39,6 +37,7 @@ def run(
     faces_threshold: float = typer.Option(0.5, "--faces-threshold", help="Soglia coseno per clustering/gallery volti"),
     faces_min_score: float = typer.Option(0.5, "--faces-min-score", help="Soglia det_score: scarta i volti deboli"),
     faces_min_px: int = typer.Option(50, "--faces-min-px", help="Lato minimo del volto in pixel: sotto, l'embedding è rumore"),
+    faces_min_shots: int = typer.Option(3, "--faces-min-shots", help="Un personaggio entra nel cast se ricorre in >=N shot distinti (taglia le comparse)"),
     run_all: bool = typer.Option(False, "--all", help="Fa tutto: detection + split + faces + ASR + VLM"),
     max_detail: bool = typer.Option(False, "--max", help="Massimo dettaglio + multi-core: --all + reencode frame-accurate + multi-core (2 core liberi)"),
     jobs: int = typer.Option(0, "-j", "--jobs", help="Processi ffmpeg paralleli per il taglio (0 = auto: tutti i core meno 2)"),
@@ -52,18 +51,16 @@ def run(
         faces = True
     if transnet_weights is None and Path("weights/transnetv2.pth").exists():
         transnet_weights = Path("weights/transnetv2.pth")
-    if autoshot_weights is None and Path("weights/autoshot.pth").exists():
-        autoshot_weights = Path("weights/autoshot.pth")
 
     cfg = Config(
-        video=video, output_dir=output_dir, detector=detector, ensemble=ensemble,
+        video=video, output_dir=output_dir, detector=detector,
         split_mode=split_mode, threshold=threshold, min_scene_len=min_scene_len,
-        transnet_weights=transnet_weights, autoshot_weights=autoshot_weights,
+        transnet_weights=transnet_weights,
         asr=asr, asr_model=asr_model, asr_lang=asr_lang, asr_threads=asr_threads,
         vlm=vlm, vlm_model=vlm_model, vlm_frames=vlm_frames,
         faces=faces, faces_gallery=faces_gallery, faces_frames=faces_frames,
         faces_threshold=faces_threshold, faces_min_score=faces_min_score,
-        faces_min_px=faces_min_px,
+        faces_min_px=faces_min_px, faces_min_shots=faces_min_shots,
         jobs=jobs,
     )
 
@@ -94,7 +91,7 @@ def setup(
 ):
     """Scarica i pesi neurali e verifica gli eseguibili esterni.
 
-    I pesi piccoli (TransNetV2, AutoShot: 88 MB) arrivano da mirror con sha256 verificato.
+    Il peso di TransNetV2 (30 MB) arriva da un mirror con sha256 verificato.
     I modelli grandi si scaricano da soli al primo uso: `--models` li anticipa qui.
     """
     from .core.weights import REGISTRY, fetch, missing_tools
@@ -146,7 +143,6 @@ def benchmark(
     data_dir: Path = typer.Option(Path("prove/shot-dataset"), "--data-dir",
                                   help="Dove tenere ground truth e video scaricati"),
     limit: int = typer.Option(50, "--limit", help="Quanti video di test usare (0 = tutti i 200)"),
-    ensemble: bool = typer.Option(False, "--ensemble", help="TransNet + AutoShot invece del solo TransNet"),
     tol: int = typer.Option(5, "--tol", help="Tolleranza in frame per il match sui boundary"),
     min_iou: float = typer.Option(0.5, "--min-iou", help="IoU minimo perché una transizione sia un TP"),
 ):
@@ -173,14 +169,13 @@ def benchmark(
     typer.echo(f"\rvideo pronti: {len(videos)}" + " " * 20)
 
     cfg = Config(video=Path("."),
-                 transnet_weights=Path("weights/transnetv2.pth"),
-                 autoshot_weights=Path("weights/autoshot.pth"))
+                 transnet_weights=Path("weights/transnetv2.pth"))
     with typer.progressbar(length=len(videos), label="[bench]") as bar:
-        res = bench.run(videos, gt, cfg, ensemble=ensemble, tol=tol, min_iou=min_iou,
+        res = bench.run(videos, gt, cfg, tol=tol, min_iou=min_iou,
                         on_video=lambda *a: bar.update(1))
 
     b, t = res["boundary"], res["transition"]
-    typer.echo(f"\n{res['n_videos']} video · detector: {'ensemble' if ensemble else 'transnet'}")
+    typer.echo(f"\n{res['n_videos']} video · detector: transnet")
     typer.echo(f"boundary   (tol {res['tol']})  P {b['precision']:.3f}  R {b['recall']:.3f}  "
                f"F1 {b['f1']:.3f}   tp {b['tp']} fp {b['fp']} fn {b['fn']}")
     typer.echo(f"transizioni (IoU>={res['min_iou']})  P {t['precision']:.3f}  R {t['recall']:.3f}  "

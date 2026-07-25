@@ -11,14 +11,13 @@ from dataclasses import replace
 from ..core.config import DetectorKind
 from ..core.scene import enforce_min_len
 from ..detection import build_detector
-from ..detection import confidence as conf_mod
 from ..detection.neural import read_small_frames
 from ..io.video import probe
 from .eval import boundaries_from_ranges, boundaries_from_scenes, prf, prf1, transition_iou, \
     transitions_from_ranges
 
 
-def evaluate_video(video_path, gt_ranges, cfg, ensemble=False, tol=5, min_iou=0.5):
+def evaluate_video(video_path, gt_ranges, cfg, tol=5, min_iou=0.5):
     """Un video: -> (dict boundary con tp/fp/fn, dict transition, n_shot predetti)."""
     info = probe(video_path)
     vcfg = replace(cfg, video=video_path)
@@ -28,13 +27,7 @@ def evaluate_video(video_path, gt_ranges, cfg, ensemble=False, tol=5, min_iou=0.
     t_det = build_detector(DetectorKind.transnet, vcfg)
     h, w = t_det.input_size
     frames = read_small_frames(info.path, w, h, total=info.n_frames, progress=False)
-    transnet = t_det.detect_from_frames(frames, info)
-    if ensemble:
-        a_det = build_detector(DetectorKind.autoshot, vcfg)
-        scenes, _ = conf_mod.reconcile(transnet, a_det.detect_from_frames(frames, info),
-                                       info.n_frames, info.fps, t_det.probs, vcfg.agreement_tol)
-    else:
-        scenes = transnet
+    scenes = t_det.detect_from_frames(frames, info)
     scenes = enforce_min_len(scenes, vcfg.min_scene_len)
 
     b = prf1(boundaries_from_scenes(scenes), boundaries_from_ranges(gt_ranges), tol)
@@ -43,7 +36,7 @@ def evaluate_video(video_path, gt_ranges, cfg, ensemble=False, tol=5, min_iou=0.
     return b, t, len(scenes)
 
 
-def run(videos, gt, cfg, ensemble=False, tol=5, min_iou=0.5, on_video=None):
+def run(videos, gt, cfg, tol=5, min_iou=0.5, on_video=None):
     """Valuta tutti i video. `videos` = {id: Path}, `gt` = {id: [(start, end), …]}.
 
     -> dict con i totali micro sui boundary, la media degli IoU sulle transizioni e il
@@ -55,7 +48,7 @@ def run(videos, gt, cfg, ensemble=False, tol=5, min_iou=0.5, on_video=None):
     ious, n_gt_grad = [], 0
 
     for vid, path in sorted(videos.items()):
-        b, t, n = evaluate_video(path, gt[vid], cfg, ensemble, tol, min_iou)
+        b, t, n = evaluate_video(path, gt[vid], cfg, tol, min_iou)
         tp, fp, fn = tp + b["tp"], fp + b["fp"], fn + b["fn"]
         t_tp, t_fp, t_fn = t_tp + t["tp"], t_fp + t["fp"], t_fn + t["fn"]
         ious.append((t["mean_iou"], t["matched"]))

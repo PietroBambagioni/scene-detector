@@ -89,7 +89,7 @@ def _crop_thumb(pil_rgb, bbox, pad=0.3, size=112):
 
 
 def recognize_characters(manifest, video, recognizer, *, gallery=None, n_frames=6, size=640,
-                         threshold=0.5, min_faces=1, min_face_px=50, film_dir=None,
+                         threshold=0.5, min_shots=2, min_face_px=50, film_dir=None,
                          progress=True):
     """Popola `manifest["cast"]` e `shot["characters"]` rilevando e clusterizzando i volti del film.
 
@@ -130,7 +130,7 @@ def recognize_characters(manifest, video, recognizer, *, gallery=None, n_frames=
                                threshold, det_scores=scores)
 
     names = match_gallery(centroids_of(emb, labels), gallery, threshold) if gallery else {}
-    cast, per_shot = build_cast(labels, shot_idx, names, min_faces)
+    cast, per_shot = build_cast(labels, shot_idx, names, min_shots)
 
     if film_dir is not None and cast:
         kept = {c["id"] for c in cast}

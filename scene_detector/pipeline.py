@@ -4,13 +4,11 @@ import os
 from pathlib import Path
 
 from .core import telemetry as tel_mod
-from .core.config import Config, DetectorKind, SplitMode
+from .core.config import Config, SplitMode
 from .core.cpu import resolve_workers
 from .core.scene import enforce_min_len
 from .core.telemetry import log
 from .detection import build_detector
-from .detection import confidence as conf_mod
-from .detection.neural import read_small_frames
 from .io.video import probe
 from .segmentation.splitter import split
 
@@ -32,7 +30,7 @@ def run(cfg: Config) -> None:
     tel.write_config({
         "command": tel_mod.command_snapshot(),
         "flags": {
-            "detector": cfg.detector.value, "ensemble": cfg.ensemble,
+            "detector": cfg.detector.value,
             "split_mode": cfg.split_mode.value, "threshold": cfg.threshold,
             "min_scene_len": cfg.min_scene_len,
             "asr": cfg.asr, "asr_model": cfg.asr_model, "asr_lang": cfg.asr_lang,
@@ -44,10 +42,9 @@ def run(cfg: Config) -> None:
             "faces_min_score": cfg.faces_min_score,
             "jobs": cfg.jobs, "output_dir": str(cfg.output_dir),
             "transnet_weights": str(cfg.transnet_weights) if cfg.transnet_weights else None,
-            "autoshot_weights": str(cfg.autoshot_weights) if cfg.autoshot_weights else None,
         },
         "mode": {
-            "detector": "ensemble" if cfg.ensemble else cfg.detector.value,
+            "detector": cfg.detector.value,
             "split_mode": cfg.split_mode.value,
             "device": "mps" if env.get("mps_available") else "cpu",
             "split_workers": split_workers, "asr_workers": asr_workers,
@@ -63,22 +60,7 @@ def run(cfg: Config) -> None:
 
     log.info("[1/%d] Rilevamento shot…", n_steps)
     with tel.step("detection") as o:
-        if cfg.ensemble:
-            t_det = build_detector(DetectorKind.transnet, cfg)
-            a_det = build_detector(DetectorKind.autoshot, cfg)
-            assert t_det.input_size == a_det.input_size, "ensemble: input dei due detector diverso"
-            h, w = t_det.input_size  # (H, W) — decodifica condivisa una sola volta
-            frames = read_small_frames(info.path, w, h, total=info.n_frames, desc="[decode] frames")
-            a = t_det.detect_from_frames(frames, info)
-            b = a_det.detect_from_frames(frames, info)
-            scenes, flags = conf_mod.reconcile(a, b, info.n_frames, info.fps, t_det.probs,
-                                               cfg.agreement_tol)
-            if flags:
-                log.info("  %d boundary in disaccordo (rivedere): %s", len(flags), flags)
-            o["n_flag"] = len(flags)
-            o["flags"] = list(flags)
-        else:
-            scenes = build_detector(cfg.detector, cfg).detect(info)
+        scenes = build_detector(cfg.detector, cfg).detect(info)
         scenes = enforce_min_len(scenes, cfg.min_scene_len)
         o["n_shots"] = len(scenes)
         o["threshold"] = cfg.threshold
@@ -98,7 +80,7 @@ def run(cfg: Config) -> None:
         o["workers"] = split_workers
 
     from .catalog.manifest import build_manifest, write_manifest
-    label = "ensemble" if cfg.ensemble else cfg.detector.value
+    label = cfg.detector.value
     # senza clip la UI riproduce il film originale a intervalli: le serve come raggiungerlo
     # dalla cartella del catalogo (relativo: catalogo e film restano spostabili insieme)
     video_src = None if cutting else os.path.relpath(Path(cfg.video).resolve(), out_dir.resolve())
@@ -127,7 +109,8 @@ def run(cfg: Config) -> None:
                 gallery = load_gallery(cfg.faces_gallery, recognizer) if cfg.faces_gallery else None
                 n_faces, n_chars = recognize_characters(
                     manifest, cfg.video, recognizer, gallery=gallery, n_frames=cfg.faces_frames,
-                    threshold=cfg.faces_threshold, min_face_px=cfg.faces_min_px, film_dir=out_dir,
+                    threshold=cfg.faces_threshold, min_shots=cfg.faces_min_shots,
+                    min_face_px=cfg.faces_min_px, film_dir=out_dir,
                 )
             o["n_faces"] = n_faces
             o["n_characters"] = n_chars

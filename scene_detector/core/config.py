@@ -7,7 +7,6 @@ from pathlib import Path
 
 class DetectorKind(str, Enum):
     transnet = "transnet"
-    autoshot = "autoshot"
     pyscenedetect = "pyscenedetect"
 
 
@@ -22,7 +21,6 @@ class Config:
     video: Path
     output_dir: Path = Path("clips")
     detector: DetectorKind = DetectorKind.transnet
-    ensemble: bool = False
     split_mode: SplitMode = SplitMode.copy
     # Soglia boundary neurale. 0,05 e non 0,5: con `runs_to_ranges` una corsa di frame caldi è
     # una transizione sola, quindi la soglia bassa non moltiplica i tagli — recupera le
@@ -34,9 +32,7 @@ class Config:
     # nascono più shot brevi legittimi e la fusione cieca ne mangia di veri — sui soli stacchi
     # netti 0,77 con 15 contro 0,93 con 5. Le due tarature non sono separabili.
     min_scene_len: int = 5
-    agreement_tol: int = 5        # tolleranza (frame) per agreement in ensemble
     transnet_weights: Path | None = None
-    autoshot_weights: Path | None = None
     # trascrizione dialoghi (ASR)
     asr: bool = False
     asr_model: str = "large-v3-turbo"
@@ -53,5 +49,6 @@ class Config:
     faces_threshold: float = 0.5
     faces_min_score: float = 0.5
     faces_min_px: int = 50        # lato minimo del bbox: sotto, l'embedding e' rumore
+    faces_min_shots: int = 3      # un personaggio del cast ricorre in >=N shot distinti (non volti)
     # taglio clip
     jobs: int = 0                 # processi ffmpeg paralleli (0 = auto)

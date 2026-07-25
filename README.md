@@ -22,7 +22,7 @@ scene-detector "FILM.mp4" --all -o catalogo/
 ## Installazione
 
 ```bash
-./install.sh            # venv + tutte le dipendenze + pesi neurali (88 MB)
+./install.sh            # venv + tutte le dipendenze + peso neurale (31 MB)
 ./install.sh --models   # anche Whisper / VLM / volti (~4 GB), altrimenti scaricati al primo run
 ```
 
@@ -32,7 +32,7 @@ A mano, per un'installazione parziale:
 python3.13 -m venv .venv
 source .venv/bin/activate
 pip install -e .              # base: scenedetect, numpy, typer, tqdm
-pip install -e '.[neural]'    # TransNetV2 / AutoShot: torch, pillow, einops
+pip install -e '.[neural]'    # TransNetV2: torch, pillow
 pip install -e '.[asr]'       # trascrizione: faster-whisper
 pip install -e '.[vlm]'       # descrizione visiva: mlx-vlm (Apple Silicon)
 pip install -e '.[faces]'     # personaggi: insightface, onnxruntime (CoreML)
@@ -54,7 +54,7 @@ rompe nulla finché non lo si chiede.
 ### 1 · Rilevamento shot
 
 Il video viene decodificato **una sola volta** a 48×27 px via ffmpeg — la risoluzione d'ingresso
-dei due modelli neurali — e i frame restano in RAM (~1,25 GB per un film di 2 h). Il detector
+del modello neurale — e i frame restano in RAM (~1,25 GB per un film di 2 h). Il detector
 produce una **probabilità di boundary per frame**, non una lista di tagli:
 
 ```
@@ -73,11 +73,8 @@ manifest. `enforce_min_len` fonde nella precedente ogni scena più corta di `--m
 > 0,088 a 0,270 e sui soli stacchi netti da 0,81 a **0,93**, al prezzo di +32% di shot.
 > Dettagli in [plan/TRANSIZIONI-GRADUALI.md](plan/TRANSIZIONI-GRADUALI.md).
 
-In modalità `--ensemble` i due detector condividono la stessa decodifica e i loro boundary
-vengono riconciliati (`detection/confidence.py`): i tagli entro `agreement_tol=5` frame si
-fondono, gli altri entrano comunque ma finiscono in `flags` come «da rivedere». La
-**confidenza** di ogni boundary è la probabilità per-frame di TransNetV2 al taglio — uno score
-continuo, non un flag binario.
+La **confidenza** di ogni boundary è la probabilità per-frame di TransNetV2 al taglio che lo
+apre — uno score continuo e calibrato, non un flag binario.
 
 ### 2 · Taglio delle clip
 
@@ -111,6 +108,11 @@ Il clustering è **a due stadi** e questo è il pezzo che conta:
 Misurato su un film di 3h33: **−31% di cluster a parità di copertura degli shot** rispetto al
 clustering per singolo volto. Un pre-filtro `--faces-min-px` scarta i volti troppo piccoli,
 il cui embedding è rumore.
+
+Nel cast entra solo chi **ricorre in ≥`--faces-min-shots` shot distinti** (default 3), non chi
+appare in ≥N *volti*: lo stesso viso in due frame di un solo shot resta un'apparizione unica, non
+un personaggio. Su Rogue One il taglio per shot porta il cast da 661 a 65 col default 3 (i
+singleton spariscono); `--faces-min-shots 2` lo allarga a 113.
 
 Con `--faces-gallery <dir>` (una sottocartella `<Nome>/` con foto per personaggio) i cluster
 prendono i nomi veri; senza gallery restano `Personaggio N`, **rinominabili nella UI**.
@@ -190,12 +192,7 @@ durata/esito di ogni stadio.
 | Modello | `-d` | Tipo | Device | Pesi | Ruolo |
 |---|---|---|---|---|---|
 | **TransNetV2** | `transnet` | CNN 3D (DDCNN) | MPS | 31 MB | primario, default |
-| **AutoShot** | `autoshot` | NAS su spazio derivato da TransNetV2 | CPU | 57 MB | seconda opinione |
 | **PySceneDetect** | `pyscenedetect` | classico, content-based | CPU | nessuno | baseline, zero setup |
-| **Ensemble** | `--ensemble` | TransNet + AutoShot | MPS+CPU | entrambi | riconciliazione + flag sui disaccordi |
-
-**AutoShot gira su CPU e non su MPS**: la sua `ColorHistograms` usa operazioni intere
-(bit-shift, segment-sum) che MPS non supporta.
 
 ### Arricchimento
 
@@ -208,7 +205,7 @@ durata/esito di ogni stadio.
 
 ### Base
 
-**Typer** (CLI) · **PyTorch** + **einops** (inference neurale) · **NumPy** · **OpenCV** via
+**Typer** (CLI) · **PyTorch** (inference neurale) · **NumPy** · **OpenCV** via
 `scenedetect` · **ffmpeg/ffprobe** (probe, decode, taglio) · **tqdm** · **psutil** (telemetria)
 · **pytest**.
 
@@ -223,7 +220,6 @@ Quattro entry point.
 ```bash
 scene-detector FILM.mp4 -d pyscenedetect -o clips/          # baseline classica, nessun peso
 scene-detector FILM.mp4 -o clips/                           # neurale (default), pesi auto da weights/
-scene-detector FILM.mp4 --ensemble -o clips/                # TransNet + AutoShot
 scene-detector FILM.mp4 --all --asr-lang it -o catalogo/    # tutto, lingua forzata
 scene-detector FILM.mp4 --all --split-mode none -o catalogo/ # catalogo senza duplicare il film
 ```
@@ -234,14 +230,12 @@ scene-detector FILM.mp4 --all --split-mode none -o catalogo/ # catalogo senza du
 | `-o, --output-dir` | `clips` | cartella radice; l'output va in `<dir>/<nome-film>/` |
 | `--all` | off | pipeline completa: detection + split + faces + ASR + VLM |
 | `--max` | off | `--all` + `reencode` frame-accurate + multi-core |
-| `-d, --detector` | `transnet` | `transnet` \| `autoshot` \| `pyscenedetect` |
-| `--ensemble` | off | TransNet + AutoShot con riconciliazione e flag sui disaccordi |
+| `-d, --detector` | `transnet` | `transnet` \| `pyscenedetect` |
 | `--threshold` | `0.05` | soglia di boundary sulle probabilità neurali |
 | `--min-scene-len` | `5` | frame minimi per shot (sotto, viene fuso nel precedente) |
 | `--split-mode` | `copy` | `copy` \| `reencode` \| `none` |
 | `-j, --jobs` | `0` | processi ffmpeg paralleli per il taglio (0 = core − 2) |
 | `--transnet-weights` | auto da `weights/` | pesi TransNetV2 |
-| `--autoshot-weights` | auto da `weights/` | pesi AutoShot |
 | `--asr` | off | trascrivi i dialoghi |
 | `--asr-model` | `large-v3-turbo` | `tiny/base/small/medium/large-v3/large-v3-turbo` o path |
 | `--asr-lang` | auto | lingua ISO (es. `it`); auto = rilevata sul parlato |
@@ -255,11 +249,12 @@ scene-detector FILM.mp4 --all --split-mode none -o catalogo/ # catalogo senza du
 | `--faces-threshold` | `0.5` | soglia coseno per clustering / match gallery |
 | `--faces-min-score` | `0.5` | soglia `det_score`: scarta i volti deboli |
 | `--faces-min-px` | `50` | lato minimo del volto in px: sotto, l'embedding è rumore |
+| `--faces-min-shots` | `3` | un personaggio entra nel cast se ricorre in ≥N shot distinti (taglia le comparse) |
 
 ### `scene-detector-setup` — pesi e modelli
 
 ```bash
-scene-detector-setup                 # TransNetV2 + AutoShot (88 MB), sha256 verificato
+scene-detector-setup                 # TransNetV2 (31 MB), sha256 verificato
 scene-detector-setup --models        # anticipa anche Whisper / VLM / volti (~4 GB)
 scene-detector-setup --force         # riscarica anche ciò che c'è già
 ```
@@ -270,19 +265,18 @@ Verifica anche che `ffmpeg`/`ffprobe` siano nel PATH.
 
 ```bash
 scene-detector-benchmark --limit 50            # 50 video del test set di SHOT
-scene-detector-benchmark --limit 0 --ensemble  # tutti i 200, in ensemble
+scene-detector-benchmark --limit 0             # tutti i 200
 ```
 
 | Flag | Default | Descrizione |
 |---|---|---|
 | `--data-dir` | `prove/shot-dataset` | dove tenere ground truth e video |
 | `--limit` | `50` | quanti video di test usare (0 = tutti i 200) |
-| `--ensemble` | off | valuta l'ensemble invece del solo TransNet |
 | `--tol` | `5` | tolleranza in frame per il match sui boundary |
 | `--min-iou` | `0.5` | IoU minimo perché una transizione conti come TP |
 
 Scarica il test set di **SHOT** (AutoShot, CVPR-W 2023: 200 video, 2716 shot, 2516 boundary di
-cui 438 transizioni graduali **col loro range**) dallo stesso mirror HuggingFace dei pesi.
+cui 438 transizioni graduali **col loro range**) da un mirror HuggingFace pubblico.
 Niente Baidu, niente auth, **niente annotazione a mano**. Degli ~20 GB di archivi legge l'indice
 degli zip remoti via range HTTP e scarica solo i video che servono.
 
@@ -301,11 +295,9 @@ verifica lo **sha256** di ogni file e scrive su un temporaneo, rinominando solo 
 — un download interrotto non lascia un peso corrotto al suo posto. Il registro sta in
 [`core/weights.py`](scene_detector/core/weights.py).
 
-Nessuno dei due upstream pubblica un artefatto scaricabile — TransNetV2 va convertito da
-TensorFlow, AutoShot sta su Baidu con passcode — ma entrambi hanno un **mirror pubblico su
-HuggingFace**: AutoShot identico byte per byte, TransNetV2 una conversione diversa (altra
-serializzazione torch) ma con **90/90 tensori uguali**, verificato con `torch.equal`. Download
-completo in ~9 s.
+L'upstream di TransNetV2 non pubblica un artefatto scaricabile — va convertito da TensorFlow —
+ma c'è un **mirror pubblico su HuggingFace**: una conversione diversa (altra serializzazione
+torch) ma con **90/90 tensori uguali**, verificato con `torch.equal`. Download in ~9 s.
 
 Un file già presente in `weights/` **non viene sovrascritto**, anche se il suo hash differisce da
 quello del mirror: chi ha convertito i pesi a mano ha un file valido con un hash diverso.
@@ -372,13 +364,13 @@ deve pesare più di uno con 1).
 ## Test
 
 ```bash
-.venv/bin/python -m pytest tests/ -q                    # 79 test, ~0,2 s
+.venv/bin/python -m pytest tests/ -q                    # 82 test, ~0,2 s
 .venv/bin/python -m pytest tests/test_eval.py -q        # un singolo file
 .venv/bin/python -m pytest tests/ -q -k transition      # un singolo caso
 ```
 
 I test non toccano video né pesi: girano in due decimi di secondo e coprono la logica pura
-(post-processing, riconciliazione, clustering, allineamento dialoghi, manifest, metriche).
+(post-processing, clustering, allineamento dialoghi, manifest, metriche).
 
 ---
 
@@ -398,10 +390,9 @@ scene_detector/
     telemetry.py            # logs/run-<ts>/
   io/video.py               # probe ffprobe -> VideoInfo
   detection/
-    neural.py               # decode + probs_to_ranges + i due detector
+    neural.py               # decode + probs_to_ranges + il detector
     pyscenedetect.py
-    confidence.py           # riconciliazione ensemble
-    models/                 # architetture vendored (TransNetV2, AutoShot) + wrapper
+    models/                 # architettura vendored (TransNetV2) + wrapper
   segmentation/splitter.py  # export clip via ffmpeg, parallelo
   transcription/
     asr.py                  # faster-whisper + VAD + filtro allucinazioni
@@ -425,7 +416,7 @@ scene_detector/
 ## Note & gotcha
 
 - **Memoria**: i frame 48×27 stanno interi in RAM, ~1,25 GB per un film di 2 h a 24 fps. È una
-  scelta: il path a streaming costava 120 righe e in ensemble raddoppiava la decodifica.
+  scelta: il path a streaming costava 120 righe per risparmiare ~1 GB.
 - **Taglio**: `copy` è veloce ma si allinea ai keyframe, quindi su uno shot corto l'errore pesa
   in proporzione. Se conta, `reencode`.
 - **Film lunghi**: `--split-mode copy` (default), altrimenti migliaia di clip in `reencode` sono
@@ -444,8 +435,8 @@ scene_detector/
 | Componente | Autori | Licenza |
 |---|---|---|
 | [TransNetV2](https://github.com/soCzech/TransNetV2) | Souček & Lokoč | MIT |
-| [AutoShot](https://github.com/wentaozhu/AutoShot) | Zhu et al., CVPR-W 2023 | MIT |
 | [PySceneDetect](https://github.com/Breakthrough/PySceneDetect) | Castellano | BSD-3 |
+| [SHOT dataset](https://github.com/wentaozhu/AutoShot) (solo benchmark) | Zhu et al., CVPR-W 2023 | MIT |
 | [faster-whisper](https://github.com/SYSTRAN/faster-whisper) | SYSTRAN | MIT |
 | [mlx-vlm](https://github.com/Blaizzy/mlx-vlm) · [Qwen3-VL](https://github.com/QwenLM/Qwen3-VL) | Blaizzy · Alibaba | MIT · Apache-2.0 |
 | [InsightFace](https://github.com/deepinsight/insightface) | Deng et al. | codice **MIT** |
@@ -453,6 +444,6 @@ scene_detector/
 ⚠️ Il model package **`buffalo_l`** di InsightFace ha una **licenza separata: solo ricerca non
 commerciale**. È distinta dalla licenza MIT del codice.
 
-Le architetture di TransNetV2 e AutoShot sono vendorate in `detection/models/` (entrambe MIT).
+L'architettura di TransNetV2 è vendorata in `detection/models/` (MIT).
 Regola adottata per il resto: **codice senza licenza si scarica al setup, non si vendora** —
 stesso schema di `core/weights.py` per i pesi.

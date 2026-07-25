@@ -96,6 +96,27 @@ const esc = s => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c
 
 $('meta').textContent = `${DATA.video} · ${DATA.n_shots} shot · ${DATA.detector}`;
 
+// Con --split-mode none non ci sono clip: si riproduce il film originale spostando currentTime,
+// non riassegnando src a ogni click. Il media fragment #t= era inaffidabile — cambiare solo il
+// frammento non fa ricaricare, e ricaricare 2,7 GB a ogni click e' comunque lento. Qui il film
+// si carica UNA volta, poi ogni shot e' un seek + play che si ferma a fine shot.
+const FILM = DATA.video_src || null;
+let stopAt = Infinity;
+if (FILM) {
+  $('player').src = FILM;
+  $('player').addEventListener('timeupdate', () => {
+    if ($('player').currentTime >= stopAt) $('player').pause();
+  });
+}
+
+function seekTo(sh) {
+  const p = $('player');
+  stopAt = sh.end_time;
+  const go = () => { p.currentTime = sh.start_time; p.play().catch(() => {}); };
+  if (p.readyState >= 1) go();                 // metadati pronti: seek subito
+  else p.addEventListener('loadedmetadata', go, { once: true });
+}
+
 function renderList(filter='') {
   const list = $('list'); list.innerHTML = '';
   shots.forEach((sh, i) => {
@@ -131,10 +152,9 @@ function select(i) {
   if (i < 0 || i >= shots.length) return;
   cur = i;
   const sh = shots[i];
-  // con --split-mode none non ci sono clip: si riproduce il film intero a intervallo
-  // (media fragment). Il '#t=' va rimesso ogni volta o il player resta sul frammento vecchio.
-  const src = sh.clip || `${DATA.video_src}#t=${sh.start_time},${sh.end_time}`;
-  $('player').src = src;
+  // clip su disco: una src per shot. Film non tagliato: seek sul film gia' caricato.
+  if (sh.clip) { stopAt = Infinity; $('player').src = sh.clip; }
+  else if (FILM) seekTo(sh);
   $('tc').textContent = `#${String(i).padStart(3,'0')}  ${fmt(sh.start_time)}–${fmt(sh.end_time)}  (${sh.clip || DATA.video})`;
   renderChips(sh);
   $('dialogue').value = sh.dialogue || '';
