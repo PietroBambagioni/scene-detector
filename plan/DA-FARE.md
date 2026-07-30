@@ -634,6 +634,51 @@ Da fare **dopo** la 4.4, non prima.
   a 0,63 su BBC), e un tratto d'azione ha per costruzione scene lunghe. Il tasso dell'1,1% è il
   tasso *di questo tratto*, non del film.
 
+  ### ✅ Il secondo tratto, dialogato — e la voce va nella direzione opposta (30 lug 2026)
+
+  Stesso protocollo su **2700-3600 s** (shot 991-1392, 401 stacchi): Jedha, il messaggio di Galen,
+  la distruzione, Yavin, il viaggio, l'arrivo su Eadu. Tratto scelto **prima di guardare** come la
+  finestra da 900 s con più parlato del film (1160 parole ASR contro 502). `prove/annota2700/`.
+  **12 confini certi + 10 incerti.**
+
+  🎯 **La densità di scene dipende dal materiale, e questo condanna un k globale.** 3,0% degli
+  stacchi qui contro 1,1% nel tratto d'azione: **una scena ogni 69 s invece di ogni 180 s**. Non è
+  rumore fra due campioni, è il montaggio: dialogo e battaglia hanno strutture diverse. Un k unico
+  per il film è troppo alto per le sequenze d'azione e troppo basso per quelle dialogate — e
+  infatti k=250 mette 14 confini dove qui ce ne sono 12 (giusto) e 35 dove là ce n'erano 4 (9×).
+  **Non serve un k migliore: serve una segmentazione a densità variabile.**
+
+  | OSG contro i 12 certi | tol 0 | tol 1 | tol 3 |
+  |---|---|---|---|
+  | dialogato (2700) | **F1 0,308** (P 0,29 · R 0,33) | F1 0,385 | **F1 0,538** (P 0,50 · R 0,58) |
+  | dialogato, + incerti | F1 0,389 | F1 0,444 | **F1 0,556** (P 0,71 · R 0,46) |
+  | azione (3600), per confronto | F1 0,051 | F1 0,205 | F1 0,205 |
+
+  Dove k è nell'ordine giusto **OSG arriva a 0,54-0,56**, cioè all'86% dell'accordo fra annotatori
+  esperti (0,63). Contro lo 0,300-0,317 di BBC e RAI, dove k era imposto dal ground truth.
+
+  ⛔ **La voce non predice i confini — li anti-predice.** Sul tratto più dialogato del film:
+
+  | categoria | coppie | confini | tasso |
+  |---|---|---|---|
+  | dominante **cambia** | 44 | **0** | **0,0000** |
+  | parlanti condivisi | 166 | 5 | 0,0301 |
+  | almeno uno **muto** | 191 | 7 | **0,0366** |
+
+  **Zero confini su 44 cambi di parlante**, e il tasso più alto è fra gli shot muti. Con il senno
+  della misura è ovvio e andava previsto: un cambio di parlante *è* il campo/controcampo, cioè il
+  segnale più forte di **continuità** dentro una scena; un cambio di scena cade su una **pausa**.
+  La tesi «parlante che attraversa lo stacco = stessa scena» è vera e inutile — quasi tutti gli
+  stacchi parlati sono interni a una scena — mentre il suo complemento è falso.
+
+  ⚠️ **E l'indizio di RAI (1,74×, p = 0,017) non generalizza**: là il «dominante» è il conduttore, e
+  cambiarlo coincide con lo stacco didattico fra segmenti. Su fiction il meccanismo non esiste. È
+  il caso da manuale del perché questo file chiede due banchi prima di credere a un effetto.
+
+  🔵 **Se si vuole insistere sull'audio, il candidato è il silenzio, non l'identità del parlante**:
+  è l'unica categoria che sopravanza la prevalenza (0,0366 contro 0,0299), ed è misurabile senza
+  diarizzazione — basta il VAD che l'ASR usa già. 7 confini su 12 cadono lì.
+
   ⛔ **La stima di k non funziona** (`--estimate`). Contro il numero vero di scene per video, il
   gomito dei valori singolari sottostima sistematicamente: media 7,2 (HSV) e 10,0 (SigLIP) contro
   **12,6** reale, e non segue il video (GT 22 → 5; GT 5 → 7). Conseguenza retroattiva: i **126**
