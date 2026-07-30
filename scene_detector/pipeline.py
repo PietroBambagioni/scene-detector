@@ -58,7 +58,7 @@ def run(cfg: Config) -> None:
         "env": env,
     })
 
-    n_steps = (3 + (1 if cfg.scenes else 0) + (1 if cfg.faces else 0)
+    n_steps = (4 + (1 if cfg.scenes else 0) + (1 if cfg.faces else 0)
                + (1 if cfg.asr else 0) + (1 if cfg.vlm else 0))
 
     log.info("[1/%d] Rilevamento shot…", n_steps)
@@ -91,7 +91,18 @@ def run(cfg: Config) -> None:
                               clip_template=None if not cutting else "scene-{:03d}.mp4",
                               video_src=video_src)
     manifest_path = out_dir / "manifest.json"
-    step = 2
+
+    # Miniature **per shot** e sempre, non solo con `--scenes`: la lista della UI le mostra in
+    # entrambe le modalità (senza, resta una fila di testo), e con le scene fanno anche le
+    # intestazioni — per shot perché unisci/dividi possono far cominciare una scena da qualunque.
+    log.info("[3/%d] Miniature per shot…", n_steps)
+    with tel.step("thumbs") as o:
+        from .catalog.thumbs import extract_thumbs
+        # ponytail: un seek ffmpeg per shot, ~0,1 s ciascuno — quindi ~5 min su 3200 shot, niente
+        # accanto ai 45 min di ASR+VLM ma visibile su un run di sola detection. Idempotente (i
+        # file già su disco si saltano). Se il costo mordesse, il rimedio è un `--no-thumbs`.
+        o["n_thumbs"] = extract_thumbs(manifest, cfg.video, out_dir)
+    step = 3
 
     if cfg.scenes:
         step += 1
@@ -113,10 +124,6 @@ def run(cfg: Config) -> None:
             groups = group_shots(scenes, shot_signatures(frames, scenes), cfg.n_scenes)
             manifest["n_scenes"] = len(groups)
             manifest["scenes"] = build_scene_entries(groups, scenes)
-            # miniature per shot: la UI le usa nelle intestazioni di scena, e servono per shot
-            # perché unisci/dividi possono far cominciare una scena da qualunque shot
-            from .catalog.thumbs import extract_thumbs
-            o["n_thumbs"] = extract_thumbs(manifest, cfg.video, out_dir)
             o["n_scenes"] = len(groups)
             o["n_scenes_richiesto"] = cfg.n_scenes
             o["shot_per_scena"] = round(len(scenes) / len(groups), 2)
@@ -130,6 +137,11 @@ def run(cfg: Config) -> None:
             prior = load_manifest(manifest_path) if manifest_path.exists() else None
             if prior and prior.get("cast"):
                 manifest["cast"] = prior["cast"]  # resume: riusa il cast già calcolato (+ eventuali rinomine)
+                # Il resume non ri-rileva niente, quindi le opzioni volti di *questo* run non si
+                # applicano: va detto, o `--faces-refine` sembra non fare nulla.
+                if cfg.faces_refine:
+                    log.warning("  cast riusato dal manifest: --faces-refine non applicato "
+                                "(togli la voce `cast` da %s per rifare i volti)", manifest_path)
                 prior_chars = {s["index"]: s.get("characters", []) for s in prior["shots"]}
                 for s in manifest["shots"]:
                     s["characters"] = prior_chars.get(s["index"], [])

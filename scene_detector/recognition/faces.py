@@ -171,7 +171,7 @@ def _refine(labels, scores, shot_idx, body, threshold=0.70):
 
 
 def recognize_characters(manifest, video, recognizer, *, gallery=None, n_frames=6, size=640,
-                         threshold=0.5, min_shots=2, min_face_px=50, film_dir=None,
+                         threshold=0.5, min_shots=3, min_face_px=50, film_dir=None,
                          encoder=None, refine_threshold=0.70, progress=True):
     """Popola `manifest["cast"]` e `shot["characters"]` rilevando e clusterizzando i volti del film.
 
