@@ -43,6 +43,42 @@ def build_manifest(video_info, scenes, detector, clip_template="scene-{:03d}.mp4
     }
 
 
+# Campi che costano ore di calcolo e che `build_manifest` non può ricostruire: se il manifest
+# nuovo li lasciasse a `None`, un run senza `--vlm`/`--asr` **cancellerebbe** il lavoro dei run
+# precedenti. È già successo: `clips/Rogue.One/manifest.json` ha perso 3204 descrizioni e 897
+# dialoghi (5h16m) in un run `--scenes`, e si sono recuperati solo perché esistevano due copie
+# fatte a mano. Il cast non è qui perché lo step `faces` ha già il suo resume.
+CAMPI_COSTOSI = ("description", "dialogue", "characters", "speakers")
+
+
+def merge_prior(manifest, path):
+    """Riporta nel manifest i campi costosi già presenti su disco. -> quanti shot recuperati.
+
+    Accoppiamento per `index`, e solo dove il valore nuovo è vuoto: un run che ricalcola davvero
+    (`--vlm`, `--asr`, `--diarize`) scrive dopo e vince. Se il manifest su disco non c'è o è
+    illeggibile non è un errore — è il primo run.
+    """
+    p = Path(path)
+    if not p.exists():
+        return 0
+    try:
+        prior = load_manifest(p)
+    except (json.JSONDecodeError, OSError):
+        return 0
+
+    by_index = {s["index"]: s for s in prior.get("shots", [])}
+    n = 0
+    for shot in manifest["shots"]:
+        old = by_index.get(shot["index"])
+        if not old:
+            continue
+        recuperati = [c for c in CAMPI_COSTOSI if not shot.get(c) and old.get(c)]
+        for campo in recuperati:
+            shot[campo] = old[campo]
+        n += bool(recuperati)
+    return n
+
+
 def write_manifest(manifest, path):
     Path(path).write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
 

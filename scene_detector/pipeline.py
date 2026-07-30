@@ -82,7 +82,7 @@ def run(cfg: Config) -> None:
         o["split_mode"] = cfg.split_mode.value
         o["workers"] = split_workers
 
-    from .catalog.manifest import build_manifest, write_manifest
+    from .catalog.manifest import build_manifest, merge_prior, write_manifest
     label = cfg.detector.value
     # senza clip la UI riproduce il film originale a intervalli: le serve come raggiungerlo
     # dalla cartella del catalogo (relativo: catalogo e film restano spostabili insieme)
@@ -91,6 +91,11 @@ def run(cfg: Config) -> None:
                               clip_template=None if not cutting else "scene-{:03d}.mp4",
                               video_src=video_src)
     manifest_path = out_dir / "manifest.json"
+    # `build_manifest` riparte da zero: senza questo, un run che non riaccende `--vlm`/`--asr`
+    # sovrascrive descrizioni e dialoghi con `None` e butta ore di calcolo.
+    recuperati = merge_prior(manifest, manifest_path)
+    if recuperati:
+        log.info("[resume] %d shot recuperati dal manifest esistente", recuperati)
 
     # Miniature **per shot** e sempre, non solo con `--scenes`: la lista della UI le mostra in
     # entrambe le modalità (senza, resta una fila di testo), e con le scene fanno anche le
