@@ -8,10 +8,8 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from ..core.config import DetectorKind
 from ..core.scene import enforce_min_len
-from ..detection import build_detector
-from ..detection.neural import read_small_frames
+from ..detection.neural import TransNetV2Detector, read_small_frames
 from ..io.video import probe
 from .eval import boundaries_from_ranges, boundaries_from_scenes, prf, prf1, transition_iou, \
     transitions_from_ranges
@@ -23,8 +21,11 @@ def evaluate_video(video_path, gt_ranges, cfg, tol=5, min_iou=0.5):
     vcfg = replace(cfg, video=video_path)
 
     # decode-once anche per il detector singolo: `detect()` stamperebbe le sue barre per ogni
-    # video, e con 50 video l'output del benchmark diventa illeggibile
-    t_det = build_detector(DetectorKind.transnet, vcfg)
+    # video, e con 50 video l'output del benchmark diventa illeggibile. È anche il motivo per cui
+    # qui il detector è fisso e `cfg.detector` non viene letto: `detect_from_frames` la espone
+    # solo la via neurale — PySceneDetect decodifica da sé. Passava da `build_detector` con
+    # `DetectorKind.transnet` costante, cioè un'indirezione che non sceglieva niente.
+    t_det = TransNetV2Detector(vcfg.transnet_weights, vcfg.threshold)
     h, w = t_det.input_size
     frames = read_small_frames(info.path, w, h, total=info.n_frames, progress=False)
     scenes = t_det.detect_from_frames(frames, info)
