@@ -76,7 +76,7 @@ def run(cfg: Config) -> None:
             split(info, scenes, out_dir, cfg.split_mode, jobs=cfg.jobs)
             o["n_clips"] = len(scenes)
         else:
-            log.info("[2/%d] Taglio saltato (--split-mode none): la UI usa i media fragments",
+            log.info("[2/%d] Taglio saltato (--split-mode none): la UI riproduce il film intero",
                      n_steps)
             o["n_clips"] = 0
         o["split_mode"] = cfg.split_mode.value
@@ -102,6 +102,7 @@ def run(cfg: Config) -> None:
         # accanto ai 45 min di ASR+VLM ma visibile su un run di sola detection. Idempotente (i
         # file già su disco si saltano). Se il costo mordesse, il rimedio è un `--no-thumbs`.
         o["n_thumbs"] = extract_thumbs(manifest, cfg.video, out_dir)
+    log.info("  %d miniature (%d già su disco)", o["n_thumbs"], len(scenes) - o["n_thumbs"])
     step = 3
 
     if cfg.scenes:
@@ -211,6 +212,8 @@ def run(cfg: Config) -> None:
             o["total_described"] = after
             o["model"] = cfg.vlm_model
             o["vlm_frames"] = cfg.vlm_frames
+        log.info("  %d descrizioni nuove, %d shot su %d descritti",
+                 o["described"], o["total_described"], len(scenes))
 
     log.info("[%d/%d] Manifest + UI", n_steps, n_steps)
     with tel.step("manifest") as o:
