@@ -38,6 +38,8 @@ def run(
     faces_min_score: float = typer.Option(0.5, "--faces-min-score", help="Soglia det_score: scarta i volti deboli"),
     faces_min_px: int = typer.Option(50, "--faces-min-px", help="Lato minimo del volto in pixel: sotto, l'embedding è rumore"),
     faces_min_shots: int = typer.Option(3, "--faces-min-shots", help="Un personaggio entra nel cast se ricorre in >=N shot distinti (taglia le comparse)"),
+    faces_refine: bool = typer.Option(False, "--faces-refine", help="Rimette in discussione i cluster non-volto (droidi, elmetti) sui ritagli di figura (DINOv2 adattato)"),
+    faces_refine_threshold: float = typer.Option(0.70, "--faces-refine-threshold", help="Soglia coseno del raffinamento. NON è --faces-threshold: altro spazio di embedding, altra scala"),
     scenes: bool = typer.Option(False, "--scenes", help="Raggruppa gli shot in scene (OSG, solo visivo)"),
     n_scenes: int = typer.Option(None, "--n-scenes", help="Numero di scene. Passalo: la stima automatica sottostima di ~40% (misurato su RAI)"),
     run_all: bool = typer.Option(False, "--all", help="Fa tutto: detection + split + faces + ASR + VLM"),
@@ -68,6 +70,7 @@ def run(
         faces=faces, faces_gallery=faces_gallery, faces_frames=faces_frames,
         faces_threshold=faces_threshold, faces_min_score=faces_min_score,
         faces_min_px=faces_min_px, faces_min_shots=faces_min_shots,
+        faces_refine=faces_refine, faces_refine_threshold=faces_refine_threshold,
         scenes=scenes, n_scenes=n_scenes,
         jobs=jobs,
     )

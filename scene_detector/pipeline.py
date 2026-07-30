@@ -39,7 +39,8 @@ def run(cfg: Config) -> None:
             "faces": cfg.faces,
             "faces_gallery": str(cfg.faces_gallery) if cfg.faces_gallery else None,
             "faces_frames": cfg.faces_frames, "faces_threshold": cfg.faces_threshold,
-            "faces_min_score": cfg.faces_min_score,
+            "faces_min_score": cfg.faces_min_score, "faces_refine": cfg.faces_refine,
+            "faces_refine_threshold": cfg.faces_refine_threshold,
             "scenes": cfg.scenes, "n_scenes": cfg.n_scenes,
             "jobs": cfg.jobs, "output_dir": str(cfg.output_dir),
             "transnet_weights": str(cfg.transnet_weights) if cfg.transnet_weights else None,
@@ -112,6 +113,10 @@ def run(cfg: Config) -> None:
             groups = group_shots(scenes, shot_signatures(frames, scenes), cfg.n_scenes)
             manifest["n_scenes"] = len(groups)
             manifest["scenes"] = build_scene_entries(groups, scenes)
+            # miniature per shot: la UI le usa nelle intestazioni di scena, e servono per shot
+            # perché unisci/dividi possono far cominciare una scena da qualunque shot
+            from .catalog.thumbs import extract_thumbs
+            o["n_thumbs"] = extract_thumbs(manifest, cfg.video, out_dir)
             o["n_scenes"] = len(groups)
             o["n_scenes_richiesto"] = cfg.n_scenes
             o["shot_per_scena"] = round(len(scenes) / len(groups), 2)
@@ -134,10 +139,15 @@ def run(cfg: Config) -> None:
                 from .recognition import FaceRecognizer, load_gallery, recognize_characters
                 recognizer = FaceRecognizer(min_score=cfg.faces_min_score)
                 gallery = load_gallery(cfg.faces_gallery, recognizer) if cfg.faces_gallery else None
+                encoder = None
+                if cfg.faces_refine:
+                    from .recognition.embed import BodyEncoder
+                    encoder = BodyEncoder()
                 n_faces, n_chars = recognize_characters(
                     manifest, cfg.video, recognizer, gallery=gallery, n_frames=cfg.faces_frames,
                     threshold=cfg.faces_threshold, min_shots=cfg.faces_min_shots,
-                    min_face_px=cfg.faces_min_px, film_dir=out_dir,
+                    min_face_px=cfg.faces_min_px, film_dir=out_dir, encoder=encoder,
+                    refine_threshold=cfg.faces_refine_threshold,
                 )
             o["n_faces"] = n_faces
             o["n_characters"] = n_chars

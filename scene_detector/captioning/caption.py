@@ -153,7 +153,10 @@ def caption_manifest(manifest, video, captioner, n_frames=3, size=512,
     from tqdm import tqdm
 
     shots = manifest["shots"]
-    cast_names = {c["id"]: c["name"] for c in manifest.get("cast", [])}  # id cluster → nome (face-rec)
+    # id cluster → nome (face-rec). I cluster `uncertain` restano fuori: sono volti che il
+    # rilevatore non riconosce come umani (droidi, elmetti) e finiscono fusi fra loro, quindi il
+    # loro nome è sbagliato per costruzione. Vedi `recognition/faces.mark_uncertain`.
+    cast_names = {c["id"]: c["name"] for c in manifest.get("cast", []) if not c.get("uncertain")}
 
     # resume cross-run: riporta le descrizioni già salvate su disco
     if manifest_path and Path(manifest_path).exists():

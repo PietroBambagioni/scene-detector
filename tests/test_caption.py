@@ -84,6 +84,21 @@ def test_caption_manifest_skips_already_done(monkeypatch):
     assert manifest["shots"][1]["description"] == "descr 1"
 
 
+def test_caption_manifest_esclude_i_cluster_incerti(monkeypatch):
+    """Un cluster `uncertain` fonde personaggi diversi: il suo nome non entra nel prompt."""
+    monkeypatch.setattr(caption, "sample_frames", lambda *a, **k: ["frame"])
+    manifest = {
+        "cast": [{"id": 0, "name": "Jyn"},
+                 {"id": 1, "name": "Personaggio 23", "uncertain": True}],
+        "shots": [{"index": 0, "start_frame": 0, "end_frame": 50, "start_time": 0.0,
+                   "end_time": 2.0, "description": None, "dialogue": None,
+                   "characters": [0, 1]}],
+    }
+    cap = _StubCaptioner()
+    caption_manifest(manifest, "video.mp4", cap, progress=False)
+    assert cap.last_characters == ["Jyn"]
+
+
 class _FlakyCaptioner:
     def __init__(self, fail_on):
         self.fail_on = fail_on

@@ -19,9 +19,10 @@ neural = ["torch>=2.1", "pillow>=10.0", "transformers>=4.45"]  # TransNetV2 + Si
 asr = ["faster-whisper>=1.0"]                            # trascrizione dialoghi
 vlm = ["mlx-vlm>=0.1,<0.7", "pillow>=10.0"]              # VLM per shot (Apple Silicon); <0.7: firma generate() testata (0.6.x)
 faces = ["insightface>=1.0", "onnxruntime>=1.20"]        # riconoscimento personaggi (SCRFD+ArcFace, CoreML)
+characters = ["torch>=2.1", "pillow>=10.0", "transformers>=4.45"]  # --faces-refine: DINOv2 (Apache 2.0) sui ritagli di figura
 obs = ["psutil>=5.9"]                                    # telemetria run (CPU%/RSS live)
 dev = ["pytest>=8.0"]
-all = ["scene-detector[neural,asr,vlm,faces,obs]"]       # tutto ciò che serve a `--all`
+all = ["scene-detector[neural,asr,vlm,faces,characters,obs]"]  # tutto ciò che serve a `--all`
 
 [project.scripts]
 # gli oggetti Typer sono callable: nessun wrapper `main_*` in mezzo

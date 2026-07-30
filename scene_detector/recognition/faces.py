@@ -88,9 +88,91 @@ def _crop_thumb(pil_rgb, bbox, pad=0.3, size=112):
     return pil_rgb.crop(box).resize((size, size))
 
 
+# Sotto questa mediana di `det_score` il cluster non è un'identità: è roba che il rilevatore non
+# riconosce come volto umano. Non è una taratura sul film ma sul rilevatore — SCRFD è calibrato sui
+# volti, e sotto ~0,65 sta dicendo "non so se è una faccia".
+#
+# Misurato su *Rogue One* (plan/DA-FARE.md §2): il cluster che fonde K-2SO, Darth Vader, gli
+# stormtrooper e un pilota con la visiera ha mediana **0,579**, contro **0,762** di tutti gli altri,
+# e il suo p90 (0,68) sta sotto il p10 di ogni cluster legittimo (0,69). Nessuna soglia di
+# clustering li separa e nessun encoder di apparenza li salva: qui si segnala e basta.
+UNCERTAIN_DET = 0.65
+
+
+# Un cluster insegna l'invarianza cross-shot solo se ricorre: sotto questo numero di shot
+# distinti non ha visto abbastanza luci e pose per dire cosa *non* conta.
+TEACHER_MIN_SHOTS = 3
+
+
+def mark_uncertain(cast, labels, det_scores):
+    """Segna `uncertain` i cluster che il rilevatore non considera volti. -> quanti segnati.
+
+    Marcati, non scartati: restano visibili e rinominabili nella UI — ma **fuori dal prompt del
+    VLM**, o un nome sbagliato finisce nella descrizione di decine di shot.
+    """
+    labels = np.asarray(labels)
+    det_scores = np.asarray(det_scores)
+    n = 0
+    for c in cast:
+        med = float(np.median(det_scores[labels == c["id"]]))
+        c["det_median"] = round(med, 3)
+        if med < UNCERTAIN_DET:
+            c["uncertain"] = True
+            n += 1
+    return n
+
+
+def split_by_reliability(labels, det_scores, shot_indices, min_shots=TEACHER_MIN_SHOTS):
+    """Divide i cluster fra maestri e sospetti secondo `UNCERTAIN_DET`. -> (ids_maestri, sospetti).
+
+    Stessa soglia di `mark_uncertain`, letta nei due versi: sopra, ArcFace sta riconoscendo
+    volti umani e le sue etichette sono un buon segnale di identita' cross-shot; sotto, sta
+    dicendo «non so se e' una faccia» e li' vanno rimessi in discussione.
+
+    `ids_maestri[N]`: identita' per volto, `-1` per chi non insegna — la forma che vuole
+    `adapt.train_adapter`. Un maestro deve anche ricorrere in >= `min_shots` shot distinti.
+    """
+    labels = np.asarray(labels)
+    det_scores = np.asarray(det_scores)
+    shots = np.asarray(shot_indices)
+
+    ids = np.full(len(labels), -1, dtype=int)
+    sospetti = set()
+    for c in sorted({int(l) for l in labels if l >= 0}):
+        m = labels == c
+        if float(np.median(det_scores[m])) < UNCERTAIN_DET:
+            sospetti.add(c)
+        elif len(np.unique(shots[m])) >= min_shots:
+            ids[m] = c
+    return ids, sospetti
+
+
+def _refine(labels, scores, shot_idx, body, threshold=0.70):
+    """Ri-clusterizza i cluster sospetti nello spazio adattato. -> (labels, spezzati).
+
+    Tre passi, e ognuno puo' non fare niente senza rompere il resto: si scelgono i maestri, si
+    addestra la testa sui loro embedding di figura, si rimettono in discussione i sospetti.
+
+    ⚠️ `threshold` **non** e' `faces_threshold`: quella vive nello spazio ArcFace, questa nello
+    spazio DINOv2 adattato, e le due distribuzioni di similarita' non sono commensurabili.
+    Passare 0,50 qui lascia tutti i sospetti in un gruppo solo (purezza 0,43 contro 0,98 a 0,70,
+    misurato con verita' annotata su *Rogue One*).
+    """
+    from .adapt import project, train_adapter
+    from .identify import refine_clusters
+
+    ids, sospetti = split_by_reliability(labels, scores, shot_idx)
+    if not sospetti:
+        return labels, set()
+    W = train_adapter(body, ids)
+    if W is None:
+        return labels, set()   # meno di due identita' maestre: non c'e' niente da imparare
+    return refine_clusters(labels, project(body, W), sospetti, threshold)
+
+
 def recognize_characters(manifest, video, recognizer, *, gallery=None, n_frames=6, size=640,
                          threshold=0.5, min_shots=2, min_face_px=50, film_dir=None,
-                         progress=True):
+                         encoder=None, refine_threshold=0.70, progress=True):
     """Popola `manifest["cast"]` e `shot["characters"]` rilevando e clusterizzando i volti del film.
 
     Campiona `n_frames` per shot (via `sample_frames`), rileva volti + embedding e clusterizza
@@ -100,6 +182,10 @@ def recognize_characters(manifest, video, recognizer, *, gallery=None, n_frames=
 
     `min_face_px`: lato minimo del bbox. Nel cinema gran parte delle detection sono volti
     lontani o di scorcio, il cui embedding e' rumore: si scartano prima di clusterizzare.
+
+    `encoder`: con un `embed.BodyEncoder`, i cluster che ArcFace non riconosce come volti umani
+    (droidi, elmetti) vengono rimessi in discussione sui ritagli di **figura** — vedi `_refine`.
+    I frame sono gia' in mano qui, quindi non costa nessuna estrazione in piu'.
     """
     from tqdm import tqdm
 
@@ -117,6 +203,8 @@ def recognize_characters(manifest, video, recognizer, *, gallery=None, n_frames=
                     continue  # volto troppo piccolo: l'embedding e' rumore che avvelena i cluster
                 detected.append(DetectedFace(shot["index"], fi, emb, score,
                                              _crop_thumb(pil, bbox)))
+                if encoder is not None:
+                    encoder.add(pil, bbox)   # stesso ordine di `detected`
 
     if not detected:
         manifest["cast"] = []
@@ -130,8 +218,16 @@ def recognize_characters(manifest, video, recognizer, *, gallery=None, n_frames=
     labels = cluster_two_stage(emb, shot_idx, [d.frame_index for d in detected],
                                threshold, det_scores=scores)
 
+    spezzati = set()
+    if encoder is not None:
+        labels, spezzati = _refine(labels, scores, shot_idx, encoder.result(), refine_threshold)
+
     names = match_gallery(centroids_of(emb, labels), gallery, threshold) if gallery else {}
     cast, per_shot = build_cast(labels, shot_idx, names, min_shots)
+    mark_uncertain(cast, labels, scores)
+    for c in cast:
+        if c["id"] in spezzati:
+            c["refined"] = True
 
     if film_dir is not None and cast:
         kept = {c["id"] for c in cast}

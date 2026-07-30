@@ -50,6 +50,21 @@ class Config:
     faces_min_score: float = 0.5
     faces_min_px: int = 50        # lato minimo del bbox: sotto, l'embedding e' rumore
     faces_min_shots: int = 3      # un personaggio del cast ricorre in >=N shot distinti (non volti)
+    # Rimette in discussione i cluster che ArcFace non riconosce come volti umani (droidi,
+    # elmetti) sui ritagli di figura, con una testa lineare adattata al film. Costa il
+    # caricamento di DINOv2 e ~26 img/s in piu' sullo stesso passaggio di frame — nessuna
+    # estrazione aggiuntiva. Vedi `recognition/adapt.py` per da dove viene la supervisione.
+    faces_refine: bool = False
+    # Soglia coseno del raffinamento. **Separata da `faces_threshold` e non per pignoleria**:
+    # quella è tarata su ArcFace, questa vive nello spazio DINOv2 adattato, e le due
+    # distribuzioni di similarità non sono commensurabili. Riusare 0,50 qui lascia i sospetti in
+    # un gruppo solo — misurato su *Rogue One* con verità annotata (`prove/labels-661.txt`,
+    # 36 Vader + 35 stormtrooper + 13 altro):
+    #
+    #   t=0,50 → purezza 0,43, un gruppo, Vader e trooper **non** separati
+    #   t=0,70 → purezza 0,98, cinque gruppi, separati
+    #   t=0,80 → purezza 0,92
+    faces_refine_threshold: float = 0.70
     # raggruppamento shot -> scene (Optimal Sequential Grouping, solo visivo)
     scenes: bool = False
     # None: stimato dal gomito dei valori singolari — ma la stima **sottostima di ~40%** (media

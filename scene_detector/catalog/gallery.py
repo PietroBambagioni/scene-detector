@@ -60,7 +60,7 @@ function render(filter='') {
     a.className = 'card';
     a.href = encodeURIComponent(c.dir) + '/index.html';
     a.innerHTML = `<div class="title">${esc(c.video)}</div>`
-                + `<div class="row"><span>${c.n_shots} shot</span><span>${fmtDur(c.duration)}</span></div>`
+                + `<div class="row"><span>${c.n_scenes ? c.n_scenes + ' scene · ' : ''}${c.n_shots} shot</span><span>${fmtDur(c.duration)}</span></div>`
                 + `<span class="det">${esc(c.detector)}</span>`;
     grid.appendChild(a);
   });
@@ -91,6 +91,7 @@ def scan_catalogs(out_dir):
             "dir": manifest_path.parent.name,
             "video": m.get("video") or manifest_path.parent.name,
             "n_shots": m.get("n_shots", 0),
+            "n_scenes": m.get("n_scenes", 0),   # 0 = catalogo senza `--scenes`
             "duration": m.get("duration", 0),
             "detector": m.get("detector", "?"),
         })

@@ -19,6 +19,7 @@ Film/
 prove/
 .claude
 CLAUDE.md
+datasets/
 
 # log dei run
 *.log

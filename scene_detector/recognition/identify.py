@@ -116,6 +116,50 @@ def cluster_two_stage(embeddings, shot_indices, frame_indices, threshold=0.5, de
     return np.array([to_final.get(int(g), -1) for g in group_of], dtype=int)
 
 
+def refine_clusters(labels, embeddings, targets, threshold=0.5, min_size=5):
+    """Ri-clusterizza i soli cluster in `targets` in uno spazio diverso. -> (labels, spezzati).
+
+    Serve dove ArcFace non e' un rilevatore di identita' ma di volti umani: sui droidi e sugli
+    elmetti i suoi vettori descrivono «oggetto scuro a forma di testa», e il risultato e' un
+    cluster che ne fonde diversi (su *Rogue One*: 259 volti in 93 shot fra K-2SO, Darth Vader,
+    gli stormtrooper, un pilota con la visiera e una creatura pelosa).
+
+    **Conservativo per costruzione.** Il gruppo piu' numeroso tiene l'id originale, e solo i
+    gruppi da almeno `min_size` membri ne ricevono uno nuovo: chi finisce in un gruppetto resta
+    dov'era. Se il cluster non si separa in almeno due gruppi significativi si lascia **intatto**
+    — meglio un cluster fuso noto che una frammentazione inventata.
+
+    Nota storica: l'ibrido «ArcFace primario + ri-clustering di apparenza» era stato provato con
+    SigLIP grezzo e scartato (`plan/DA-FARE.md` §2), perche' produceva
+    `{stormtrooper+Vader}, {K-2SO chiaro}, {K-2SO scuro}` — spaccava K-2SO **per illuminazione**.
+    Il motivo era l'encoder, non lo schema: con gli embedding adattati (`adapt.train_adapter`)
+    K-2SO resta un gruppo solo attraverso illuminazioni molto diverse.
+    """
+    labels = np.asarray(labels).copy()
+    if not len(labels):
+        return labels, set()
+    nxt = int(labels.max()) + 1
+    spezzati = set()
+
+    for c in sorted(int(t) for t in targets):
+        m = np.flatnonzero(labels == c)
+        if len(m) < 2 * min_size:
+            continue
+        sub = cluster_faces(embeddings[m], threshold)
+        sizes = np.bincount(sub[sub >= 0])
+        big = [g for g in range(len(sizes)) if sizes[g] >= min_size]
+        if len(big) < 2:
+            continue
+        big.sort(key=lambda g: -sizes[g])
+        for g in big[1:]:                    # il piu' grande tiene l'id, gli altri si staccano
+            labels[m[sub == g]] = nxt
+            spezzati.add(nxt)
+            nxt += 1
+        spezzati.add(c)
+
+    return labels, spezzati
+
+
 def centroids_of(embeddings, labels):
     """Centroide (normalizzato) di ogni cluster ≥ 0. -> {cluster_id: vec}."""
     means, ids, _ = average_embeddings(embeddings, labels)
