@@ -596,6 +596,44 @@ Da fare **dopo** la 4.4, non prima.
   serve a nessuno finché la galleria non lo mostra, e i confini ora sono buoni abbastanza da
   impaginarli.
 
+  ### ✅ Il tratto continuo annotato — 15 min di *Rogue One*, 30 lug 2026
+
+  Il protocollo che questo file chiedeva da due sessioni: **tutti** gli stacchi di un tratto
+  continuo, non un campione. Shot 1393-1753 (3600-4500 s, la sequenza di Eadu), 360 stacchi
+  giudicati sulle sole miniature, ciechi ai gruppi OSG, alla diarizzazione, alle descrizioni VLM e
+  ai dialoghi. Annotazione in `prove/annota15/giudizi_claude.json`, misura in `prove/annota15_ab.py`.
+
+  **4 confini certi** (1514 base ribelle, 1519 ritorno a Eadu, 1674 interno navetta, 1729
+  Mustafar) **+ 5 incerti**. Confini in indici di shot, quindi nessuna tolleranza in frame da citare.
+
+  🎯 **Il tasso vero di scene, che era la domanda aperta: 1,1% degli stacchi**, cioè una scena ogni
+  ~180 s. **Il 15% dell'annotazione cieca campionata era un artefatto** — questo file lo sospettava
+  («implica una scena ogni 16 s, non è la scena del manuale») e ora c'è il numero: 13× di scarto.
+
+  ⚠️ **E ribalta la conclusione su k.** Qui sopra sta scritto che i 126 di *Rogue One* sono «con
+  ogni probabilità una forte sottostima». Sul tratto annotato è **il contrario**: OSG mette 35
+  confini dove ce ne sono 4 (9×), e il manifest attuale gira a k=250. Un k giusto per questo film
+  sarebbe ~30-45 scene, non 126 né 250.
+
+  | contro | tol 0 | tol 1 | tol 3 |
+  |---|---|---|---|
+  | 4 confini certi | F1 0,051 (P 0,03 · R 0,25) | **F1 0,205 (P 0,11 · R 1,00)** | F1 0,205 |
+  | certi + incerti | F1 0,091 | F1 0,273 | F1 0,318 (P 0,20 · R 0,78) |
+
+  **Il recall è 1,00 a tol 1: OSG trova tutti e quattro i confini veri.** Non gli manca il segnale,
+  gli manca la parsimonia — 31 confini di troppo su 35. Che è una diagnosi diversa da «le feature
+  non bastano» e indica dove intervenire: **k**, non le firme.
+
+  ⛔ **La voce, su questo tratto, non è misurabile**: 4 confini veri in tutto, e nessuno cade su un
+  cambio di parlante (2 stanno in coppie mute, 2 fra shot che condividono il parlante). p = 1,00 con
+  entrambi i criteri. Non contraddice l'indizio di RAI — **non lo mette alla prova**: là mancavano
+  le coppie disgiunte, qui mancano i confini. Per la voce serve un tratto **dialogato** con molte
+  scene brevi, non una sequenza di battaglia.
+
+  ⚠️ **Limiti, dichiarati**: un tratto solo, un annotatore non esperto (gli esperti fra loro stanno
+  a 0,63 su BBC), e un tratto d'azione ha per costruzione scene lunghe. Il tasso dell'1,1% è il
+  tasso *di questo tratto*, non del film.
+
   ⛔ **La stima di k non funziona** (`--estimate`). Contro il numero vero di scene per video, il
   gomito dei valori singolari sottostima sistematicamente: media 7,2 (HSV) e 10,0 (SigLIP) contro
   **12,6** reale, e non segue il video (GT 22 → 5; GT 5 → 7). Conseguenza retroattiva: i **126**
