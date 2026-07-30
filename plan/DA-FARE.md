@@ -675,6 +675,40 @@ Da fare **dopo** la 4.4, non prima.
   cambiarlo coincide con lo stacco didattico fra segmenti. Su fiction il meccanismo non esiste. È
   il caso da manuale del perché questo file chiede due banchi prima di credere a un effetto.
 
+  ### ⛔ Densità variabile con il DP penalizzato — provato, non funziona (30 lug 2026)
+
+  La conclusione «serve densità variabile, non un k migliore» ha una realizzazione ovvia: togliere
+  `k` dal DP e **penalizzare** ogni blocco in più, `C[e] = min_m C[m] + cost[m,e] + λ`
+  (change-point penalizzato, Killick 2012). Quindici righe, stessa `_block_costs`, nessuna
+  dipendenza — `prove/lambda_ab.py`. λ espresso in unità del costo tipico di uno shot (`α·d̄·W`),
+  così è confrontabile fra film e si tara **una volta**.
+
+  **Su BBC pareggia l'oracolo e non lo batte**: F1 mediana **0,294** (α=1) contro **0,300** del k
+  oracolo — che conosce il numero di scene *per episodio e per annotatore*. Pareggiare con un solo
+  parametro globale sarebbe già qualcosa, ma lo fa con **1890 confini contro 549**: stesso F1
+  comprato con 3,4× le predizioni, cioè recall alto e precisione bassa.
+
+  ⛔ **E sui due tratti annotati fa esattamente ciò che doveva evitare: la densità non varia.**
+
+  | α | confini nel dialogato (12 veri) | confini nell'azione (4 veri) | rapporto |
+  |---|---|---|---|
+  | 1,0 | 148 | 130 | 1,14 |
+  | 4,0 | 72 | 69 | 1,04 |
+  | 8,0 | 28 | 31 | **0,90** |
+
+  Il rapporto vero è **3,0** e il DP penalizzato ne produce ~1,0 a ogni λ. Il miglior F1 (α=8) è
+  0,550 sul dialogato e 0,229 sull'azione, cioè **pari** a OSG con k=250 fisso (0,538 e 0,205).
+
+  🔑 **Il perché è meccanico e si vede dai numeri**: con la banda, il costo di un blocco è
+  ~proporzionale al numero di shot che contiene (ogni shot pesa ~W distanze). Il guadagno di
+  spezzare è quindi simile ovunque, e un λ costante produce una densità costante. **La
+  penalizzazione sposta il totale dei confini, non la loro distribuzione** — è k travestito.
+
+  Perché la densità vari, deve variare il **costo**: serve un criterio di contrasto locale (quanto
+  il blocco a destra somiglia a quello a sinistra) invece di una somma di distanze interne. `H_nrm`
+  era un tentativo in quella direzione ed è già stato misurato peggio (0,276 contro 0,310). Chi
+  riapre parta da lì, non dal DP.
+
   🔵 **Se si vuole insistere sull'audio, il candidato è il silenzio, non l'identità del parlante**:
   è l'unica categoria che sopravanza la prevalenza (0,0366 contro 0,0299), ed è misurabile senza
   diarizzazione — basta il VAD che l'ASR usa già. 7 confini su 12 cadono lì.
