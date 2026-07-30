@@ -309,8 +309,8 @@ Legenda verdetto: **in uso** · **adottabile** · *riferimento* (da leggere, non
 
 | Repo | ⭐ | Licenza | Agg. | Verdetto |
 |---|---|---|---|---|
-| [speech-swift](https://github.com/soniqo/speech-swift) | 1 073 | Apache-2.0 | 2026-07 | **adottabile** — Swift/Homebrew, Sortformer su Neural Engine, niente token HF |
-| [pyannote-audio](https://github.com/pyannote/pyannote-audio) | 10 313 | MIT | 2026-07 | standard di riferimento, ma modelli **gated** |
+| [speech-swift](https://github.com/soniqo/speech-swift) | 1 073 | Apache-2.0 | 2026-07 | **adottato** — Swift/Homebrew, niente token HF. Engine: **pyannote**, non sortformer (§3.5) |
+| [pyannote-audio](https://github.com/pyannote/pyannote-audio) | 10 313 | MIT | 2026-07 | standard di riferimento. Il «modelli **gated**» **non vale dentro `speech`**: eseguito senza credenziali HF (§3.5) |
 | [FunCineForge](https://github.com/FunAudioLLM/FunCineForge) | 442 | Apache-2.0 | 2026-03 | *riferimento* per l'active speaker detection (CUDA, nasce per dataset di doppiaggio) |
 | [TranscriptionSuite](https://github.com/homelab-00/TranscriptionSuite) | 611 | GPL-3.0 | 2026-07 | *riferimento* — GPL, attenzione |
 
@@ -464,10 +464,30 @@ economiche e alcune potrebbero far risparmiare lavoro già messo in preventivo.
 
 ### 3.5 · Diarizzazione
 
-- **Sortformer sarebbe limitato a ~4 parlanti** (riportato dalla documentazione di terze parti,
-  non verificato). Sul segmento provato ne ha trovati 3. Su un film corale con scene di gruppo il
-  limite conta: da verificare prima di adottarlo per l'intero film, e confrontare con gli engine
-  alternativi (`pyannote`, `community1`) che `speech` offre comunque.
+- ✅ **Il tetto di ~4 parlanti di Sortformer è reale — misurato, 30 lug 2026.** Era «riportato da
+  terze parti, non verificato»: adesso ha un numero. Stesso audio (*Rogue One*, 600 s dal minuto
+  60, mono 16 kHz), tre engine dello stesso binario `speech`:
+
+  | engine | speaker | segmenti | parlato | tempo | stimato su 2h14 |
+  |---|---|---|---|---|---|
+  | `sortformer` | **4 esatti** | 76 | 125,7 s | 5,4 s | ~72 s |
+  | `pyannote` | **6** | 92 | 136,2 s | 11,0 s | ~2,5 min |
+  | `community1` | **6** | 115 | 124,2 s | 41,0 s | ~9 min |
+
+  **Non dice chi ha ragione** — non c'è ground truth su questo segmento, e con 4 dei 6 parlanti
+  sotto i 10 s di parlato totale una parte è certamente rumore. Dice che sortformer si ferma a
+  **4 esatti** dove due engine indipendenti concordano su 6: è il tetto architetturale sospettato,
+  non una coincidenza del materiale. Su un film corale conta.
+
+- ✅ **Conseguenza: l'engine di default è `pyannote`, non `sortformer`.** Costa 2× (11 s contro
+  5,4 s su 600 s di audio) e su un film intero resta sotto i 3 minuti: irrilevante accanto ai
+  45 min di ASR+VLM. E **il motivo per cui pyannote era stato scartato non si applica**: «modelli
+  gated» vale per la libreria Python, non per `speech`, che li serve senza token HuggingFace —
+  eseguito qui senza alcuna credenziale. `community1` a 9 min non compra nulla in più di pyannote.
+
+- ⚠️ **Gotcha di integrazione**: `speech diarize --json` scrive i suoi log di avanzamento su
+  **stdout**, davanti al JSON. Il parse va tagliato alla prima `{`, o muore. Formato:
+  `{"segments": [{"speaker": int, "start": float, "end": float, "duration": float}], "num_speakers": int}`.
 - **`speech embed-speaker` è la via diretta al linking voce↔volto**: estrae un embedding del
   parlante, quindi si può costruire una *gallery vocale* per personaggio e legarla ai cluster di
   volti per co-occorrenza — più solido che passare per i nomi nel dialogo.

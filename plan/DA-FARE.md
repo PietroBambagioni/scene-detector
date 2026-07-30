@@ -627,11 +627,19 @@ Da fare **dopo** la 4.4, non prima.
     Le due cose si separano solo esaurendo *tutti* gli stacchi di un tratto continuo del film
     (~15 min) invece di campionarli: dà insieme il tasso vero di scene e la calibrazione
     dell'annotatore.
-- [ ] 🟡 **Diarizzazione + linking (Fase 2).** `speech diarize --engine sortformer` (0,90 s / 180 s,
-  Neural Engine, niente token HF). Ordine: diarizzazione → linking speaker↔volto per co-occorrenza →
-  nomi dai vocativi come `name_hint`+score (non sovrascrivere `Personaggio N`) → poi active speaker
-  detection se serve. Dipende da: 4.4 (cluster volti stabili).
-  - [ ] 🔵 **Sortformer ~4 speaker** (non verificato): limite su film corali, da controllare.
+- [ ] 🔴 **Diarizzazione + linking (Fase 2).** `speech diarize` (Homebrew, binario esterno, niente
+  token HF). Ordine: diarizzazione → linking speaker↔volto per co-occorrenza → nomi dai vocativi
+  come `name_hint`+score (non sovrascrivere `Personaggio N`) → poi active speaker detection se
+  serve. La dipendenza da 4.4 (cluster volti stabili) è **sciolta**: clustering a due stadi e
+  `--faces-refine` sono in `main`.
+  - [x] **Sortformer ~4 speaker: confermato, e per questo l'engine di default è `pyannote`**
+    (30 lug 2026). Sullo stesso audio sortformer trova **4 esatti**, pyannote e community1 **6**;
+    pyannote costa 11 s su 600 s, cioè ~2,5 min su un film. Il «pyannote è gated» non vale dentro
+    `speech`. Numeri e caveat in [PUNTI-APERTI §3.5](PUNTI-APERTI.md).
+  - ⚠️ **Il banco va deciso prima del linking, non dopo.** BBC Planet Earth ha un narratore solo:
+    inutile per la voce. Su RAI va verificato se il parlato è multi-parlante — se lo è, il segnale
+    «parlante che attraversa lo stacco» si misura sui suoi 116 confini contro lo 0,388 attuale.
+    Altrimenti la Fase 2 resta *plausibile e non giudicabile*, che è la trappola di §0.1.
   - [ ] 🔵 **`speech embed-speaker`** — gallery vocale per personaggio, linking voce↔volto più solido
     che passare per i nomi.
   - [ ] 🔵 **Parlante che attraversa lo stacco** = indizio di *stessa scena* (campo/controcampo).
