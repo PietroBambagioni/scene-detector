@@ -97,7 +97,7 @@ textarea { width:100%; min-height:70px; padding:8px; border-radius:8px; border:1
     <video id="player" controls preload="metadata"></video>
     <div class="tc" id="tc"></div>
     <div id="chips"></div>
-    <label>Dialogo</label>
+    <label id="dlgLabel">Dialogo</label>
     <textarea id="dialogue"></textarea>
     <label>Descrizione</label>
     <textarea id="description" placeholder="(descrizione visiva — da generare)"></textarea>
@@ -368,6 +368,12 @@ function select(i) {
   else if (FILM) seekTo(sh);
   $('tc').textContent = `#${String(i).padStart(3,'0')}  ${fmt(sh.start_time)}–${fmt(sh.end_time)}  (${sh.clip || DATA.video})`;
   renderChips(sh);
+  // `--diarize` è opt-in: senza, `speakers` non c'è e l'etichetta resta quella di sempre. Gli id
+  // sono numeri perché la diarizzazione non sa i nomi — il linking speaker↔personaggio non c'è
+  // ancora (plan/DA-FARE.md §5, Fase 2).
+  const spk = sh.speakers || [];
+  $('dlgLabel').textContent = spk.length ? `Dialogo · parlanti ${spk.map(s => 'S' + s).join(', ')}`
+                                         : 'Dialogo';
   $('dialogue').value = sh.dialogue || '';
   $('description').value = sh.description || '';
   const si = sceneOf(i);

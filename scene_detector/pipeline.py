@@ -34,7 +34,7 @@ def run(cfg: Config) -> None:
             "split_mode": cfg.split_mode.value, "threshold": cfg.threshold,
             "min_scene_len": cfg.min_scene_len,
             "asr": cfg.asr, "asr_model": cfg.asr_model, "asr_lang": cfg.asr_lang,
-            "asr_threads": cfg.asr_threads,
+            "asr_threads": cfg.asr_threads, "diarize": cfg.diarize,
             "vlm": cfg.vlm, "vlm_model": cfg.vlm_model, "vlm_frames": cfg.vlm_frames,
             "faces": cfg.faces,
             "faces_gallery": str(cfg.faces_gallery) if cfg.faces_gallery else None,
@@ -59,7 +59,7 @@ def run(cfg: Config) -> None:
     })
 
     n_steps = (4 + (1 if cfg.scenes else 0) + (1 if cfg.faces else 0)
-               + (1 if cfg.asr else 0) + (1 if cfg.vlm else 0))
+               + (1 if cfg.asr else 0) + (1 if cfg.diarize else 0) + (1 if cfg.vlm else 0))
 
     log.info("[1/%d] Rilevamento shot…", n_steps)
     with tel.step("detection") as o:
@@ -181,6 +181,20 @@ def run(cfg: Config) -> None:
             o["model"] = cfg.asr_model
             o["threads"] = asr_workers
         log.info("  lingua=%s, %d segmenti", lang, len(segments))
+
+    if cfg.diarize:
+        step += 1
+        log.info("[%d/%d] Diarizzazione (chi parla)…", step, n_steps)
+        with tel.step("diarize") as o:
+            from .transcription.diarize import ENGINE, assign_speakers, diarize
+            segments, n_speakers = diarize(cfg.video)
+            assign_speakers(manifest["shots"], segments)
+            manifest["n_speakers"] = n_speakers
+            o["engine"] = ENGINE
+            o["n_speakers"] = n_speakers
+            o["n_segments"] = len(segments)
+            o["n_shots_with_speaker"] = sum(1 for s in manifest["shots"] if s.get("speakers"))
+        log.info("  %s parlanti, %d turni di parola", n_speakers, len(segments))
 
     if cfg.vlm:
         step += 1

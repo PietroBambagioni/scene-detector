@@ -628,7 +628,13 @@ Da fare **dopo** la 4.4, non prima.
     (~15 min) invece di campionarli: dà insieme il tasso vero di scene e la calibrazione
     dell'annotatore.
 - [ ] 🔴 **Diarizzazione + linking (Fase 2).** `speech diarize` (Homebrew, binario esterno, niente
-  token HF). Ordine: diarizzazione → linking speaker↔volto per co-occorrenza → nomi dai vocativi
+  token HF).
+  - [x] **Passo 1 spedito** (30 lug 2026): `--diarize` → `transcription/diarize.py`, campo
+    `speakers` per shot nel manifest, parlanti nel dettaglio della UI. Indipendente da `--asr`:
+    dice *chi* parla, non cosa. Su 600 s di *Rogue One*: 288 shot, 96 con parlanti, 6 parlanti,
+    4,5 s. **68 coppie di shot consecutivi su 287 condividono un parlante** — il segnale «stessa
+    scena» di §5 esiste ed è denso, ora è nel manifest e si può misurare.
+  - Ordine di ciò che resta: linking speaker↔volto per co-occorrenza → nomi dai vocativi
   come `name_hint`+score (non sovrascrivere `Personaggio N`) → poi active speaker detection se
   serve. La dipendenza da 4.4 (cluster volti stabili) è **sciolta**: clustering a due stadi e
   `--faces-refine` sono in `main`.

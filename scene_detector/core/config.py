@@ -38,6 +38,10 @@ class Config:
     asr_model: str = "large-v3-turbo"
     asr_lang: str | None = None
     asr_threads: int = 0
+    # diarizzazione: chi parla in ogni shot (binario esterno `speech`, non una dep Python).
+    # Indipendente da `asr`: dice *chi* parla e quando, non cosa dice. Opt-in come `scenes` —
+    # `--all` non la include finché il linking speaker↔volto non è misurato.
+    diarize: bool = False
     # descrizione visiva per shot (VLM)
     vlm: bool = False
     vlm_model: str = "mlx-community/Qwen3-VL-8B-Instruct-4bit"
