@@ -32,7 +32,15 @@ def probe(path) -> VideoInfo:
     fps = float(num) / float(den)
     duration = float(st.get("duration") or out["format"]["duration"])
 
+    # `nb_frames` è un metadato del **container** e sa mentire: su un file tagliato con `-c copy`
+    # conta i pacchetti del GOP originale, non i frame che restano. Su `clips/Anna/scene-308.mp4`
+    # dice 774 dove `-count_frames` ne trova 753 e il decode ne consegna 754 — che è esattamente
+    # `duration × fps`. Sui film interi i due numeri coincidono, quindi si prende il **minimo**:
+    # mai promettere frame che non esistono, e contarli per davvero costerebbe una passata di
+    # decode del film intero.
     nb = st.get("nb_frames")
-    n_frames = int(nb) if nb and nb != "N/A" else round(duration * fps)
+    n_frames = round(duration * fps)
+    if nb and nb != "N/A":
+        n_frames = min(n_frames, int(nb))
 
     return VideoInfo(path, fps, n_frames, duration, int(st["width"]), int(st["height"]))
