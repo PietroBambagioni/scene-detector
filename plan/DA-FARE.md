@@ -10,8 +10,10 @@
 
 ## 0 · Immediato
 
-- [ ] 🔴 **Committare** il fix volti (`--faces-min-shots`, ora **default 3**) + il fix UI (seek su
-  `currentTime`) — i 9 file di [SESSIONE-2026-07-24 §8](SESSIONE-2026-07-24.md). 86 test verdi.
+- [x] **Committato** (30 lug 2026, `6d00dc8`): il fix volti (`--faces-min-shots`, ora **default
+  3**), `--faces-refine` con la soglia separata, la UI a tre livelli e le miniature per shot —
+  17 file, 114 test verdi. Resta fuori dal repo `Introduzione al linguaggio del film.md`
+  (384 KB, materiale di terzi): da gitignorare o committare, è una decisione sulle licenze.
 - [x] **Default `faces-min-shots`** scelto: **3** (65 personaggi su *Rogue One*). `config.py` + `cli.py`.
 - [x] **AutoShot — buttato.** Due annotatori ciechi su 40 boundary di *Rogue One* (`prove/annota/`):
   i boundary unici di AutoShot sono stacchi veri nel 67% (Claude) / 40% (Pietro) dei casi contro il
@@ -19,8 +21,9 @@
   `confidence.py` (reconcile), `--ensemble`/`--autoshot-weights`, `DetectorKind.autoshot`, registro
   pesi, `einops`, `test_confidence.py`. −922 righe, 82 test verdi. Chiude "AutoShot: tenerlo o
   buttarlo". Resta su disco `weights/autoshot.pth` (57 MB, gitignored, non più scaricato).
-- [ ] 🔵 **README §Valutazione stale** — cita `evaluate`/`read_scenes_txt`/`f1_curve`, rimossi in
-  `40a7d06`. Riscrivere sull'API vera (`prf1(tol)` + `transition_iou`).
+- [x] **README §Valutazione** — già riscritto sull'API vera (`prf1(tol)` + `transition_iou`,
+  `README.md` §Valutazione). La voce «stale» era stale: `evaluate`/`read_scenes_txt`/`f1_curve`
+  non compaiono più nel README. Verificato il 30 lug 2026.
 
 ---
 
@@ -41,6 +44,335 @@
 ---
 
 ## 2 · Volti
+
+### 🔴 Il cluster dei non-volti — misurato su *Rogue One*, 25 lug 2026
+
+Segnalato guardando il catalogo: «Personaggio 23» unisce persone diverse, e l'unico filo è che
+**o sono droidi o hanno elmetti mascherati**. Confermato: cluster **22**, 259 volti in 93 shot,
+contiene **K-2SO, Darth Vader, gli stormtrooper, un pilota con casco a visiera e una creatura
+pelosa** (contact sheet: `prove/faces_sheet.py 22`). ArcFace è addestrato su volti umani scoperti;
+su questi produce embedding che descrivono «oggetto scuro a forma di testa», non identità.
+
+**Tre rimedi plausibili, tutti smontati dalla misura** (cache embedding `prove/faces-Rogue.One/`,
+riproduce la produzione byte per byte):
+
+| ipotesi | esito |
+|---|---|
+| il cluster è *lasco*, si becca dalla coesione | ❌ 0,722 contro 0,746 mediano: **normale** |
+| sta in una regione "generica" dello spazio | ❌ cos(centroide, media globale) 0,283, in mezzo ai legittimi (0,14-0,69) |
+| alzare `--faces-min-score` | ⚠️ accusa ma non separa (sotto) |
+| stringere la soglia di clustering | ⚠️ scambia fusione con frammentazione (sotto) |
+
+- **`det_score` è un buon rilevatore di cluster sospetti e un pessimo separatore.** Mediana 0,579
+  (cluster 22) e 0,568 (cluster 85) contro 0,762 di tutti gli altri, e il p90 del 22 (0,68) sta
+  **sotto il p10 di ogni cluster legittimo** (0,69). Ma *dentro*, K-2SO compare a **0,50 e a 0,81**,
+  Vader a 0,56 e 0,66. Alzare la soglia a 0,65 taglia l'82% del cluster, costa il **12% di tutti i
+  volti del film**, e lascia comunque K-2SO e Vader insieme.
+- **Nessuna soglia di clustering funziona.** A 0,55 il cluster si spacca in 120/55/34/31: il gruppo
+  da 55 è **K-2SO puro** (16/16 verificati), ma quello da 120 è ancora K-2SO + Vader + stormtrooper
+  + pilota. Si frammenta l'identità che funzionava senza isolare quelle che non funzionano.
+- **Non c'è un salto nella distribuzione**: le mediane di `det_score` per cluster vanno da 0,568 a
+  0,881 in continuo, quindi «scarta sotto X» è una taratura su un film solo, non una scoperta.
+
+**Il danno vero non è la card sbagliata**: il nome del cluster entra nel prompt del VLM
+(`build_prompt`), quindi 93 shot verrebbero descritti citando un personaggio inesistente.
+
+✅ **Fatto — si marcano, non si scartano** (25 lug 2026). `recognition/faces.mark_uncertain`:
+mediana di `det_score` per cluster, sotto `UNCERTAIN_DET = 0,65` il cluster prende
+`uncertain: True` e `det_median`. Conseguenze: **fuori dal prompt del VLM**
+(`captioning/caption.py`, o un nome sbagliato entra nella descrizione di decine di shot) e
+segnalato nella UI (card in trasparenza, `⚠`, tooltip che spiega). Resta visibile e rinominabile:
+il giudizio su chi sia davvero lo può dare solo una persona.
+
+Su *Rogue One*: **10 personaggi su 65** segnati, **174 shot** perdono un nome nel prompt — 93 dal
+solo cluster 22, il resto cluster da 3-8 shot. La soglia cade fra 0,638 e 0,653, che è il punto più
+arbitrario di tutta la faccenda: prende i due colpevoli grossi, e il danno collaterale sono
+personaggi piccoli e mal illuminati che perdono il nome in poche descrizioni.
+
+⛔ **Ibrido ArcFace + SigLIP — valutato e scartato.** L'idea ovvia era: ArcFace come primario, e sui
+cluster segnalati si ri-clusterizza con SigLIP. Applicata ai nostri dati produce
+`{stormtrooper + Vader}`, `{K-2SO chiaro}`, `{K-2SO scuro}`: **scambia un cluster sbagliato con
+tre cluster sbagliati**. Vader resta fuso coi trooper e K-2SO si spacca per illuminazione.
+Sessanta righe e un modello in più nel percorso volti, per sbagliare in modo diverso. È
+esattamente il caso in cui VGG **rifinisce DINOv2 per-film** in contrastivo: senza quell'
+addestramento l'apparenza non basta, e quell'addestramento è un altro progetto.
+
+> ⚠️ **Superato in parte** (vedi «Il raffinamento a due stadi» sotto). Il difetto era
+> **l'encoder, non lo schema**: con DINOv2 adattato al film, K-2SO non si spacca più per
+> illuminazione e l'ibrido funziona. Resta vera la parte su Vader fuso coi trooper.
+
+### Il raffinamento a due stadi — misurato e spedito, 25 lug 2026
+
+`--faces-refine`: ArcFace resta primario, e i **soli** cluster che `mark_uncertain` segnala
+(det mediano < 0,65) vengono rimessi in discussione su ritagli di **figura** con DINOv2 (ViT-L
+con register, Apache 2.0) più una testa lineare addestrata sul film. Gli umani non passano di
+qui per costruzione. Codice: `recognition/embed.py`, `recognition/adapt.py`,
+`identify.refine_clusters`, `faces.split_by_reliability`.
+
+**Su *Rogue One*: 65 → 69 personaggi.** Il cluster 22 (259 volti, 93 shot) si scompone in
+**175 + 84**, l'85 (86 volti) in **55 + 17 + 9 + 5**. I cluster umani (#6, #5, #1, #14, #2, #0)
+restano identici volto per volto. Costo: **+23 min** di embedding sopra i ~50 min della
+rilevazione, e **nessuna estrazione ffmpeg in più** — i frame sono già in mano.
+
+A vista, 16 ritagli per cluster: **#22 = K-2SO** (12/16, attraverso shot 749→3046 con
+illuminazione radicalmente diversa — esterno chiaro, interno blu, fumo, notte), **#661 = Vader
++ stormtrooper**. Cioè separa **il droide dagli umani in elmetto**, che è quanto SigLIP non
+sapeva fare senza spaccare K-2SO. ⚠️ **La purezza non è misurata**: 16 ritagli guardati, non un
+numero. Serve l'annotazione (metrica VPCD, sotto).
+
+**Due strade provate e bocciate prima di arrivarci** — entrambe con la misura, non per opinione:
+
+- ⛔ **DINOv2 grezzo sui ritagli di figura.** **Nessuna soglia funziona.** Sotto 0,85 fonde i due
+  protagonisti umani (cluster 5 e 6), sopra li polverizza — 240 ritagli → 205 gruppi, i due
+  gruppi principali ne catturano il 5%. ArcFace, per confronto, non li confonde **mai**, a
+  nessuna soglia. Le contact sheet confermano che i ritagli sono buoni (armatura, mantello,
+  corpo del droide ben visibili): non è geometria, è che il coseno di DINOv2 non è allineato
+  all'identità. Banco: `prove/body_ab.py`.
+  - 📌 Da correggere in `appearance_ab.py`: quella prova usava `PAD = 0,6`, cioè **testa e
+    spalle, non figura**. La tesi vera di VGG — box di corpo — non era stata testata fino a qui.
+- ⛔ **Adattatore contrastivo auto-supervisionato «stesso shot = stessa identità».** Sembra
+  gratis: il 77% degli shot ha esattamente un volto per frame campionato, 14 214 coppie
+  positive senza tracking né ArcFace. **Peggiora**: 240 ritagli umani → 71 gruppi già alla
+  soglia più larga. Il motivo è aritmetico — **8 191 positivi dichiarati contro 2 676 785
+  coppie della stessa identità finite fra i negativi** (17,7% di tutte le coppie). La testa
+  impara l'identità dello *shot*, non del personaggio. Banco: `prove/adapt_ab.py`.
+  - 🔑 **E vale anche per le tracce: una traccia non attraversa uno stacco.** Da dentro lo shot
+    non arrivano positivi cross-shot, mai. Chi propone i body-track per risolvere questo deve
+    rispondere prima a questa riga.
+
+**Quello che funziona, e non costa dati esterni**: i cluster ArcFace **affidabili** del film
+stesso fanno da maestri. Sui volti umani scoperti ArcFace lega correttamente attraverso gli
+stacchi, quindi dà positivi cross-shot veri e gratis — su *Rogue One* 21 identità maestre,
+130 196 coppie. L'ipotesi che regge alla misura: *ciò che varia fra uno shot e l'altro — luce,
+posa, scala, sfondo — è proprietà della fotografia del film, non del personaggio*, e imparato
+sugli umani si applica anche ai non-umani. Effetto isolato (`prove/transfer_ab.py`): a parità di
+cattura, i gruppi sui due protagonisti passano da **20 a 7**.
+
+**Perché conta per la coda lunga**: non serve un character bank. Il bank esiste per Star Wars e
+non per *Anna*, e questo percorso funziona identico sui due.
+
+- [ ] 🔴 **Purezza vera del raffinamento.** I numeri sopra sono conteggi e un colpo d'occhio su
+  16 ritagli. Annotare i 259 del cluster 22 (e i 86 dell'85) chiude la domanda.
+### ✅ Vader separato dai trooper — era una soglia, non un modello (26 lug 2026)
+
+**Il difetto era mio e stava in una riga**: `_refine` riusava `faces_threshold` (0,50), che è
+tarato sullo spazio **ArcFace**, per clusterizzare nello spazio **DINOv2 adattato**. Le due
+distribuzioni di similarità non sono commensurabili — è l'avviso che sta scritto in
+`prove/body_ab.py` e che ho ignorato scrivendo il codice.
+
+Misurato con verità annotata a mano (`prove/labels-661.txt`: 84 ritagli, 36 Vader, 35
+stormtrooper, 13 altro — maschere col respiratore, piloti TIE, incappucciati):
+
+| | t=0,50 (spedito) | **t=0,70** (corretto) |
+|---|---|---|
+| #661 | 84 misti — vader 36 + trooper 35 + altro 13 | **36, tutti Vader** |
+| #662 | — | **26, tutti stormtrooper** |
+| #664 | — | 7, tutti stormtrooper |
+| purezza pesata | **0,43** | **0,98** |
+| cluster 22 si scompone in | 2 gruppi | **9 gruppi** |
+
+Nuovo campo `Config.faces_refine_threshold` (default 0,70) e `--faces-refine-threshold`, separato
+di proposito: **due spazi di embedding diversi non condividono una soglia**.
+
+⚠️ Attenzione a cosa si chiede: *trooper A contro trooper B* non è separabile da nessuna feature
+visiva — sono identici per progetto, e VGG dichiara lo stesso limite sui personaggi identici. I
+26+7 sopra sono trooper puri ma **frammentati**, e va bene così.
+
+### ⛔ MovieNet — scaricato, addestrato, non ripaga (26 lug 2026)
+
+L'ipotesi era: la testa ha 21 identità maestre di un film solo, con **3 087 identità su 573
+film** dovrebbe andare molto meglio. Fatto per davvero — 162 GB di keyframe, 187 404 ritagli di
+corpo, 154 minuti di embedding DINOv2, SupCon a campionamento P×K (48×4; il full-batch avrebbe
+voluto una matrice 187k×187k, ~140 GB).
+
+Valutazione **senza soglia** sulle coppie cross-shot dei ritagli con verità nota, perché
+confrontare la purezza di due spazi alla stessa soglia coseno non vuol dire niente:
+
+| spazio | AUC | AP | purezza@3gruppi |
+|---|---|---|---|
+| DINOv2 grezzo | 0,944 | 0,951 | 0,96 |
+| testa per-film (21 maestri) | 0,944 | 0,940 | 0,52 |
+| **testa MovieNet (3 087 maestri)** | **0,948** | **0,956** | 0,96 |
+| MovieNet → per-film | 0,950 | 0,944 | 0,96 |
+
+**+0,004 di AUC per 162 GB e mezza giornata.** L'ipotesi «serve più supervisione» è smentita:
+il collo di bottiglia non erano né le feature né la quantità di maestri — era la soglia.
+
+📌 **Errore di metodo da non ripetere**: la riga `purezza@3gruppi` sopra ha inizialmente fatto
+concludere che la testa per-film *danneggiasse* la separazione (0,52 contro 0,96 del grezzo). È
+falso: `purity_at_k` cercava 3 gruppi, e nello spazio adattato quel numero cade a t=0,59, un
+punto di lavoro pessimo. A t=0,70 lo stesso spazio dà **0,98**, meglio del grezzo a qualunque
+soglia. **Una metrica che sceglie da sé il punto di lavoro può scegliere quello sbagliato.**
+
+I dati restano in `datasets/movienet/` (hard link, zero spazio in più) e l'accesso è in
+`prove/movienet.py`: se un giorno serve un banco esterno con identità non-umane, è già lì.
+
+  🔑 **Ma il soffitto non è DINOv2 — è la supervisione. Misurato** (`prove/probe_ab.py`,
+  etichette in `prove/labels-661.txt`). #661 annotato a vista: **36 Vader, 35 stormtrooper,
+  13 altro** (mascherato col respiratore, piloti TIE, incappucciati). Un probe lineare
+  supervisionato sugli embedding DINOv2 **grezzi** separa Vader dai trooper a **1,00**.
+
+  | misura | esito |
+  |---|---|
+  | CV per shot, 5 fold | **1,00 ± 0,00** |
+  | holdout **per contesto** (A→B e B→A) | **1,00** |
+  | etichette permutate per shot (controllo) | **0,50 ± 0,18** (max 0,77) |
+
+  Le due righe di controllo servono entrambe. L'holdout per contesto addestra su Vader nel
+  corridoio scuro + trooper in pieno sole e testa su Vader nello spazio + trooper in un interno
+  rosso: se il probe avesse imparato la *scena* invece dell'identità, lì crollava. E il 1,00 con
+  1024 feature su 71 campioni è sospetto per pura aritmetica — 71 punti in 1024 dimensioni sono
+  quasi sempre separabili — ma con le etichette permutate scende a 0,50, quindi il segnale è reale.
+
+  **Conseguenza operativa**: l'informazione c'è già negli embedding che calcoliamo, e il
+  clustering non la sfrutta perché la testa ha **21 identità maestre di un film solo**. Non
+  serve un encoder migliore: serve più supervisione. È l'argomento per addestrare la testa su
+  MovieNet e CMD-AM — e si può fare **senza backprop attraverso il ViT**, precalcolando gli
+  embedding una volta e addestrando solo la testa.
+
+- [ ] 🟢 **MovieNet — verificato, va bene** (25 lug 2026). Le annotazioni **non** richiedono la
+  registrazione OpenDataLab: il mirror HF [`ZhengPeng7/MovieNet`](https://huggingface.co/datasets/ZhengPeng7/MovieNet)
+  espone `annotation.v1.zip` (53 MB) e `meta.v1.zip` (537 MB) senza gate. Sono JSON, non pickle:
+  nessun rischio di esecuzione, a differenza di `evaluation/shot_dataset.py`.
+
+  | | |
+  |---|---|
+  | box **di corpo** con identità | **808 051** su **630** film |
+  | identità uniche (attori IMDb) | **3 349** — contro le 21 di un film solo |
+  | schema | `body.bbox`, `pid` (id IMDb), `shot_idx`, `resolution` |
+  | box di **volto** | **zero** nei film controllati: è un dataset di corpi |
+
+  ✅ **Il dubbio era «l'identità è l'attore accreditato, quindi i mascherati non ci sono». È
+  falso, e non solo per Star Wars.** Fuori da quella saga: **~35 film, ~45 identità, ~11 000
+  istanze**, distribuite su tutti i tipi che ci servono — maschera integrale (Spider-Man 803+800,
+  Rorschach 454, V 397, Batman 332+285, Catwoman 323, Green Goblin 280, Jason Voorhees 172),
+  protesi (Hellboy 671, Edward Scissorhands 328, Abe Sapien 90, Penguin 264), mocap e CG
+  (Jake Sully 1108, Neytiri 416, Caesar 436, *Planet of the Apes* 1968 **e** 2001 **e** 2011),
+  robot e androidi (Terminator 608, T-1000 250, David di *Prometheus* 392, David di *A.I.* 466,
+  Call 292), trucco pesante (Joker 327 e 218, Freddy Krueger 189). In Star Wars: Vader 225,
+  C-3PO 281, Chewbacca 272, R2-D2 71 — un droide senza volto né geometria umana, annotato.
+
+  ✅ **I keyframe a 240p non sono un problema**, che era l'altro dubbio: i box di corpo occupano
+  il **93% dell'altezza del frame** (mediana; p10 0,60), quindi a 240p il ritaglio mediano è alto
+  **~223 px** — l'input di DINOv2 è 224.
+
+  ⚠️ **Ma la parte non-umana è modesta**: ~11 000 istanze su 808 051. Non è quello il valore.
+  Il valore è che l'**invarianza** si impara dalle 3 349 identità su 630 fotografie diverse, e
+  poi si applica ai non-umani — che è precisamente ciò che `prove/transfer_ab.py` ha già
+  misurato in piccolo (21 maestri, frammentazione 20 → 7). Il sottoinsieme non-umano è il
+  **banco di validazione**, non il corpo dell'addestramento.
+- [ ] 🔵 **Il cluster 85 si è spezzato in 4** (55/17/9/5) e nessuno ha guardato cosa siano.
+- [ ] 🔵 **I nuovi cluster restano `uncertain`** (incerti 10 → 14), quindi fuori dal prompt del
+  VLM. Logica non toccata di proposito: se un cluster raffinato è puro, il suo «Personaggio N»
+  non è più un nome sbagliato — ma è una decisione da prendere con la purezza in mano.
+
+**Come si risolve davvero, in ordine di costo:**
+
+1. 🟡 **La voce** — è la strada che il repo già percorre per altri motivi. Diarizzazione (§5, Fase 2)
+   → embedding vocale per parlante → si lega al cluster visivo per co-occorrenza. K-2SO e Vader
+   hanno voci inconfondibili proprio dove il visivo fallisce, ed è il terzo pilastro sia di VPCD sia
+   del paper VGG. **Limite da mettere in conto prima di provarci:** funziona solo su chi parla — gli
+   stormtrooper del cluster 22 restano indistinguibili.
+2. 🔴 **Il VLM come *verificatore*, non come battezzatore** — provato (`prove/vlm_naming.py`,
+   Qwen3-VL-8B-4bit, 4 ritagli per cluster, due domande: «è lo stesso personaggio?» e «chi è?»).
+
+   | cluster | verdetto «STESSO» | nomi |
+   |---|---|---|
+   | 22 (incerto) | **no** ✅ | Stormtrooper, Darth Vader, *C-3PO* (è K-2SO), «spia» |
+   | 85 (incerto) | **no** ✅ | «non lo so» ✅ |
+   | 6 (controllo umano) | **sì** ✅ | Jyn Erso ✅ |
+   | 5 (controllo umano) | **sì** ✅ | «Chirrut Înghil» |
+   | 1 (controllo umano) | **sì** ✅ | «Chirrut Îmwe» |
+
+   **La verifica è 5/5**, i due incerti riconosciuti come misti e i tre legittimi come puri.
+   **Il nome no**: K-2SO diventa C-3PO (giusta la famiglia, sbagliato il personaggio) e soprattutto
+   i cluster 1 e 5 prendono lo stesso nome pur avendo **coseno 0,101** fra i centroidi — due volti
+   completamente diversi. Non è frammentazione, è allucinazione.
+
+   Il pezzo che vale è quindi quello che **non richiede di conoscere il film**: un controllo di
+   purezza dei cluster, cioè la «metrica di purezza» aperta in §2 da sempre. Il nome resta un
+   suggerimento da mostrare, mai da scrivere nel manifest.
+
+   **Misurato sul serio** (`prove/vlm_purity.py`), con un ground truth **costruito**, che non
+   chiede a nessuno di riconoscere nessuno: un gruppo di ritagli presi da un solo cluster è puro
+   *per costruzione*, uno che ne mescola due è misto *per costruzione*.
+
+   | banco | misto | puro | nomi «non lo so» |
+   |---|---|---|---|
+   | *Rogue One*, 40 casi | **20/20 = 100%** | 16/20 = 80% | **39/40** |
+   | *Anna*, 12 casi (misto soltanto) | **10/12 = 83%** | — | **12/12** |
+
+   ✅ **L'obiezione «su un film ignoto allucina» non regge — ma solo con il prompt giusto.** *Anna*
+   (Grifi/Sarchielli, video-arte italiana anni '70) è l'opposto di un blockbuster, e il modello
+   **non ha inventato un solo nome**: 12 volte su 12 «non lo so», e il verdetto ha comunque tenuto
+   l'83%. L'allucinazione del pilota (due volti a coseno **0,101** battezzati entrambi «Chirrut»)
+   veniva dal prompt, che diceva *«un algoritmo sostiene che siano lo stesso personaggio»* e poi
+   chiedeva i nomi: **suggerire una conclusione basta a farla confermare**. Con un prompt neutro
+   più «non tirare a indovinare», l'invenzione sparisce.
+   - **Il prezzo**: con il prompt onesto smette anche di nominare *Jyn Erso*, che prima azzeccava.
+     Cioè non c'è un prompt che dia nomi affidabili: **verificatore sì, battezzatore no**, misurato
+     due volte in due direzioni.
+   - **I 4 falsi positivi**: cluster 8, 41, 7, 18 giudicati misti pur essendo puri. Tre hanno
+     coesione (0,79-0,86) e `det` (0,76-0,78) del tutto normali — errori veri. Il quarto è il
+     cluster **18**, che la nostra regola già segna `uncertain` (det 0,622): lì il VLM ha ragione e
+     il "falso positivo" è dell'etichetta, non sua.
+   - ⚠️ **Le due righe della tabella non si confrontano fra loro**: *Anna* usa 2 miniature piccole
+     per caso, *Rogue One* 4 ritagli a 640 px. Stesso protocollo, condizioni diverse.
+3. ✅ **Rifinire un encoder di apparenza per-film**, come VGG. ~~Fuori scala: serve un character
+   bank e un addestramento.~~ **Falso, misurato il 25 lug 2026** — vedi «Il raffinamento a due
+   stadi». Il bank non serve (i cluster ArcFace affidabili del film fanno da maestri) e
+   l'addestramento è una testa lineare su embedding già calcolati: **secondi**, non un progetto.
+   Quello che serviva davvero non era scala, era capire da dove vengono i positivi *cross-shot*.
+
+### Ricognizione — come si riconoscono i personaggi nei film (25 lug 2026)
+
+**Lo stato dell'arte dice esattamente la nostra diagnosi.** VGG Oxford, *Character-Centric
+Understanding of Animated Movies* ([arXiv 2509.12204](https://arxiv.org/html/2509.12204), set
+2025), su 75 film animati: i personaggi non umani mandano fuori strada il riconoscimento facciale,
+e la risposta è cambiare **feature**, non tarare. Usano **DINOv2 su ritagli di corpo** (non di
+volto) + voce **ECAPA-TDNN** + tracce da SAM2. Risultato: **81,8 AP contro 45,3 di InsightFace** —
+cioè contro il nostro stesso rilevatore. Codice e dataset (CMD-AM) pubblicati.
+
+Prima di loro, e già citato in PUNTI-APERTI §2.5: **VPCD** — Brown, Kalogeiton, Zisserman,
+*Face, Body, Voice* ([ICCV-W 2021](https://arxiv.org/pdf/2105.09939),
+[codice](https://github.com/Andrew-Brown1/Video_Person_Clustering)) — clustering multimodale con
+face-track, body-track e voice-track. Anche Disney è passata al deep learning per i personaggi
+animati per lo stesso motivo: i metodi facciali pretendono due occhi, un naso e una bocca in
+proporzioni umane.
+
+**Provato in casa, non solo letto** (`prove/appearance_ab.py`, 360 ritagli, SigLIP che nel repo
+c'era già). L'idea: se il problema è che ArcFace codifica *identità facciale*, un encoder di
+*apparenza* dovrebbe separare un droide da un elmetto.
+
+| soglia | cluster 22 (i non-volti) | due protagonisti **umani** |
+|---|---|---|
+| 0,80 | 1 gruppo da 114: non separa | 1 gruppo, purezza 0,50: **fonde i due** |
+| 0,85 | **55 / 37 / 15**: separa | purezza 0,97, 2 gruppi ancora misti |
+| 0,90 | 60 / 16 / 14 | purezza 1,00 ma **35 gruppi per 2 persone** |
+
+Contact sheet dei tre gruppi a 0,85 (`prove/siglip-22.png`): **gruppo 0 = elmetti** (stormtrooper
+*e* Vader insieme), **gruppi 4 e 5 = K-2SO**, separati fra loro solo dall'illuminazione. Cioè
+SigLIP isola il droide dagli umani in elmetto — cosa che ArcFace non sa fare — ma **fonde Vader
+con i trooper e spacca K-2SO per luce**. È apparenza, non identità.
+
+**Conclusione: gli embedding di apparenza sono complementari, non sostitutivi, e presi
+dallo scaffale non bastano.** ArcFace è ottimo sui volti umani e catastrofico sui non-volti;
+SigLIP l'opposto. Questo spiega anche perché VGG **rifinisce DINOv2 per-film** in contrastivo su
+un character bank invece di usarlo così com'è: la nostra misura riproduce indipendentemente il
+motivo di quel passaggio.
+
+**La strada realistica per questo repo è la voce**, e converge con quello che è già in programma:
+la diarizzazione (§5, Fase 2) darebbe embedding vocali per personaggio, e K-2SO e Vader hanno voci
+inconfondibili proprio dove il visivo fallisce. È lo stesso terzo pilastro di VPCD e del paper VGG.
+Da fare **dopo** la 4.4, non prima.
+
+- [ ] 🔴 **Cast stantio nel catalogo.** `clips/Rogue.One/manifest.json` ha **113** personaggi da un
+  run con `min_shots=2`; il default è **3** e darebbe **65**. Il ramo di resume dello step faces
+  riusa `prior["cast"]` senza controllare con quali parametri era stato costruito, quindi rilanciare
+  con parametri diversi **non** ricalcola. Serve almeno registrare i parametri accanto al cast.
+- [ ] 🔵 **`prove/faces_sheet.py`** — contact sheet di un cluster ordinata per `det_score`, con il
+  valore stampato. È lo strumento che ha chiuso questa diagnosi in una schermata; oggi legge le
+  label da `/tmp/lab.npy`, cioè è ancora usa-e-getta (vedi la voce «provino del cast» sotto).
 
 - [ ] 🟡 **Frammentazione 22↔85** (coseno 0,764, stesso volto in due cluster). Il greedy a passo
   singolo non li fonde: serve un secondo merge sui centroidi finali. Un caso su *Rogue One*, forse
