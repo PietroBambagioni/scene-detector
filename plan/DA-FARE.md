@@ -709,6 +709,47 @@ Da fare **dopo** la 4.4, non prima.
   era un tentativo in quella direzione ed è già stato misurato peggio (0,276 contro 0,310). Chi
   riapre parta da lì, non dal DP.
 
+  ### ⛔ Novelty a contrasto locale — competitivo, ma la densità non arriva (30 lug 2026)
+
+  Se il DP fallisce perché somma coesione interna, il candidato è il **contrasto locale**: novelty
+  a kernel scacchiera (Foote 2000) sulla stessa matrice, più una soglia **adattiva**
+  (`media + z·std` su finestra scorrevole, non sul film). `prove/novelty_ab.py`, ~40 righe, numpy,
+  nessuna dipendenza. Criteri fissati prima: F1 ≥ 0,300 su BBC, rapporto di densità ≥ 2,0.
+
+  **Confronto alla pari — a OSG è dato il k oracolo su tutti e quattro i banchi:**
+
+  | banco | OSG (k oracolo) | novelty | |
+  |---|---|---|---|
+  | BBC, 5 annotatori | 0,300 | **0,302** (W=4 z=0,5; 518 confini contro 549 GT) | pari |
+  | RAI, tol 5 / tol 25 | **0,310 / 0,388** | 0,266 / 0,319 | **OSG** |
+  | *Rogue One* dialogato, F1@0 / @3 | 0,333 / 0,583 | **0,370 / 0,667** | novelty |
+  | *Rogue One* azione, F1@0 / @3 | 0,000 / 0,000 | **0,100 / 0,300** | novelty |
+
+  Nessuno domina, e il parametro migliore cambia col banco (W=4 su BBC e RAI, W=8 su *Rogue One*):
+  **non c'è taratura unica**. Notevole: OSG con k oracolo sul tratto d'azione fa **0,000** — con
+  4 confini imposti non ne azzecca nessuno nemmeno a tol 3, mentre con k=250 globale ne trovava
+  tutti e quattro a tol 1 sommergendoli in 31 falsi. Il pregio strutturale di novelty resta che
+  **non chiede k**.
+
+  ⛔ **Ma la densità non varia neanche qui**: 15 confini nel tratto dialogato e 16 in quello
+  d'azione (rapporto 0,94), dove il vero è 3,0. Su tutte e dodici le combinazioni provate il
+  rapporto sta fra 0,59 e 1,12.
+
+  🔑 **Due metodi indipendenti, stesso fallimento: l'ipotesi da abbandonare è un'altra.** Non è il
+  DP a essere sbagliato, e non è il partizionamento globale: **le feature visive di basso livello
+  non contengono la densità di scene**. In una battaglia i cambi di inquadratura sono frequenti e
+  contrastati quanto in un dialogo — cambia il *significato*, non la fotografia. Coerente con la
+  Fase 1b, dove SigLIP (semantica di immagine) non batteva gli istogrammi: nemmeno lui vede la
+  differenza fra «nuova scena» e «nuova inquadratura della stessa scena».
+
+  🔴 **Dove guardare adesso**: le **descrizioni VLM sono già nel manifest** (3204 su *Rogue One*,
+  gratis, nessun calcolo nuovo). Un confine di scena dovrebbe corrispondere a un cambio di
+  *argomento* nel testo, e il testo distingue «esplosione nell'hangar» da «Jyn parla con Cassian»
+  in un modo che un istogramma non può. Prima misura possibile senza scrivere quasi niente:
+  distanza fra descrizioni adiacenti (TF-IDF o embedding) contro i due tratti annotati, e vedere
+  se **il rapporto di densità si avvicina a 3,0**. Se neanche lì, la densità variabile non è
+  ottenibile da questo tipo di segnale e va chiusa.
+
   🔵 **Se si vuole insistere sull'audio, il candidato è il silenzio, non l'identità del parlante**:
   è l'unica categoria che sopravanza la prevalenza (0,0366 contro 0,0299), ed è misurabile senza
   diarizzazione — basta il VAD che l'ASR usa già. 7 confini su 12 cadono lì.
