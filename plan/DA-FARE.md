@@ -648,8 +648,34 @@ Da fare **dopo** la 4.4, non prima.
     Altrimenti la Fase 2 resta *plausibile e non giudicabile*, che è la trappola di §0.1.
   - [ ] 🔵 **`speech embed-speaker`** — gallery vocale per personaggio, linking voce↔volto più solido
     che passare per i nomi.
-  - [ ] 🔵 **Parlante che attraversa lo stacco** = indizio di *stessa scena* (campo/controcampo).
-    Segnale gratis dalla diarizzazione, da misurare — utile alla Fase 1.
+  - [x] **Parlante che attraversa lo stacco — misurato su RAI, 30 lug 2026: indizio, non
+    risultato, e il banco è inadeguato.** `prove/rai_diar_ab.py`, 10 video diarizzati (~2 min),
+    1225 coppie di shot consecutivi contro i confini di scena annotati.
+
+    **La formulazione letterale — «condividono almeno un parlante» — non è misurabile qui**:
+    satura a 853 coppie su 1225 «condiviso» contro **28** «disgiunto». Il parlato copre il 61-96%
+    del tempo e basta che il conduttore compaia in entrambi gli shot perché l'intersezione non sia
+    vuota. Con 28 casi informativi la potenza è nulla (p = 0,49 e 0,66): **non dice nulla**, né a
+    favore né contro.
+
+    Riprovato con «**cambia chi parla di più**» — post-hoc, deciso dopo aver visto saturare la
+    prima:
+
+    | criterio | tol | condiviso | disgiunto | rapporto | Fisher 1 coda |
+    |---|---|---|---|---|---|
+    | dominante | 5 | 0,088 (69/788) | 0,140 (13/93) | 1,66× | 0,078 |
+    | dominante | 25 | 0,109 (86/788) | **0,194** (18/93) | **1,74×** | **0,017** |
+
+    L'effetto è nella direzione della tesi e coerente su entrambe le tolleranze. **Ma**: è la
+    seconda operazionalizzazione provata sullo stesso dato, cioè 4 test — con Bonferroni p = 0,069,
+    fuori dal 5%. E il costo pratico è alto: solo **93 coppie su 1225** hanno un cambio di
+    dominante e contengono 18 dei 136 confini, cioè **recall 13% a precisione 0,19**. Da solo non
+    sposta OSG (0,388), e infilarlo nel DP adesso significherebbe tarare su un banco debole.
+
+    ⚠️ **Perché RAI non basta, in una riga**: due video su dieci hanno il 99-100% del parlato da un
+    solo speaker, quindi per costruzione non possono produrre il segnale. Serve materiale
+    **dialogato** con GT di scena — che in casa non c'è: BBC ha un narratore, MovieNet-SSeg ha i
+    confini ma non l'audio. È la stessa carenza di banco che blocca il linking voce↔volto.
 - [ ] 🟡 **Ricerca sul catalogo (3.4).** Caption + transcript + embedding per scena → `index.html`
   cercabile (faiss + SigLIP, entrambi MIT/adottabili). Rende molto di più **dopo** la Fase 1.
 
