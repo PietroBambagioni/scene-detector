@@ -185,3 +185,13 @@ class TransNetV2Detector(NeuralDetector):
     def _build(self):
         from .models.wrapper import TransNetV2Predictor
         return TransNetV2Predictor(self.weights)
+
+
+class AutoShotDetector(NeuralDetector):
+    """[OPZIONALE] Seconda opinione neurale (NAS-based). Stesso contratto di TransNetV2."""
+
+    name = "autoshot"
+
+    def _build(self):
+        from .models.wrapper import AutoShotPredictor
+        return AutoShotPredictor(self.weights)

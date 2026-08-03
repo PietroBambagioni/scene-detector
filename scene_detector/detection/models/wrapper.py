@@ -4,12 +4,12 @@ from pathlib import Path
 
 
 class _WindowedPredictor:
-    """Windowing ufficiale TransNetV2.
+    """Windowing ufficiale TransNetV2, condiviso dai due modelli.
 
     predict(frames: uint8[N,27,48,3]) -> float[N] (prob boundary per frame).
     Finestre da 100 frame, passo 50, si tengono le 50 predizioni centrali (25:75),
     con padding di 25 frame all'inizio e riempimento in coda (come l'inference TF).
-    La sottoclasse fornisce modello (`_build`), tensore d'ingresso (`_to_tensor`) e
+    Le sottoclassi forniscono modello (`_build`), tensore d'ingresso (`_to_tensor`) e
     estrazione dei logit (`_logits`).
     """
 
@@ -76,3 +76,41 @@ class TransNetV2Predictor(_WindowedPredictor):
 
     def _logits(self, out):
         return out[0]
+
+
+class AutoShotPredictor(_WindowedPredictor):
+    """AutoShot (TransNetV2Supernet, NAS). Input modello: float [1,3,100,27,48]
+
+    (channels-first, senza /255, come l'inference ufficiale AutoShot). Il modello ritorna
+    (single, many); si usa `single`.
+    """
+
+    name = "autoshot"
+
+    def _default_device(self, device):
+        # AutoShot: ColorHistograms usa op intere (bit-shift/segment-sum) non supportate su MPS
+        # e i sotto-moduli tengono un attributo `.device` fisso -> default CPU per robustezza.
+        return device or "cpu"
+
+    def _build(self, weights):
+        from .autoshot.supernet import TransNetV2Supernet
+
+        torch = self.torch
+        ck = torch.load(str(weights), map_location="cpu", weights_only=True)
+        state = ck["net"] if isinstance(ck, dict) and "net" in ck else ck
+        model = TransNetV2Supernet().eval()
+        model.load_state_dict(state)
+        model.to(self.device)
+
+        dev = torch.device(self.device)
+        for mod in model.modules():
+            if hasattr(mod, "device"):
+                mod.device = dev
+        return model
+
+    def _to_tensor(self, window):
+        return (self.torch.from_numpy(window)
+                .permute(3, 0, 1, 2).unsqueeze(0).float().to(self.device))
+
+    def _logits(self, out):
+        return out[0] if isinstance(out, (tuple, list)) else out
