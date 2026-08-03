@@ -145,8 +145,10 @@ class NeuralDetector:
         self.weights = Path(weights) if weights else None
         self.threshold = threshold
         self.probs = None  # prob boundary per-frame dell'ultima detection
+        self._pred = None  # modello costruito, memoizzato: `prove/` cicla su centinaia di video
 
     def detect(self, video):
+        self._predictor()  # pesi mancanti: fallisci ora, non dopo 2,5 min di decodifica
         h, w = self.input_size
         frames = read_small_frames(video.path, w, h, total=video.n_frames,
                                    desc=f"[{self.name}] frames")
@@ -167,7 +169,9 @@ class NeuralDetector:
         if self.weights is None or not self.weights.exists():
             raise RuntimeError(f"Pesi {self.name} mancanti: lancia `scene-detector-setup` "
                                f"(oppure passa --{self.name}-weights PATH).")
-        return self._build()
+        if self._pred is None:
+            self._pred = self._build()
+        return self._pred
 
     def _build(self):
         raise NotImplementedError
