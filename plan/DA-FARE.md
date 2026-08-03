@@ -841,6 +841,28 @@ Da fare **dopo** la 4.4, non prima.
 
 ## 6 · Infrastruttura / debito
 
+### ✅ Correzione manuale dei confini — fatta (2 ago 2026)
+
+Dettaglio, misure e smentite in [SESSIONE-2026-08-02.md](SESSIONE-2026-08-02.md). In breve: la UI
+taglia e unisce **shot** (non solo scene) col frame letto dalla testina del player,
+`--from-manifest` ritaglia le clip dai confini corretti, e l'identità di uno shot è passata da
+`index` a `start_frame` in `merge_prior` e nei nomi delle miniature — con l'indice ogni taglio
+faceva scivolare le descrizioni VLM su shot che non descrivono. 136 test verdi.
+
+Cosa resta da lì:
+
+- [ ] 🔵 **Miniature vecchie orfane.** Il rename da `{index}` a `{start_frame}` fa riestrarre
+  tutte le miniature al primo run dei cataloghi esistenti (*Rogue One*: 3204 file, 18 MB) e
+  lascia le vecchie su disco. Uno script di rinomina dal manifest le salverebbe: ~5 righe.
+- [ ] 🔵 **Il taglio manuale non è tracciato.** Uno shot corretto a mano è indistinguibile da uno
+  del detector (`source="manuale"` sta nella `Scene`, non arriva al manifest). Serve un campo se
+  un giorno si vuole misurare il detector **contro** le correzioni — che sarebbe anche il modo
+  più economico di farsi un ground truth vero, senza annotare da zero.
+- [ ] 🔵 **`--faces` dopo un ritaglio** rilegge il cast dal manifest su disco invece che da quello
+  corretto: le rinomine fatte nella UI perdono contro la copia più vecchia. Nicchia.
+- [ ] 🔵 **`clips/Anna/manifest.cleaned.json` e `.pre-asr-fix.json`** citano ancora i path piatti
+  delle clip (ora in `clip/`). Istantanee fatte a mano, non toccate.
+
 - [ ] 🔵 **Filtro per confidenza nella UI** — il 25% degli shot ha confidenza < 0,2 (soglia 0,05).
   Non è un bug (sono shot che prima non vedevamo) ma la UI li mostra come gli altri. **Una riga di JS.**
 - [ ] 🔵 **Frame condivisi faces+vlm** — oggi campionano gli stessi shot in modo indipendente (6

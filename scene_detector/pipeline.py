@@ -13,6 +13,31 @@ from .io.video import probe
 from .segmentation.splitter import split
 
 
+def _shots_corretti(path, info):
+    """Legge un manifest corretto a mano e controlla che descriva *questo* film. -> manifest.
+
+    È l'unico ingresso della pipeline che non arriva dal nostro codice: un JSON riferito a un
+    altro film, o con i range rotti da una modifica a mano, taglierebbe le clip nei punti
+    sbagliati **senza dire niente**. I controlli sono gli stessi invarianti del resto del
+    progetto: range contigui, `end_frame` inclusivo, copertura dal frame 0.
+    """
+    from .catalog.manifest import load_manifest
+
+    m = load_manifest(path)
+    shots = m.get("shots") or []
+    if not shots:
+        raise ValueError(f"{path}: nessuno shot")
+    if abs(m.get("fps", 0) - info.fps) > 1e-3:
+        raise ValueError(f"{path}: fps {m.get('fps')} contro {info.fps} del video — altro film?")
+    for a, b in zip(shots, shots[1:]):
+        if b["start_frame"] != a["end_frame"] + 1:
+            raise ValueError(f"{path}: shot non contigui fra #{a['index']} (fine {a['end_frame']}) "
+                             f"e #{b['index']} (inizio {b['start_frame']})")
+    if shots[0]["start_frame"] != 0 or shots[-1]["end_frame"] >= info.n_frames:
+        raise ValueError(f"{path}: i range escono dal video (0–{info.n_frames - 1})")
+    return m
+
+
 def run(cfg: Config) -> None:
     """Orchestrazione end-to-end: detection → split → (faces) → (ASR) → (VLM) → manifest/UI → galleria.
 
@@ -43,6 +68,7 @@ def run(cfg: Config) -> None:
             "faces_refine_threshold": cfg.faces_refine_threshold,
             "scenes": cfg.scenes, "n_scenes": cfg.n_scenes,
             "jobs": cfg.jobs, "output_dir": str(cfg.output_dir),
+            "from_manifest": str(cfg.from_manifest) if cfg.from_manifest else None,
             "transnet_weights": str(cfg.transnet_weights) if cfg.transnet_weights else None,
         },
         "mode": {
@@ -61,20 +87,37 @@ def run(cfg: Config) -> None:
     n_steps = (4 + (1 if cfg.scenes else 0) + (1 if cfg.faces else 0)
                + (1 if cfg.asr else 0) + (1 if cfg.diarize else 0) + (1 if cfg.vlm else 0))
 
-    log.info("[1/%d] Rilevamento shot…", n_steps)
+    # I confini corretti a mano nella UI sostituiscono il detector, e **solo** quello: da qui in
+    # giù la pipeline non sa la differenza, quindi split, miniature, manifest e UI ripartono dai
+    # confini nuovi senza un ramo in più. `enforce_min_len` non si applica — la fusione cieca
+    # degli shot brevi qui mangerebbe proprio i tagli appena scelti a mano.
+    corretto = _shots_corretti(cfg.from_manifest, info) if cfg.from_manifest else None
+
+    log.info("[1/%d] %s…", n_steps, "Confini dal manifest" if corretto else "Rilevamento shot")
     with tel.step("detection") as o:
-        scenes = build_detector(cfg.detector, cfg).detect(info)
-        scenes = enforce_min_len(scenes, cfg.min_scene_len)
+        if corretto:
+            from .core.scene import scenes_from_ranges
+            scenes = scenes_from_ranges(
+                [(s["start_frame"], s["end_frame"]) for s in corretto["shots"]],
+                info.fps, source="manuale")
+            o["from_manifest"] = str(cfg.from_manifest)
+        else:
+            scenes = build_detector(cfg.detector, cfg).detect(info)
+            scenes = enforce_min_len(scenes, cfg.min_scene_len)
+            o["threshold"] = cfg.threshold
         o["n_shots"] = len(scenes)
-        o["threshold"] = cfg.threshold
     log.info("  %d shot", len(scenes))
 
     cutting = cfg.split_mode is not SplitMode.none
     with tel.step("split") as o:
         if cutting:
             log.info("[2/%d] Taglio %d clip…", n_steps, len(scenes))
-            split(info, scenes, out_dir, cfg.split_mode, jobs=cfg.jobs)
+            orfane = split(info, scenes, out_dir / "clip", cfg.split_mode, jobs=cfg.jobs)
             o["n_clips"] = len(scenes)
+            o["n_orfane"] = orfane
+            if orfane:
+                log.info("  %d clip in eccesso rinominate .orfano (il run precedente ne aveva "
+                         "di più)", orfane)
         else:
             log.info("[2/%d] Taglio saltato (--split-mode none): la UI riproduce il film intero",
                      n_steps)
@@ -88,14 +131,26 @@ def run(cfg: Config) -> None:
     # dalla cartella del catalogo (relativo: catalogo e film restano spostabili insieme)
     video_src = None if cutting else os.path.relpath(Path(cfg.video).resolve(), out_dir.resolve())
     manifest = build_manifest(info, scenes, label,
-                              clip_template=None if not cutting else "scene-{:03d}.mp4",
+                              # deve combaciare con la cartella passata a `split` qui sopra: il
+                              # path nel manifest è relativo a `index.html`, che sta in out_dir
+                              clip_template=None if not cutting else "clip/scene-{:03d}.mp4",
                               video_src=video_src)
     manifest_path = out_dir / "manifest.json"
     # `build_manifest` riparte da zero: senza questo, un run che non riaccende `--vlm`/`--asr`
-    # sovrascrive descrizioni e dialoghi con `None` e butta ore di calcolo.
-    recuperati = merge_prior(manifest, manifest_path)
+    # sovrascrive descrizioni e dialoghi con `None` e butta ore di calcolo. Col ritaglio manuale
+    # la sorgente è il JSON corretto e non quello su disco: è lo stesso, più le modifiche.
+    recuperati = merge_prior(manifest, cfg.from_manifest or manifest_path)
     if recuperati:
         log.info("[resume] %d shot recuperati dal manifest esistente", recuperati)
+
+    if corretto:
+        # Roba che `build_manifest` non ricostruisce e che un ritaglio non deve buttare: i nomi
+        # dei personaggi digitati a mano e le scene corrette nella UI. Stesso spirito di
+        # `merge_prior`, un livello sopra. Se lo step vero rigira (`--faces`, `--scenes`)
+        # ricalcola dopo e vince.
+        for chiave in ("cast", "scenes", "n_scenes", "n_speakers"):
+            if corretto.get(chiave) and not manifest.get(chiave):
+                manifest[chiave] = corretto[chiave]
 
     # Miniature **per shot** e sempre, non solo con `--scenes`: la lista della UI le mostra in
     # entrambe le modalità (senza, resta una fila di testo), e con le scene fanno anche le

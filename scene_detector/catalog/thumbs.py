@@ -14,6 +14,11 @@ def extract_thumbs(manifest, video, film_dir, size=256, progress=True):
     relativo nel manifest. JPEG e non PNG perché sono fotogrammi: ~10 KB contro ~100, e su 3200
     shot sono 30 MB invece di 300.
 
+    Il nome del file è lo **`start_frame`**, non l'indice, per la stessa ragione di `merge_prior`:
+    dopo un taglio manuale gli indici a valle scalano di uno, e con i file numerati per indice
+    l'idempotenza qui sotto (`if not path.exists()`) terrebbe per sempre la miniatura di un altro
+    shot. Una miniatura sbagliata che non si rigenera mai è peggio di una mancante.
+
     Idempotente: salta gli shot che hanno già il file su disco.
     """
     from tqdm import tqdm
@@ -26,7 +31,7 @@ def extract_thumbs(manifest, video, film_dir, size=256, progress=True):
     shots = manifest["shots"]
     n = 0
     for shot in tqdm(shots, desc="[thumbs]", unit="shot", disable=not progress):
-        rel = f"thumbs/{shot['index']:06d}.jpg"
+        rel = f"thumbs/{shot['start_frame']:06d}.jpg"
         path = Path(film_dir) / rel
         if not path.exists():
             # n=1 -> il frame di mezzo dello shot; `fps` evita di finire su quello dopo

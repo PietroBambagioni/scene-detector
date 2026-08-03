@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 
-def build_manifest(video_info, scenes, detector, clip_template="scene-{:03d}.mp4",
+def build_manifest(video_info, scenes, detector, clip_template="clip/scene-{:03d}.mp4",
                    video_src=None):
     """Costruisce il manifest del catalogo shot (backbone per ASR / VLM / UI).
 
@@ -54,9 +54,15 @@ CAMPI_COSTOSI = ("description", "dialogue", "characters", "speakers")
 def merge_prior(manifest, path):
     """Riporta nel manifest i campi costosi già presenti su disco. -> quanti shot recuperati.
 
-    Accoppiamento per `index`, e solo dove il valore nuovo è vuoto: un run che ricalcola davvero
-    (`--vlm`, `--asr`, `--diarize`) scrive dopo e vince. Se il manifest su disco non c'è o è
-    illeggibile non è un errore — è il primo run.
+    Accoppiamento per **`start_frame`**, e solo dove il valore nuovo è vuoto: un run che ricalcola
+    davvero (`--vlm`, `--asr`, `--diarize`) scrive dopo e vince. Se il manifest su disco non c'è o
+    è illeggibile non è un errore — è il primo run.
+
+    `index` non è un'identità: basta un taglio manuale nella UI (o una soglia diversa) e ogni
+    indice a valle scala di uno, così le descrizioni scivolano tutte sullo shot sbagliato. Un
+    campo **assegnato male** è peggio di un campo perso, perché non si vede. `start_frame`
+    identifica lo shot: se il confine si è mosso il recupero non avviene, e quello è il
+    comportamento giusto — quel testo parlava di un altro pezzo di film.
     """
     p = Path(path)
     if not p.exists():
@@ -66,10 +72,11 @@ def merge_prior(manifest, path):
     except (json.JSONDecodeError, OSError):
         return 0
 
-    by_index = {s["index"]: s for s in prior.get("shots", [])}
+    by_start = {s["start_frame"]: s for s in prior.get("shots", [])
+                if s.get("start_frame") is not None}
     n = 0
     for shot in manifest["shots"]:
-        old = by_index.get(shot["index"])
+        old = by_start.get(shot.get("start_frame"))
         if not old:
             continue
         recuperati = [c for c in CAMPI_COSTOSI if not shot.get(c) and old.get(c)]

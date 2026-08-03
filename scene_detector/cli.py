@@ -21,6 +21,9 @@ def run(
     min_scene_len: int = typer.Option(5, "--min-scene-len",
                                       help="Frame minimi per shot (5: vedi core/config.py)"),
     transnet_weights: Path = typer.Option(None, "--transnet-weights"),
+    from_manifest: Path = typer.Option(None, "--from-manifest", exists=True, dir_okay=False,
+                                       help="Riparte dai confini di un manifest corretto a mano "
+                                            "(Export JSON della UI): niente detection, ritaglia le clip"),
     asr: bool = typer.Option(False, "--asr", help="Trascrivi i dialoghi (faster-whisper)"),
     asr_model: str = typer.Option("large-v3-turbo", "--asr-model",
                                   help="Modello Whisper: tiny/base/small/medium/large-v3/large-v3-turbo o path"),
@@ -66,7 +69,7 @@ def run(
     cfg = Config(
         video=video, output_dir=output_dir, detector=detector,
         split_mode=split_mode, threshold=threshold, min_scene_len=min_scene_len,
-        transnet_weights=transnet_weights,
+        transnet_weights=transnet_weights, from_manifest=from_manifest,
         asr=asr, asr_model=asr_model, asr_lang=asr_lang, asr_threads=asr_threads,
         diarize=diarize,
         vlm=vlm, vlm_model=vlm_model, vlm_frames=vlm_frames,

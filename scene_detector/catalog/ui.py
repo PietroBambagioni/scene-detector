@@ -21,6 +21,7 @@ header .spacer { flex:1; }
 input, button, textarea { font:inherit; }
 #filter { padding:6px 10px; border-radius:8px; border:1px solid #444; background:transparent; color:inherit; }
 button { padding:6px 12px; border-radius:8px; border:1px solid #555; background:#2a2a2a; color:#eee; cursor:pointer; }
+button:disabled { opacity:.35; cursor:default; }
 @media (prefers-color-scheme: light){ button{ background:#fff; color:#111; } }
 #timeline { display:flex; align-items:center; height:40px; padding:0 14px; border-bottom:1px solid #333; position:sticky; top:53px; background:inherit; z-index:2; }
 #track { position:relative; flex:1; height:22px; background:rgba(127,127,127,.14); border-radius:5px; }
@@ -96,6 +97,13 @@ textarea { width:100%; min-height:70px; padding:8px; border-radius:8px; border:1
   <div id="detail">
     <video id="player" controls preload="metadata"></video>
     <div class="tc" id="tc"></div>
+    <div class="nav">
+      <button id="fprev" title="un fotogramma indietro">◀ 1f</button>
+      <span class="tc" id="frame"></span>
+      <button id="fnext" title="un fotogramma avanti">1f ▶</button>
+      <button id="split" title="spezza questo shot al fotogramma sul player">✂ taglia qui</button>
+      <button id="mergeprev" title="fondi questo shot nel precedente">⤴ unisci al prec</button>
+    </div>
     <div id="chips"></div>
     <label id="dlgLabel">Dialogo</label>
     <textarea id="dialogue"></textarea>
@@ -141,6 +149,19 @@ if (FILM) {
   $('player').src = FILM;
   $('player').addEventListener('timeupdate', () => {
     if ($('player').currentTime >= stopAt) $('player').pause();
+  });
+  // `stopAt` vincola *la riproduzione che abbiamo avviato noi*, non il player: appena l'utente
+  // interviene va disarmato, altrimenti il timeupdate rimette in pausa e il film sembra rotto.
+  // Due interventi, due casi, ed e' il secondo quello che si nota:
+  //  - seek sulla barra oltre lo shot corrente -> ripartirebbe in pausa
+  //  - play a fine shot (siamo fermi *su* stopAt) -> non riparte affatto, nessun seek di mezzo
+  // Niente flag da tenere in sincrono: basta guardare dove si trova la testina.
+  $('player').addEventListener('seeked', () => {
+    const sh = shots[cur], t = $('player').currentTime;
+    if (!sh || t < sh.start_time || t > sh.end_time) stopAt = Infinity;
+  });
+  $('player').addEventListener('play', () => {
+    if ($('player').currentTime >= stopAt) stopAt = Infinity;
   });
 }
 
@@ -247,6 +268,95 @@ $('player').addEventListener('ended', () => {
   select(playing.i);
   $('player').play().catch(() => {});
 });
+
+// ------------------------------------------------------------------- shot ---
+// Gli shot sono l'unico livello dove l'unita' e' il **frame**, non un indice: il confine lo
+// detta la testina del player, non una riga della lista. `currentTime` e' relativo alla clip
+// quando le clip esistono e al film quando non ci sono — l'offset e' lo start_frame dello shot.
+
+function frameBase() { const sh = shots[cur]; return sh && sh.clip ? sh.start_frame : 0; }
+function frameNow() { return frameBase() + Math.floor($('player').currentTime * DATA.fps); }
+
+// Mezzo frame dentro: cosi' il `floor` di `frameNow` ridà esattamente `f` invece di inciampare
+// sull'arrotondamento del confine.
+function goToFrame(f) {
+  const p = $('player'); p.pause();
+  p.currentTime = (f - frameBase() + 0.5) / DATA.fps;
+}
+
+function renderFrame() {
+  const sh = shots[cur], f = frameNow();
+  // Il range accanto al frame non e' decorazione: il taglio deve cadere **dentro** lo shot e non
+  // sul suo primo frame (li' non spezzerebbe niente), e i due modi di finirci fuori non si
+  // vedono da soli — selezionare uno shot lascia la testina sul primo frame, e lasciar scorrere
+  // la ferma a `end_time`, che e' **un frame oltre** l'ultimo. Senza il range il bottone sembra
+  // spento a caso.
+  $('frame').textContent = sh ? `frame ${f} · shot ${sh.start_frame}–${sh.end_frame}` : `frame ${f}`;
+  $('split').disabled = !sh || f <= sh.start_frame || f > sh.end_frame;
+  $('split').title = $('split').disabled
+    ? 'porta la testina dentro lo shot (non sul primo frame) per poter tagliare'
+    : `spezza lo shot: ${sh.start_frame}–${f-1} + ${f}–${sh.end_frame}`;
+  $('mergeprev').disabled = cur <= 0;
+}
+$('player').addEventListener('timeupdate', renderFrame);
+$('player').addEventListener('seeked', renderFrame);
+
+// `end_frame` e' inclusivo (core/scene.py) e `end_time` e' `(end_frame + 1) / fps`: il frame `f`
+// apre il secondo shot, quindi il primo si chiude a `f - 1` e i due tempi coincidono su `f/fps`.
+function splitShotAt(f) {
+  const sh = shots[cur];
+  if (f <= sh.start_frame || f > sh.end_frame) return;
+  // Descrizione e dialogo vanno a **entrambi** i figli. Dopo un taglio manuale sono comunque da
+  // rifare, ma perderli in silenzio e' il danno gia' pagato una volta (manifest.py,
+  // CAMPI_COSTOSI). `thumb` e `clip` puntano ancora a quelli del padre: li rifa' il ritaglio.
+  const nuovo = { ...sh, start_frame: f, end_frame: sh.end_frame,
+                  start_time: f / DATA.fps, end_time: sh.end_time, confidence: null };
+  delete nuovo.transition;          // la giunta apriva il padre, non il figlio
+  sh.end_frame = f - 1;
+  sh.end_time = f / DATA.fps;
+  shots.splice(cur + 1, 0, nuovo);
+  // gli indici a valle slittano di uno; la scena che conteneva `cur` ha uno shot in piu'
+  if (scenes) scenes.forEach(sc => {
+    if (sc.first_shot > cur) sc.first_shot++;
+    if (sc.last_shot >= cur) sc.last_shot++;
+  });
+  afterShotEdit(cur + 1);
+}
+
+function mergeShotWithPrev(i) {
+  if (i <= 0) return;
+  const a = shots[i-1], b = shots[i];
+  a.end_frame = b.end_frame;
+  a.end_time = b.end_time;
+  const unisci = (x, y) => [x, y].filter(Boolean).join(' ');
+  a.dialogue = unisci(a.dialogue, b.dialogue);
+  a.description = unisci(a.description, b.description);
+  a.characters = [...new Set([...(a.characters || []), ...(b.characters || [])])];
+  if (a.speakers || b.speakers)
+    a.speakers = [...new Set([...(a.speakers || []), ...(b.speakers || [])])];
+  shots.splice(i, 1);
+  if (scenes) {
+    scenes.forEach(sc => {
+      if (sc.first_shot > i) sc.first_shot--;
+      if (sc.last_shot >= i) sc.last_shot--;
+    });
+    // fondere oltre il confine di scena puo' svuotare una scena fatta del solo shot `i`: va
+    // tolta, altrimenti resta un range vuoto e `checkScenes` si lamenta a ragione
+    for (let s = scenes.length - 1; s >= 0; s--)
+      if (scenes[s].last_shot < scenes[s].first_shot) scenes.splice(s, 1);
+  }
+  afterShotEdit(i - 1);
+}
+
+function afterShotEdit(i) {
+  shots.forEach((sh, k) => sh.index = k);
+  DATA.n_shots = shots.length;
+  if (scenes) renumberScenes(); else renderMeta();   // renumberScenes ridisegna gia' la meta
+  dirty();
+  renderList($('filter').value.toLowerCase());
+  renderTimeline();
+  select(Math.min(Math.max(i, 0), shots.length - 1));
+}
 
 // ------------------------------------------------------------------ lista ---
 
@@ -367,6 +477,7 @@ function select(i) {
   if (sh.clip) { stopAt = Infinity; $('player').src = sh.clip; }
   else if (FILM) seekTo(sh);
   $('tc').textContent = `#${String(i).padStart(3,'0')}  ${fmt(sh.start_time)}–${fmt(sh.end_time)}  (${sh.clip || DATA.video})`;
+  renderFrame();                 // il `seeked` arriva dopo: intanto i bottoni dicono il vero
   renderChips(sh);
   // `--diarize` è opt-in: senza, `speakers` non c'è e l'etichetta resta quella di sempre. Gli id
   // sono numeri perché la diarizzazione non sa i nomi — il linking speaker↔personaggio non c'è
@@ -392,6 +503,10 @@ function dirty(){ $('saved').textContent = '● modifiche non esportate'; }
 
 $('prev').onclick = () => select(cur-1);
 $('next').onclick = () => select(cur+1);
+$('fprev').onclick = () => goToFrame(frameNow() - 1);
+$('fnext').onclick = () => goToFrame(frameNow() + 1);
+$('split').onclick = () => splitShotAt(frameNow());
+$('mergeprev').onclick = () => mergeShotWithPrev(cur);
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
   if (e.key === 'ArrowDown' || e.key === 'j') select(cur+1);

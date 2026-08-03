@@ -10,7 +10,7 @@ def _manifest(n=6, scenes=None):
         "detector": "transnet", "n_shots": n, "cast": [],
         "shots": [{"index": i, "start_frame": i * 10, "end_frame": i * 10 + 9,
                    "start_time": i * 0.4, "end_time": (i + 1) * 0.4,
-                   "clip": f"scene-{i+1:03d}.mp4", "confidence": 1.0,
+                   "clip": f"clip/scene-{i+1:03d}.mp4", "confidence": 1.0,
                    "description": None, "dialogue": None, "characters": []}
                   for i in range(n)],
     }
@@ -18,7 +18,7 @@ def _manifest(n=6, scenes=None):
         m["n_scenes"] = len(scenes)
         m["scenes"] = scenes
         for s in m["shots"]:
-            s["thumb"] = f"thumbs/{s['index']:06d}.jpg"
+            s["thumb"] = f"thumbs/{s['start_frame']:06d}.jpg"
     return m
 
 
@@ -39,7 +39,7 @@ def test_html_con_scene_espone_i_dati():
     data = json.loads(html.split("const DATA = ")[1].split(";\n")[0])
     assert data["n_scenes"] == 2
     assert data["scenes"][1]["first_shot"] == 3
-    assert data["shots"][3]["thumb"] == "thumbs/000003.jpg"
+    assert data["shots"][3]["thumb"] == "thumbs/000030.jpg"    # start_frame, non indice
 
 
 def test_html_ha_i_pezzi_del_terzo_livello():
@@ -68,10 +68,21 @@ def test_extract_thumbs_scrive_e_e_idempotente(tmp_path, monkeypatch):
     m = _manifest(3)
     n = extract_thumbs(m, "Film.mp4", tmp_path, progress=False)
     assert n == 3
-    assert [s["thumb"] for s in m["shots"]] == [f"thumbs/{i:06d}.jpg" for i in range(3)]
+    assert [s["thumb"] for s in m["shots"]] == [f"thumbs/{i*10:06d}.jpg" for i in range(3)]
     assert (tmp_path / "thumbs" / "000000.jpg").exists()
     # `fps` viene passato: senza, sugli shot corti si campiona il frame dello shot successivo
     assert calls[0][5] == 25.0
 
     n2 = extract_thumbs(m, "Film.mp4", tmp_path, progress=False)
     assert n2 == 0                      # file già su disco: nessuna estrazione in più
+
+    # taglio manuale: gli indici scalano, gli start_frame no. Le miniature degli shot rimasti
+    # fermi restano valide, e solo quella dello shot nuovo si estrae — col nome per indice
+    # avrebbero invece cambiato tutte proprietario, senza rigenerarsi mai.
+    m["shots"].insert(1, {**m["shots"][0], "index": 1, "start_frame": 5, "end_frame": 9,
+                          "start_time": 0.2, "end_time": 0.4})
+    for i, s in enumerate(m["shots"]):
+        s["index"] = i
+    assert extract_thumbs(m, "Film.mp4", tmp_path, progress=False) == 1
+    assert [s["thumb"] for s in m["shots"]] == ["thumbs/000000.jpg", "thumbs/000005.jpg",
+                                                "thumbs/000010.jpg", "thumbs/000020.jpg"]

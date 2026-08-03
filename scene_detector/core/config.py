@@ -33,6 +33,11 @@ class Config:
     # netti 0,77 con 15 contro 0,93 con 5. Le due tarature non sono separabili.
     min_scene_len: int = 5
     transnet_weights: Path | None = None
+    # Confini presi da un manifest corretto a mano nella UI invece che dal detector. Il detector
+    # non gira e `min_scene_len` non si applica: se hai tagliato uno shot di 3 frame, l'hai
+    # voluto tu. Da qui in poi la pipeline non sa la differenza — split, miniature e UI
+    # ripartono dai confini nuovi.
+    from_manifest: Path | None = None
     # trascrizione dialoghi (ASR)
     asr: bool = False
     asr_model: str = "large-v3-turbo"

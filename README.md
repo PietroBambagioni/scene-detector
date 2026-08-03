@@ -166,7 +166,7 @@ resume — non c'è nessuno stato altrove.
   "shots": [
     { "index": 0, "start_frame": 0, "end_frame": 148,
       "start_time": 0.0, "end_time": 6.214,
-      "clip": "scene-001.mp4",        // null con --split-mode none
+      "clip": "clip/scene-001.mp4",   // null con --split-mode none
       "confidence": 0.98,
       // presente solo se lo shot si apre con una transizione graduale
       "transition": { "start_frame": 8464, "end_frame": 8467, "n_frames": 4 },

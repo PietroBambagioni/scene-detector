@@ -16,7 +16,8 @@ def _scenes():
 
 def test_manifest_con_clip():
     m = build_manifest(_info(), _scenes(), "transnet")
-    assert [s["clip"] for s in m["shots"]] == ["scene-001.mp4", "scene-002.mp4"]
+    # sottocartella: il catalogo tiene le clip separate da manifest, miniature e index.html
+    assert [s["clip"] for s in m["shots"]] == ["clip/scene-001.mp4", "clip/scene-002.mp4"]
     assert "video_src" not in m           # con le clip la UI non ha bisogno del film originale
 
 
@@ -45,14 +46,14 @@ def test_merge_prior_recupera_i_campi_costosi(tmp_path):
 
     path = tmp_path / "manifest.json"
     write_manifest({"shots": [
-        {"index": 0, "description": "un uomo cammina", "dialogue": "ciao", "characters": [3],
-         "speakers": [1]},
-        {"index": 1, "description": "un campo lungo", "dialogue": None, "characters": [],
-         "speakers": []},
+        {"index": 0, "start_frame": 0, "description": "un uomo cammina", "dialogue": "ciao",
+         "characters": [3], "speakers": [1]},
+        {"index": 1, "start_frame": 100, "description": "un campo lungo", "dialogue": None,
+         "characters": [], "speakers": []},
     ]}, path)
 
-    nuovo = {"shots": [{"index": i, "description": None, "dialogue": None, "characters": [],
-                        "speakers": []} for i in range(3)]}
+    nuovo = {"shots": [{"index": i, "start_frame": i * 100, "description": None, "dialogue": None,
+                        "characters": [], "speakers": []} for i in range(3)]}
     assert merge_prior(nuovo, path) == 2
     assert nuovo["shots"][0]["description"] == "un uomo cammina"
     assert nuovo["shots"][0]["dialogue"] == "ciao"
@@ -65,10 +66,44 @@ def test_merge_prior_non_sovrascrive_il_calcolo_nuovo(tmp_path):
     from scene_detector.catalog.manifest import merge_prior, write_manifest
 
     path = tmp_path / "manifest.json"
-    write_manifest({"shots": [{"index": 0, "description": "vecchia"}]}, path)
-    nuovo = {"shots": [{"index": 0, "description": "appena calcolata"}]}
+    write_manifest({"shots": [{"index": 0, "start_frame": 0, "description": "vecchia"}]}, path)
+    nuovo = {"shots": [{"index": 0, "start_frame": 0, "description": "appena calcolata"}]}
     assert merge_prior(nuovo, path) == 0
     assert nuovo["shots"][0]["description"] == "appena calcolata"
+
+
+def test_merge_prior_accoppia_per_start_frame_non_per_indice(tmp_path):
+    """Un taglio manuale nella UI sposta di uno tutti gli indici a valle. Accoppiando per `index`
+    le descrizioni scivolerebbero sullo shot sbagliato: un danno silenzioso, peggio di perderle."""
+    from scene_detector.catalog.manifest import merge_prior, write_manifest
+
+    path = tmp_path / "manifest.json"
+    write_manifest({"shots": [
+        {"index": 0, "start_frame": 0, "description": "una nave da guerra"},
+        {"index": 1, "start_frame": 100, "description": "un pianeta desertico"},
+    ]}, path)
+
+    # lo shot [0, 99] e' stato spezzato a 50: gli indici scalano, gli start_frame no
+    nuovo = {"shots": [
+        {"index": 0, "start_frame": 0, "description": None},
+        {"index": 1, "start_frame": 50, "description": None},
+        {"index": 2, "start_frame": 100, "description": None},
+    ]}
+    assert merge_prior(nuovo, path) == 2
+    assert [s["description"] for s in nuovo["shots"]] == [
+        "una nave da guerra", None, "un pianeta desertico"]
+
+
+def test_merge_prior_non_recupera_su_un_confine_spostato(tmp_path):
+    """Se lo shot inizia altrove non e' piu' lo stesso pezzo di film: non recuperare e' la scelta
+    giusta, e il conteggio deve dirlo."""
+    from scene_detector.catalog.manifest import merge_prior, write_manifest
+
+    path = tmp_path / "manifest.json"
+    write_manifest({"shots": [{"index": 0, "start_frame": 100, "description": "vecchia"}]}, path)
+    nuovo = {"shots": [{"index": 0, "start_frame": 103, "description": None}]}
+    assert merge_prior(nuovo, path) == 0
+    assert nuovo["shots"][0]["description"] is None
 
 
 def test_merge_prior_primo_run_non_e_un_errore(tmp_path):
