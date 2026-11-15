@@ -145,20 +145,21 @@ def setup(
 
 
 def _fetch_big_models(asr_model="large-v3-turbo",
-                      vlm_model="mlx-community/Qwen3-VL-8B-Instruct-4bit",
-                      siglip_model=None):
+                      vlm_model="mlx-community/Qwen3-VL-8B-Instruct-4bit"):
     """Anticipa il download dei modelli che altrimenti arrivano al primo run.
 
     Ognuno vive in un extra diverso: se l'extra non è installato lo si segnala e si prosegue,
     perché `--asr` senza `--vlm` (o viceversa) è un uso legittimo.
     """
-    from .grouping import SIGLIP_MODEL
-    siglip_model = siglip_model or SIGLIP_MODEL
+    # DINOv2 e non SigLIP: si anticipa ciò che la pipeline carica. SigLIP ha perso la misura e
+    # non è nel percorso (VERBALE §5.4), mentre `--faces-refine` DINOv2 lo usa davvero — e prima
+    # era l'unico modello che `--models` lasciava da scaricare al primo run.
+    from .recognition.embed import DINO_MODEL
     steps = [
         ("ASR", "'.[asr]'", lambda: __import__("faster_whisper").WhisperModel(asr_model, device="cpu")),
         ("VLM", "'.[vlm]'", lambda: __import__("mlx_vlm").load(vlm_model)),
         ("volti", "'.[faces]'", lambda: __import__("insightface").app.FaceAnalysis(name="buffalo_l").prepare(ctx_id=-1)),
-        ("SigLIP", "'.[neural]'", lambda: __import__("transformers").AutoModel.from_pretrained(siglip_model)),
+        ("DINOv2", "'.[characters]'", lambda: __import__("transformers").AutoModel.from_pretrained(DINO_MODEL)),
     ]
     for label, extra, load in steps:
         typer.echo(f"→ {label}…")
