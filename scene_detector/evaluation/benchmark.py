@@ -6,8 +6,6 @@ un solo shot lo stesso peso di un montaggio serrato.
 """
 from __future__ import annotations
 
-from dataclasses import replace
-
 from ..core.scene import enforce_min_len
 from ..detection.neural import TransNetV2Detector, read_small_frames
 from ..io.video import probe
@@ -15,21 +13,24 @@ from .eval import boundaries_from_ranges, boundaries_from_scenes, prf, prf1, tra
     transitions_from_ranges, transitions_from_scenes
 
 
-def evaluate_video(video_path, gt_ranges, cfg, tol=5, min_iou=0.5):
-    """Un video: -> (dict boundary con tp/fp/fn, dict transition, n_shot predetti)."""
+def evaluate_video(video_path, gt_ranges, cfg, tol=5, min_iou=0.5, detector=None):
+    """Un video: -> (dict boundary con tp/fp/fn, dict transition, n_shot predetti).
+
+    `detector`: da riusare fra un video e l'altro, così i pesi si caricano una volta sola
+    (`NeuralDetector` memoizza il modello, ma per istanza).
+    """
     info = probe(video_path)
-    vcfg = replace(cfg, video=video_path)
 
     # decode-once anche per il detector singolo: `detect()` stamperebbe le sue barre per ogni
     # video, e con 50 video l'output del benchmark diventa illeggibile. È anche il motivo per cui
     # qui il detector è fisso e `cfg.detector` non viene letto: `detect_from_frames` la espone
     # solo la via neurale — PySceneDetect decodifica da sé. Passava da `build_detector` con
     # `DetectorKind.transnet` costante, cioè un'indirezione che non sceglieva niente.
-    t_det = TransNetV2Detector(vcfg.transnet_weights, vcfg.threshold)
+    t_det = detector or TransNetV2Detector(cfg.transnet_weights, cfg.threshold)
     h, w = t_det.input_size
     frames = read_small_frames(info.path, w, h, total=info.n_frames, progress=False)
     scenes = t_det.detect_from_frames(frames, info)
-    scenes = enforce_min_len(scenes, vcfg.min_scene_len)
+    scenes = enforce_min_len(scenes, cfg.min_scene_len)
 
     b = prf1(boundaries_from_scenes(scenes), boundaries_from_ranges(gt_ranges), tol)
     t = transition_iou(transitions_from_scenes(scenes), transitions_from_ranges(gt_ranges), min_iou)
@@ -46,9 +47,10 @@ def run(videos, gt, cfg, tol=5, min_iou=0.5, on_video=None):
     tp = fp = fn = 0
     t_tp = t_fp = t_fn = 0
     ious, n_gt_grad = [], 0
+    detector = TransNetV2Detector(cfg.transnet_weights, cfg.threshold)
 
     for vid, path in sorted(videos.items()):
-        b, t, n = evaluate_video(path, gt[vid], cfg, tol, min_iou)
+        b, t, n = evaluate_video(path, gt[vid], cfg, tol, min_iou, detector)
         tp, fp, fn = tp + b["tp"], fp + b["fp"], fn + b["fn"]
         t_tp, t_fp, t_fn = t_tp + t["tp"], t_fp + t["fp"], t_fn + t["fn"]
         ious.append((t["mean_iou"], t["matched"]))
