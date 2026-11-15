@@ -20,6 +20,10 @@ def run(
                                     help="Soglia boundary neurale (0,05: vedi core/config.py)"),
     min_scene_len: int = typer.Option(5, "--min-scene-len",
                                       help="Frame minimi per shot (5: vedi core/config.py)"),
+    min_peak: float = typer.Option(0.0, "--min-peak",
+                                   help="Picco minimo di una corsa perché sia un taglio (0 = spento). "
+                                        "NON è --threshold: quella delimita, questo decide se il taglio "
+                                        "esiste. Per materiale degradato, es. 0.5 su un restauro"),
     transnet_weights: Path = typer.Option(None, "--transnet-weights"),
     from_manifest: Path = typer.Option(None, "--from-manifest", exists=True, dir_okay=False,
                                        help="Riparte dai confini di un manifest corretto a mano "
@@ -54,6 +58,13 @@ def run(
     if max_detail:
         run_all = True
         split_mode = SplitMode.reencode
+    # Un confine corretto a mano nella UI cade **dentro** uno shot, cioè lontano da un keyframe:
+    # `copy` lo fa scivolare indietro fino al precedente — su *Anna* (keyframe ogni ~1 s) un
+    # secondo, con GOP da 2 s il doppio. Il taglio finisce dove il codec vuole, non dove l'hai
+    # messo, e in silenzio. `--from-manifest` esiste per rispettare quei confini: qui `copy` non è
+    # una scelta, è un difetto. `none` resta (non taglia affatto).
+    if from_manifest and split_mode is SplitMode.copy:
+        split_mode = SplitMode.reencode
     if run_all:
         # `--scenes` resta **fuori** da `--all`, e non per il costo (una decodifica in più, 47 s
         # su un film di 2 h: niente accanto ai 45 min di ASR+VLM). È che `--all` non può passare
@@ -69,6 +80,7 @@ def run(
     cfg = Config(
         video=video, output_dir=output_dir, detector=detector,
         split_mode=split_mode, threshold=threshold, min_scene_len=min_scene_len,
+        min_peak=min_peak,
         transnet_weights=transnet_weights, from_manifest=from_manifest,
         asr=asr, asr_model=asr_model, asr_lang=asr_lang, asr_threads=asr_threads,
         diarize=diarize,

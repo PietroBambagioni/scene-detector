@@ -33,6 +33,16 @@ class Config:
     # nascono più shot brevi legittimi e la fusione cieca ne mangia di veri — sui soli stacchi
     # netti 0,77 con 15 contro 0,93 con 5. Le due tarature non sono separabili.
     min_scene_len: int = 5
+    # Picco minimo di una corsa perché produca un confine. **Non è un secondo `threshold`**: la
+    # soglia decide *dove comincia e finisce* una transizione, questo decide *se esiste*. Una
+    # corsa più fredda viene assorbita nello shot, i frame restano coperti.
+    #
+    # 0,0 (spento) di default e deve restarlo: serve solo su materiale degradato, dove il rumore
+    # del supporto produce corse larghe e tiepide. Sul restauro di *Anna* le corse col picco sotto
+    # 0,50 sono 6× più frequenti che su un film pulito, e in cieco **0 su 24 erano stacchi veri**
+    # (12/12 sui controlli). Su un film pulito le stesse corse sono in buona parte stacchi
+    # legittimi. Vedi `plan/VERBALE.md` §3.6.
+    min_peak: float = 0.0
     agreement_tol: int = 5        # tolleranza (frame) per agreement in ensemble
     transnet_weights: Path | None = None
     autoshot_weights: Path | None = None

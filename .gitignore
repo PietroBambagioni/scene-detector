@@ -23,3 +23,6 @@ datasets/
 
 # log dei run
 *.log
+
+# sottoprogetto Anna / Fuori campo
+fuoricampo/

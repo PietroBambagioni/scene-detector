@@ -33,3 +33,8 @@ scene-detector-benchmark = "scene_detector.cli:bench_app"
 
 [tool.setuptools.packages.find]
 include = ["scene_detector*"]
+
+# I woff2 dei tre caratteri (SIL OFL) finiscono dentro `index.html` come data URI: una pagina
+# che deve girare col doppio click non può linkare Google Fonts, il <link> fallisce in silenzio.
+[tool.setuptools.package-data]
+"scene_detector.catalog" = ["font/*.woff2", "font/*.css"]

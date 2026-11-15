@@ -211,7 +211,7 @@ def group_shots(scenes, sigs, n_scenes=None):
     transizioni ≥6 frame — comprese una da 10 e una da 13 — sono stati giudicati **0/7 cambi di
     scena**, sotto il 15% dei controlli casuali. Il campo dice *dove* il detector ha visto una
     corsa calda, non che lì ci sia una dissolvenza. Torna quando un detector **tipizza** le
-    transizioni (OmniShotCut: `Dissolve`/`Fade`/`Wipe` — DA-FARE §1), non prima.
+    transizioni (OmniShotCut: `Dissolve`/`Fade`/`Wipe` — VERBALE §3.8), non prima.
     """
     if len(scenes) < 2:
         return [(0, len(scenes) - 1)] if len(scenes) else []

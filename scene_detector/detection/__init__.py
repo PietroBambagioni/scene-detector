@@ -9,9 +9,9 @@ __all__ = ["build_detector"]
 
 def build_detector(kind, cfg):
     if kind == DetectorKind.transnet:
-        return TransNetV2Detector(cfg.transnet_weights, cfg.threshold)
+        return TransNetV2Detector(cfg.transnet_weights, cfg.threshold, cfg.min_peak)
     if kind == DetectorKind.autoshot:
-        return AutoShotDetector(cfg.autoshot_weights, cfg.threshold)
+        return AutoShotDetector(cfg.autoshot_weights, cfg.threshold, cfg.min_peak)
     if kind == DetectorKind.pyscenedetect:
         return PySceneDetectDetector(min_scene_len=cfg.min_scene_len)
     raise ValueError(f"detector sconosciuto: {kind}")

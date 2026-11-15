@@ -95,3 +95,46 @@ def test_i_confini_manuali_diventano_scene_senza_min_len(tmp_path):
     assert [(s.start_frame, s.end_frame) for s in scenes] == ranges
     # controprova: la fusione cieca del run normale se lo mangerebbe
     assert len(enforce_min_len(scenes, 5)) == 2
+
+
+def test_from_manifest_non_taglia_sui_keyframe(tmp_path, monkeypatch):
+    """`copy` snappa al keyframe precedente: il confine corretto a mano scivola di ~1 GOP.
+
+    E' l'unico modo in cui `--from-manifest` puo' fallire senza dirlo — i frame nel manifest
+    sono giusti, il taglio no.
+    """
+    from typer.testing import CliRunner
+
+    from scene_detector import cli
+    from scene_detector.core.config import SplitMode
+
+    video = tmp_path / "banco.mp4"
+    video.write_bytes(b"")
+    corretto = _manifest(tmp_path, [(0, 249)])
+    visti = []
+    monkeypatch.setattr(cli.pipeline, "run", lambda cfg: visti.append(cfg))
+
+    def invoca(*extra):
+        r = CliRunner().invoke(cli.app, [str(video), "--from-manifest", str(corretto),
+                                         "-o", str(tmp_path), *extra])
+        assert r.exit_code == 0, r.output
+        return visti.pop().split_mode
+
+    assert invoca() is SplitMode.reencode
+    assert invoca("--split-mode", "copy") is SplitMode.reencode
+    assert invoca("--split-mode", "none") is SplitMode.none      # "non tagliare" resta tale
+
+
+def test_il_ritaglio_conserva_confidenza_e_transizione(tmp_path):
+    """Ripartiva tutto da `confidence=1.0` senza transizioni: dopo il primo ritaglio la coda di
+    revisione era vuota e il manifest dava per certo ogni confine."""
+    from scene_detector.pipeline import _scene_corrette
+
+    path = _manifest(tmp_path, [(0, 99), (100, 136), (137, 249)])
+    m = json.loads(path.read_text())
+    m["shots"][1].update(confidence=0.12,
+                         transition={"start_frame": 96, "end_frame": 99, "n_frames": 4})
+    m["shots"][2]["confidence"] = None            # tagliato a mano nella UI
+    scenes = _scene_corrette(m, 25.0)
+    assert [s.confidence for s in scenes] == [1.0, 0.12, None]
+    assert [s.transition for s in scenes] == [None, (96, 99), None]

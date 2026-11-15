@@ -71,7 +71,15 @@ manifest. `enforce_min_len` fonde nella precedente ogni scena più corta di `--m
 > **La soglia di default è 0,05, non 0,5**, ed è accoppiata a `--min-scene-len 5`: cambiarne una
 > sola peggiora il risultato. Misurato su 1634 transizioni reali annotate: il recall passa da
 > 0,088 a 0,270 e sui soli stacchi netti da 0,81 a **0,93**, al prezzo di +32% di shot.
-> Dettagli in [plan/TRANSIZIONI-GRADUALI.md](plan/TRANSIZIONI-GRADUALI.md).
+> Dettagli in [plan/VERBALE.md](plan/VERBALE.md) §3.
+
+> **Su materiale degradato serve `--min-peak`.** La soglia dice *dove comincia e finisce* una
+> transizione; `--min-peak` dice *se esiste*. Sul restauro di *Anna* (Portapak 1975) il rumore del
+> supporto produce corse larghe e tiepide che la sola soglia non distingue da una dissolvenza: in
+> un campione cieco **0 su 24 erano stacchi veri**, contro 12 su 12 dei controlli. Con
+> `--threshold 0.05 --min-peak 0.5` gli shot passano da 967 a 307 e le 27 dissolvenze vere
+> restano delimitate, mentre alzare la soglia a 0,50 dà gli stessi 307 shot ma ne conserva **una**.
+> È spento di default: su un film pulito quelle corse sono in buona parte stacchi legittimi.
 
 La **confidenza** di ogni boundary è la probabilità per-frame di TransNetV2 al taglio che lo
 apre — uno score continuo e calibrato, non un flag binario.
@@ -233,6 +241,7 @@ scene-detector FILM.mp4 --all --split-mode none -o catalogo/ # catalogo senza du
 | `-d, --detector` | `transnet` | `transnet` \| `pyscenedetect` |
 | `--threshold` | `0.05` | soglia di boundary sulle probabilità neurali |
 | `--min-scene-len` | `5` | frame minimi per shot (sotto, viene fuso nel precedente) |
+| `--min-peak` | `0.0` | picco minimo di una corsa perché sia un taglio (0 = spento). **Non** è `--threshold`: quella delimita, questo decide se il taglio esiste. Per materiale degradato |
 | `--split-mode` | `copy` | `copy` \| `reencode` \| `none` |
 | `-j, --jobs` | `0` | processi ffmpeg paralleli per il taglio (0 = core − 2) |
 | `--transnet-weights` | auto da `weights/` | pesi TransNetV2 |

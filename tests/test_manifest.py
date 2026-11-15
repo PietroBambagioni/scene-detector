@@ -18,7 +18,7 @@ def test_manifest_con_clip():
     m = build_manifest(_info(), _scenes(), "transnet")
     # sottocartella: il catalogo tiene le clip separate da manifest, miniature e index.html
     assert [s["clip"] for s in m["shots"]] == ["clip/scene-001.mp4", "clip/scene-002.mp4"]
-    assert "video_src" not in m           # con le clip la UI non ha bisogno del film originale
+    assert "video_src" not in m           # non passato: la chiave non compare (la pipeline lo passa sempre)
 
 
 def test_manifest_senza_clip():
@@ -46,13 +46,13 @@ def test_merge_prior_recupera_i_campi_costosi(tmp_path):
 
     path = tmp_path / "manifest.json"
     write_manifest({"shots": [
-        {"index": 0, "start_frame": 0, "description": "un uomo cammina", "dialogue": "ciao",
+        {"index": 0, "start_frame": 0, "end_frame": 99, "description": "un uomo cammina", "dialogue": "ciao",
          "characters": [3], "speakers": [1]},
-        {"index": 1, "start_frame": 100, "description": "un campo lungo", "dialogue": None,
+        {"index": 1, "start_frame": 100, "end_frame": 199, "description": "un campo lungo", "dialogue": None,
          "characters": [], "speakers": []},
     ]}, path)
 
-    nuovo = {"shots": [{"index": i, "start_frame": i * 100, "description": None, "dialogue": None,
+    nuovo = {"shots": [{"index": i, "start_frame": i * 100, "end_frame": i * 100 + 99, "description": None, "dialogue": None,
                         "characters": [], "speakers": []} for i in range(3)]}
     assert merge_prior(nuovo, path) == 2
     assert nuovo["shots"][0]["description"] == "un uomo cammina"
@@ -66,32 +66,32 @@ def test_merge_prior_non_sovrascrive_il_calcolo_nuovo(tmp_path):
     from scene_detector.catalog.manifest import merge_prior, write_manifest
 
     path = tmp_path / "manifest.json"
-    write_manifest({"shots": [{"index": 0, "start_frame": 0, "description": "vecchia"}]}, path)
-    nuovo = {"shots": [{"index": 0, "start_frame": 0, "description": "appena calcolata"}]}
+    write_manifest({"shots": [{"index": 0, "start_frame": 0, "end_frame": 9, "description": "vecchia"}]}, path)
+    nuovo = {"shots": [{"index": 0, "start_frame": 0, "end_frame": 9, "description": "appena calcolata"}]}
     assert merge_prior(nuovo, path) == 0
     assert nuovo["shots"][0]["description"] == "appena calcolata"
 
 
-def test_merge_prior_accoppia_per_start_frame_non_per_indice(tmp_path):
+def test_merge_prior_accoppia_per_range_non_per_indice(tmp_path):
     """Un taglio manuale nella UI sposta di uno tutti gli indici a valle. Accoppiando per `index`
     le descrizioni scivolerebbero sullo shot sbagliato: un danno silenzioso, peggio di perderle."""
     from scene_detector.catalog.manifest import merge_prior, write_manifest
 
     path = tmp_path / "manifest.json"
     write_manifest({"shots": [
-        {"index": 0, "start_frame": 0, "description": "una nave da guerra"},
-        {"index": 1, "start_frame": 100, "description": "un pianeta desertico"},
+        {"index": 0, "start_frame": 0, "end_frame": 99, "description": "una nave da guerra"},
+        {"index": 1, "start_frame": 100, "end_frame": 199, "description": "un pianeta desertico"},
     ]}, path)
 
-    # lo shot [0, 99] e' stato spezzato a 50: gli indici scalano, gli start_frame no
+    # lo shot [0, 99] e' stato spezzato a 50: gli indici scalano, i range a valle no. Nessuna
+    # delle due meta' e' lo shot che la descrizione racconta, e nessuna la riceve.
     nuovo = {"shots": [
-        {"index": 0, "start_frame": 0, "description": None},
-        {"index": 1, "start_frame": 50, "description": None},
-        {"index": 2, "start_frame": 100, "description": None},
+        {"index": 0, "start_frame": 0, "end_frame": 49, "description": None},
+        {"index": 1, "start_frame": 50, "end_frame": 99, "description": None},
+        {"index": 2, "start_frame": 100, "end_frame": 199, "description": None},
     ]}
-    assert merge_prior(nuovo, path) == 2
-    assert [s["description"] for s in nuovo["shots"]] == [
-        "una nave da guerra", None, "un pianeta desertico"]
+    assert merge_prior(nuovo, path) == 1
+    assert [s["description"] for s in nuovo["shots"]] == [None, None, "un pianeta desertico"]
 
 
 def test_merge_prior_non_recupera_su_un_confine_spostato(tmp_path):
@@ -100,13 +100,81 @@ def test_merge_prior_non_recupera_su_un_confine_spostato(tmp_path):
     from scene_detector.catalog.manifest import merge_prior, write_manifest
 
     path = tmp_path / "manifest.json"
-    write_manifest({"shots": [{"index": 0, "start_frame": 100, "description": "vecchia"}]}, path)
-    nuovo = {"shots": [{"index": 0, "start_frame": 103, "description": None}]}
+    write_manifest({"shots": [{"index": 0, "start_frame": 100, "end_frame": 199,
+                               "description": "vecchia"}]}, path)
+    nuovo = {"shots": [{"index": 0, "start_frame": 103, "end_frame": 199, "description": None}]}
     assert merge_prior(nuovo, path) == 0
     assert nuovo["shots"][0]["description"] is None
+
+
+def test_merge_prior_non_recupera_se_si_sposta_la_fine(tmp_path):
+    """Stesso inizio, fine diversa: con una soglia nuova [100, 199] diventa [100, 349] e la
+    descrizione della sola prima meta' finiva sullo shot intero (su *Anna* 281 shot su 307)."""
+    from scene_detector.catalog.manifest import merge_prior, write_manifest
+
+    path = tmp_path / "manifest.json"
+    write_manifest({"shots": [{"start_frame": 100, "end_frame": 199, "description": "vecchia",
+                               "rivisto": True}]}, path)
+    nuovo = {"shots": [{"start_frame": 100, "end_frame": 349, "description": None}]}
+    assert merge_prior(nuovo, path) == 1                 # recupera solo il segno di rivisto
+    assert nuovo["shots"][0]["description"] is None
+    assert nuovo["shots"][0]["rivisto"] is True          # il confine d'apertura e' lo stesso
 
 
 def test_merge_prior_primo_run_non_e_un_errore(tmp_path):
     from scene_detector.catalog.manifest import merge_prior
 
     assert merge_prior({"shots": [{"index": 0}]}, tmp_path / "assente.json") == 0
+
+
+def test_i_nomi_delle_scene_sopravvivono_al_raggruppamento(tmp_path):
+    """Un run con `--scenes` rifa' i gruppi da zero: senza il recupero il nome dura un run."""
+    from scene_detector.catalog.manifest import merge_scene_names, write_manifest
+
+    path = tmp_path / "manifest.json"
+    write_manifest({"scenes": [{"start_frame": 0, "name": "Il cortile"},
+                               {"start_frame": 300, "name": "La cena"}]}, path)
+
+    # stesso confine -> il nome torna; confine spostato -> non torna, e va bene cosi'
+    nuovo = {"scenes": [{"start_frame": 0}, {"start_frame": 305}]}
+    assert merge_scene_names(nuovo, path) == 1
+    assert nuovo["scenes"][0]["name"] == "Il cortile"
+    assert "name" not in nuovo["scenes"][1]
+
+    # un nome gia' presente non viene sovrascritto, e senza scene non succede niente
+    tenuto = {"scenes": [{"start_frame": 0, "name": "Altro"}]}
+    assert merge_scene_names(tenuto, path) == 0
+    assert tenuto["scenes"][0]["name"] == "Altro"
+    assert merge_scene_names({}, path) == 0
+
+
+def test_il_segno_di_rivisto_sopravvive_al_run_dopo(tmp_path):
+    """`rivisto` non costa GPU, costa ore di persona: perderlo vuol dire rivedere la coda."""
+    from scene_detector.catalog.manifest import merge_prior, write_manifest
+
+    path = tmp_path / "manifest.json"
+    write_manifest({"shots": [{"start_frame": 0, "rivisto": True},
+                              {"start_frame": 300, "rivisto": True}]}, path)
+
+    # stesso confine -> il segno torna; confine spostato -> no, ed e' giusto: e' un altro taglio
+    nuovo = {"shots": [{"start_frame": 0}, {"start_frame": 305}]}
+    assert merge_prior(nuovo, path) == 1
+    assert nuovo["shots"][0]["rivisto"] is True
+    assert "rivisto" not in nuovo["shots"][1]
+
+
+def test_write_manifest_non_lascia_un_file_a_meta(tmp_path, monkeypatch):
+    """Se la scrittura si interrompe, su disco resta il manifest di prima, intero."""
+    import pytest
+
+    from scene_detector.catalog import manifest as mod
+
+    path = tmp_path / "manifest.json"
+    mod.write_manifest({"shots": [{"description": "vecchia"}]}, path)
+
+    def interrotto(*a, **k):
+        raise KeyboardInterrupt
+    monkeypatch.setattr(mod.os, "replace", interrotto)
+    with pytest.raises(KeyboardInterrupt):
+        mod.write_manifest({"shots": [{"description": "nuova"}]}, path)
+    assert mod.load_manifest(path)["shots"][0]["description"] == "vecchia"

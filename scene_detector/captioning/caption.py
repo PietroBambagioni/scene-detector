@@ -5,7 +5,7 @@ import subprocess
 from io import BytesIO
 from pathlib import Path
 
-from ..catalog.manifest import load_manifest, write_manifest
+from ..catalog.manifest import write_manifest
 
 log = logging.getLogger("scene_detector")
 
@@ -147,8 +147,9 @@ def caption_manifest(manifest, video, captioner, n_frames=3, size=512,
                      manifest_path=None, progress=True):
     """Riempie `description` per ogni shot. Incrementale e resumable.
 
-    Salta gli shot che hanno già una descrizione (resume da un run precedente su disco, se
-    `manifest_path` esiste). Salva il manifest a ogni shot descritto: un crash non perde lavoro.
+    Salta gli shot che hanno già una descrizione — sia quelle di questo run, sia quelle che
+    `merge_prior` ha rimesso dal manifest su disco. Salva il manifest a ogni shot descritto: un
+    crash non perde lavoro.
     """
     from tqdm import tqdm
 
@@ -158,13 +159,12 @@ def caption_manifest(manifest, video, captioner, n_frames=3, size=512,
     # loro nome è sbagliato per costruzione. Vedi `recognition/faces.mark_uncertain`.
     cast_names = {c["id"]: c["name"] for c in manifest.get("cast", []) if not c.get("uncertain")}
 
-    # resume cross-run: riporta le descrizioni già salvate su disco
-    if manifest_path and Path(manifest_path).exists():
-        prior = {s["index"]: s.get("description") for s in load_manifest(manifest_path)["shots"]}
-        for s in shots:
-            if not s.get("description") and prior.get(s["index"]):
-                s["description"] = prior[s["index"]]
-
+    # Il resume cross-run **non si fa qui**: lo ha già fatto `merge_prior` accoppiando per range
+    # (inizio e fine). Questo blocco lo rifaceva per `index`, che non è un'identità: nel percorso
+    # della pipeline era innocuo (`write_manifest` gira subito prima, quindi rileggeva sé stesso)
+    # ma bastava chiamarlo con un manifest di un run a soglia diversa perché le descrizioni
+    # scivolassero su shot che non descrivono, **in silenzio**. `manifest_path` resta: serve al
+    # salvataggio per shot qui sotto, che è la vera crash-safety.
     done = sum(1 for s in shots if s.get("description"))
     bar = tqdm(total=len(shots), initial=done, desc="[vlm]", unit="shot", disable=not progress)
     failed = 0
@@ -176,8 +176,14 @@ def caption_manifest(manifest, video, captioner, n_frames=3, size=512,
                                    manifest.get("fps"))
             chars = [cast_names[c] for c in shot.get("characters", []) if c in cast_names]
             shot["description"] = captioner.describe(frames, shot.get("dialogue"), chars or None)
+            # Una generazione vuota non solleva: senza questo il conteggio a fine step dice
+            # «306 su 307» e non si sa quale shot né perché. È successo su *Anna* (shot 251, una
+            # ripresa di 435 s). Resta `None`, quindi un run successivo lo ritenta.
+            if not shot["description"]:
+                raise ValueError("il modello non ha prodotto testo")
         except Exception as e:  # uno shot "velenoso" non deve fermare il batch (resume-friendly)
             failed += 1
+            shot["description"] = None
             log.warning("shot %s: descrizione fallita (%s) — proseguo", shot.get("index"), e)
             bar.update(1)
             continue

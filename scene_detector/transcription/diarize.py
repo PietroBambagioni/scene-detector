@@ -4,7 +4,7 @@ Backend: `speech` ([speech-swift](https://github.com/soniqo/speech-swift), Apach
 esterno da Homebrew — **non una dipendenza Python**, non tocca il venv e non vuole token
 HuggingFace. Stesso schema con cui il progetto tratta ffmpeg: un eseguibile che si invoca.
 
-**Engine `pyannote` e non `sortformer`, ed è misurato** (`plan/PUNTI-APERTI.md` §3.5): sullo
+**Engine `pyannote` e non `sortformer`, ed è misurato** (`plan/VERBALE.md` §7.1): sullo
 stesso audio di *Rogue One* sortformer si ferma a **4 parlanti esatti** dove pyannote e community1
 ne trovano 6 — è il tetto architetturale che la documentazione di terze parti riportava e che
 nessuno aveva verificato. Costa 11 s ogni 600 s di audio contro i 5,4 s di sortformer, cioè ~2,5
@@ -73,7 +73,7 @@ def assign_speakers(shots, segments):
     **Per sovrapposizione, non per punto medio** — e qui sta la differenza con
     `align.assign_dialogue`, che invece assegna ogni segmento a *uno* shot. Un turno di parola
     attraversa gli stacchi (è normale: campo/controcampo), quindi finisce in **tutti** gli shot che
-    tocca. È anche il segnale che `plan/DA-FARE.md` §5 vuole misurare: un parlante che continua
+    tocca. È anche il segnale che `plan/VERBALE.md` §5.9 ha misurato: un parlante che continua
     attraverso un taglio dice «stessa scena».
 
     Ordinati per secondi di parlato dentro lo shot, decrescente: il primo è chi parla di più.

@@ -117,3 +117,66 @@ def test_scene_carries_transition_through_merge():
     out = enforce_min_len(scenes, 10)                     # la 2ª (5 frame) viene assorbita
     assert [(s.start_frame, s.end_frame) for s in out] == [(0, 24), (25, 60)]
     assert [s.transition for s in out] == [None, (23, 24)]
+
+
+# ---------------------------------------------------------------- min_peak ---
+
+def test_min_peak_scarta_le_corse_tiepide_e_tiene_le_calde():
+    """Il picco decide se il taglio esiste; la soglia decide solo dove comincia e finisce."""
+    probs = [0.0] * 30
+    probs[10:14] = [0.1, 0.2, 0.15, 0.1]   # corsa larga ma tiepida: flicker
+    probs[20:22] = [0.3, 0.9]              # corsa calda: taglio vero
+    ranges, _ = runs_to_ranges(probs, threshold=0.05)
+    assert len(ranges) == 3                # senza min_peak: due confini
+    ranges, trans = runs_to_ranges(probs, threshold=0.05, min_peak=0.5)
+    assert ranges == [(0, 21), (22, 29)]   # resta solo il confine caldo
+    assert trans == [None, (20, 21)]       # e conserva la larghezza delimitata a 0,05
+
+
+def test_min_peak_non_rompe_il_contratto_dei_range():
+    """Contigui e copertura totale: è il contratto su cui poggiano splitter e confidenze."""
+    import random
+    rng = random.Random(0)
+    probs = [rng.random() ** 3 for _ in range(200)]
+    for mp in (0.0, 0.3, 0.5, 0.9, 1.1):
+        ranges, trans = runs_to_ranges(probs, threshold=0.05, min_peak=mp)
+        assert ranges[0][0] == 0 and ranges[-1][1] == len(probs) - 1
+        assert all(b[0] == a[1] + 1 for a, b in zip(ranges, ranges[1:]))
+        assert len(trans) == len(ranges)
+
+
+def test_min_peak_zero_e_il_comportamento_di_prima():
+    """Default spento: nessuna regressione sui cataloghi esistenti."""
+    probs = [0.0, 0.9, 0.0, 0.1, 0.2, 0.0, 0.7, 0.0]
+    assert runs_to_ranges(probs, 0.05, 0.0) == runs_to_ranges(probs, 0.05)
+
+
+def test_cover_exactly_taglia_lo_sforo_del_decode():
+    """ffmpeg decodifica 2 frame in più di `duration × fps`: l'ultimo shot non deve sforare.
+
+    Senza questo, `_shots_corretti` rifiuta il manifest che la pipeline ha appena scritto e
+    `--from-manifest` non funziona (era il caso di *Anna*: 320737 decodificati, 320735 da probe).
+    """
+    from scene_detector.detection.neural import cover_exactly
+    ranges, trans = [(0, 9), (10, 19), (20, 21)], [None, (9, 9), (19, 20)]
+    r, t = cover_exactly(ranges, trans, 20)
+    assert r == [(0, 9), (10, 19)] and t == [None, (9, 9)]
+    assert r[-1][1] == 19
+
+
+def test_cover_exactly_allunga_se_il_decode_e_corto():
+    """E vale al contrario: meno frame decodificati non devono lasciare un buco in coda."""
+    from scene_detector.detection.neural import cover_exactly
+    r, t = cover_exactly([(0, 9), (10, 15)], [None, (9, 9)], 20)
+    assert r == [(0, 9), (10, 19)] and t == [None, (9, 9)]
+
+
+def test_la_confidenza_di_una_graduale_e_il_picco_non_la_coda():
+    """Una corsa larga finisce per costruzione su un frame appena sopra soglia: leggendo quello,
+    ogni dissolvenza sembrava un confine dubbio (su *Anna* mediana 0,10 contro un picco di 0,675)."""
+    probs = [0.0] * 40
+    probs[10] = 0.95                                     # stacco netto: corsa da un frame
+    probs[24:29] = [0.1, 0.4, 0.8, 0.3, 0.06]            # dissolvenza: corsa 24..28
+    ranges, transitions = runs_to_ranges(probs, 0.05)
+    assert ranges == [(0, 10), (11, 28), (29, 39)]
+    assert boundary_confidences(ranges, probs, transitions) == [1.0, 0.95, 0.8]

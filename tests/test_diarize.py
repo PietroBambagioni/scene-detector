@@ -26,7 +26,7 @@ def test_parse_output_senza_json_e_un_errore():
 
 def test_un_turno_di_parola_entra_in_tutti_gli_shot_che_tocca():
     """È la differenza con `assign_dialogue`: un parlante attraversa gli stacchi (campo/controcampo)
-    e non va assegnato a un solo shot. È anche il segnale «stessa scena» di DA-FARE §5."""
+    e non va assegnato a un solo shot. È anche il segnale «stessa scena» di VERBALE §5.9."""
     shots = _shots([(0, 10), (10, 20), (20, 30)])
     assign_speakers(shots, [{"speaker": 1, "start": 8.0, "end": 22.0, "duration": 14.0}])
     assert [s["speakers"] for s in shots] == [[1], [1], [1]]

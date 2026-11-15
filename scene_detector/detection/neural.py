@@ -65,7 +65,7 @@ def probs_to_ranges(probs, threshold=0.5):
     return ranges
 
 
-def runs_to_ranges(probs, threshold=0.05):
+def runs_to_ranges(probs, threshold=0.05, min_peak=0.0):
     """Prob per-frame -> (ranges contigui, transizioni). Come `probs_to_ranges`, ma non
     scambia una dissolvenza per una fila di tagli.
 
@@ -84,6 +84,22 @@ def runs_to_ranges(probs, threshold=0.05):
     Misurato su ClipShots (1634 transizioni reali con il range annotato): a soglia 0,05 il
     recall passa da 0,088 a 0,325, e sui soli stacchi netti *migliora* — 0,95 contro 0,81 —
     quindi non è un baratto fra graduali e cut.
+
+    `min_peak` **separa due domande che `threshold` da solo confonde**: la soglia dice *dove
+    comincia e finisce* una transizione, `min_peak` dice *se esiste*. Una corsa il cui frame più
+    caldo non arriva a `min_peak` non produce un confine e viene assorbita nello shot: i suoi
+    frame restano coperti, il contratto non cambia.
+
+    Serve su materiale degradato, dove il rumore del supporto produce corse larghe e tiepide che
+    la sola soglia non distingue da una dissolvenza. Misurato sul restauro di *Anna* (Portapak
+    1975): le corse col picco sotto 0,50 sono **6× più frequenti** che su un film pulito
+    (2,28 per stacco sicuro contro 0,38) e in un campione cieco **0 su 24 erano stacchi veri**,
+    contro 12 su 12 dei controlli (`prove/annota_deboli.py`). Vedi `plan/VERBALE.md` §3.6.
+
+    ⚠️ **Default 0,0 — disattivato, e deve restarlo.** Su un film pulito quelle stesse corse
+    tiepide sono in buona parte stacchi legittimi che a soglia alta non vedevamo (su *Rogue One*
+    sono 933 e non sono mai state annotate). È una taratura per materiale, non un miglioramento
+    universale.
     """
     n = len(probs)
     hot = [i for i in range(n) if probs[i] >= threshold]
@@ -96,6 +112,11 @@ def runs_to_ranges(probs, threshold=0.05):
             runs.append((start, prev))
             start = cur
     runs.append((start, hot[-1]))
+
+    if min_peak:
+        runs = [(a, b) for a, b in runs if max(probs[a:b + 1]) >= min_peak]
+        if not runs:
+            return [(0, max(0, n - 1))], [None]
 
     ranges = []
     pos = 0
@@ -113,18 +134,48 @@ def runs_to_ranges(probs, threshold=0.05):
     return ranges, transitions
 
 
-def boundary_confidences(ranges, probs):
-    """Confidenza continua per shot = prob boundary per-frame del taglio che lo apre.
+def cover_exactly(ranges, transitions, n_frames):
+    """Forza i range a coprire esattamente `n_frames`. -> (ranges, transitions).
 
-    Il taglio che apre lo shot con `start_frame = s` è il frame `s-1` (dove la prob supera la
-    soglia in `probs_to_ranges`), quindi la confidenza dello shot è `probs[s-1]`. Il primo shot
-    (inizio film, nessun taglio a monte) ha confidenza 1.0. Sostituisce il flag binario 1.0/0.5.
+    **`ffmpeg` e `ffprobe` non sempre concordano su quanti frame ha un file.** Su *Anna* il decode
+    ne consegna 320737 dove `duration × fps` ne dà 320735, quindi l'ultimo shot sforava di 2 e
+    `_shots_corretti` **rifiutava il manifest che la pipeline aveva appena scritto** — cioè
+    `--from-manifest` non funzionava su quel catalogo. Su *Rogue One* i due numeri coincidono e il
+    difetto non si vedeva.
+
+    Il numero che vale è quello di `probe`: manifest, splitter, miniature e UI si appoggiano a lui.
+    Vale in entrambe le direzioni — se il decode consegna *meno* frame, l'ultimo shot si allunga
+    fino alla fine invece di lasciare un buco.
+    """
+    keep = [i for i, (s, _) in enumerate(ranges) if s <= n_frames - 1] or [0]
+    ranges = [ranges[i] for i in keep]
+    transitions = [transitions[i] for i in keep]
+    ranges[-1] = (ranges[-1][0], n_frames - 1)
+    return ranges, transitions
+
+
+def boundary_confidences(ranges, probs, transitions=None):
+    """Confidenza continua per shot = il **picco** di prob della giunta che lo apre.
+
+    Uno stacco netto è una corsa da un frame, il frame `s-1`: la confidenza è `probs[s-1]`. Una
+    transizione graduale (`transitions[i]`, da `runs_to_ranges`) è una corsa di più frame, e la
+    confidenza è il suo massimo — la stessa grandezza con cui `min_peak` decide se il taglio
+    esiste. Il primo shot (inizio film, nessun taglio a monte) ha confidenza 1.0.
+
+    Leggeva `probs[s-1]` anche sulle graduali, cioè l'**ultimo** frame della corsa: quello appena
+    sopra la soglia, per costruzione. Su *Anna* le 48 graduali avevano confidenza mediana 0,10
+    contro un picco mediano di 0,675, e i 41 shot «incerti» della coda di revisione erano tutti
+    graduali col picco sopra 0,5. Su *Rogue One* 510 graduali su 515 finivano sotto 0,5, col
+    picco sotto 0,5 solo in 284. La coda ordinava per larghezza della transizione, non per dubbio.
     """
     n = len(probs)
     confs = []
     for i, (start, _end) in enumerate(ranges):
+        tr = transitions[i] if transitions else None
         if i == 0 or start <= 0:
             confs.append(1.0)
+        elif tr:
+            confs.append(float(max(probs[tr[0]:tr[1] + 1])))
         else:
             confs.append(float(probs[min(start - 1, n - 1)]))
     return confs
@@ -141,9 +192,10 @@ class NeuralDetector:
     name = ""
     input_size = (27, 48)  # (H, W)
 
-    def __init__(self, weights=None, threshold=0.05):
+    def __init__(self, weights=None, threshold=0.05, min_peak=0.0):
         self.weights = Path(weights) if weights else None
         self.threshold = threshold
+        self.min_peak = min_peak
         self.probs = None  # prob boundary per-frame dell'ultima detection
         self._pred = None  # modello costruito, memoizzato: `prove/` cicla su centinaia di video
 
@@ -157,9 +209,10 @@ class NeuralDetector:
     def detect_from_frames(self, frames, video):
         """Predizione da frame già decodificati (uint8[N,27,48,3])."""
         self.probs = self._predictor().predict(frames)  # float[N]
-        ranges, transitions = runs_to_ranges(self.probs, self.threshold)
-        return scenes_from_ranges(ranges, video.fps, self.name,
-                                  boundary_confidences(ranges, self.probs), transitions)
+        ranges, transitions = runs_to_ranges(self.probs, self.threshold, self.min_peak)
+        ranges, transitions = cover_exactly(ranges, transitions, video.n_frames)
+        confs = boundary_confidences(ranges, self.probs, transitions)
+        return scenes_from_ranges(ranges, video.fps, self.name, confs, transitions)
 
     def _predictor(self):
         try:

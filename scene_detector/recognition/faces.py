@@ -92,7 +92,7 @@ def _crop_thumb(pil_rgb, bbox, pad=0.3, size=112):
 # riconosce come volto umano. Non è una taratura sul film ma sul rilevatore — SCRFD è calibrato sui
 # volti, e sotto ~0,65 sta dicendo "non so se è una faccia".
 #
-# Misurato su *Rogue One* (plan/DA-FARE.md §2): il cluster che fonde K-2SO, Darth Vader, gli
+# Misurato su *Rogue One* (plan/VERBALE.md §4.3): il cluster che fonde K-2SO, Darth Vader, gli
 # stormtrooper e un pilota con la visiera ha mediana **0,579**, contro **0,762** di tutti gli altri,
 # e il suo p90 (0,68) sta sotto il p10 di ogni cluster legittimo (0,69). Nessuna soglia di
 # clustering li separa e nessun encoder di apparenza li salva: qui si segnala e basta.

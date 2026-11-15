@@ -38,6 +38,23 @@ def _shots_corretti(path, info):
     return m
 
 
+def _scene_corrette(m, fps):
+    """Gli shot di un manifest corretto -> list[Scene], con confidenza e transizione **portate**.
+
+    Senza, ogni shot ripartiva da `confidence=1.0` e senza `transition`: dopo il primo ritaglio
+    la coda di revisione si svuotava e il manifest dichiarava certo ogni confine. Lo shot
+    tagliato a mano arriva dalla UI con `confidence: null`, e resta tale.
+    """
+    from .core.scene import scenes_from_ranges
+
+    shots = m["shots"]
+    return scenes_from_ranges(
+        [(s["start_frame"], s["end_frame"]) for s in shots], fps, source="manuale",
+        confidences=[s.get("confidence", 1.0) for s in shots],
+        transitions=[(t["start_frame"], t["end_frame"]) if (t := s.get("transition")) else None
+                     for s in shots])
+
+
 def run(cfg: Config) -> None:
     """Orchestrazione end-to-end: detection → split → (faces) → (ASR) → (VLM) → manifest/UI → galleria.
 
@@ -57,7 +74,7 @@ def run(cfg: Config) -> None:
         "flags": {
             "detector": cfg.detector.value,
             "split_mode": cfg.split_mode.value, "threshold": cfg.threshold,
-            "min_scene_len": cfg.min_scene_len,
+            "min_scene_len": cfg.min_scene_len, "min_peak": cfg.min_peak,
             "asr": cfg.asr, "asr_model": cfg.asr_model, "asr_lang": cfg.asr_lang,
             "asr_threads": cfg.asr_threads, "diarize": cfg.diarize,
             "vlm": cfg.vlm, "vlm_model": cfg.vlm_model, "vlm_frames": cfg.vlm_frames,
@@ -96,15 +113,13 @@ def run(cfg: Config) -> None:
     log.info("[1/%d] %s…", n_steps, "Confini dal manifest" if corretto else "Rilevamento shot")
     with tel.step("detection") as o:
         if corretto:
-            from .core.scene import scenes_from_ranges
-            scenes = scenes_from_ranges(
-                [(s["start_frame"], s["end_frame"]) for s in corretto["shots"]],
-                info.fps, source="manuale")
+            scenes = _scene_corrette(corretto, info.fps)
             o["from_manifest"] = str(cfg.from_manifest)
         else:
             scenes = build_detector(cfg.detector, cfg).detect(info)
             scenes = enforce_min_len(scenes, cfg.min_scene_len)
             o["threshold"] = cfg.threshold
+            o["min_peak"] = cfg.min_peak
         o["n_shots"] = len(scenes)
     log.info("  %d shot", len(scenes))
 
@@ -127,9 +142,13 @@ def run(cfg: Config) -> None:
 
     from .catalog.manifest import build_manifest, merge_prior, write_manifest
     label = cfg.detector.value
-    # senza clip la UI riproduce il film originale a intervalli: le serve come raggiungerlo
-    # dalla cartella del catalogo (relativo: catalogo e film restano spostabili insieme)
-    video_src = None if cutting else os.path.relpath(Path(cfg.video).resolve(), out_dir.resolve())
+    # La UI riproduce **sempre** il film originale: le serve come raggiungerlo dalla cartella del
+    # catalogo (relativo: catalogo e film restano spostabili insieme). Anche con le clip su disco,
+    # perché `--split-mode copy` le apre al keyframe precedente allo `start_frame` — fino a un GOP
+    # prima — e il contatore di frame della UI, che misura da inizio clip, sballa di altrettanto:
+    # su *Anna* (keyframe ogni ~1 s) 2-4 frame, con GOP da 2 s sono ±2 s. «✂ taglia qui» scriveva
+    # nel manifest il frame sbagliato, e il ritaglio frame-accurate lo eseguiva fedelmente.
+    video_src = os.path.relpath(Path(cfg.video).resolve(), out_dir.resolve())
     manifest = build_manifest(info, scenes, label,
                               # deve combaciare con la cartella passata a `split` qui sopra: il
                               # path nel manifest è relativo a `index.html`, che sta in out_dir
@@ -170,7 +189,7 @@ def run(cfg: Config) -> None:
         log.info("[%d/%d] Raggruppamento in scene…", step, n_steps)
         if cfg.n_scenes is None:
             # misurato su RAI: il gomito dei valori singolari dà in media 7,2 scene dove ce ne
-            # sono 12,6, e non segue il video (GT 22 -> stima 5). Vedi plan/DA-FARE.md §5.
+            # sono 12,6, e non segue il video (GT 22 -> stima 5). Vedi plan/VERBALE.md §5.10.
             log.warning("  --n-scenes non impostato: la stima automatica sottostima di ~40%%")
         with tel.step("grouping") as o:
             from .detection.neural import read_small_frames
@@ -185,6 +204,10 @@ def run(cfg: Config) -> None:
             groups = group_shots(scenes, shot_signatures(frames, scenes), cfg.n_scenes)
             manifest["n_scenes"] = len(groups)
             manifest["scenes"] = build_scene_entries(groups, scenes)
+            # il raggruppamento riparte da zero: senza questo un nome scritto nella UI vive
+            # quanto il run successivo
+            from .catalog.manifest import merge_scene_names
+            o["nomi_recuperati"] = merge_scene_names(manifest, cfg.from_manifest or manifest_path)
             o["n_scenes"] = len(groups)
             o["n_scenes_richiesto"] = cfg.n_scenes
             o["shot_per_scena"] = round(len(scenes) / len(groups), 2)
@@ -203,9 +226,11 @@ def run(cfg: Config) -> None:
                 if cfg.faces_refine:
                     log.warning("  cast riusato dal manifest: --faces-refine non applicato "
                                 "(togli la voce `cast` da %s per rifare i volti)", manifest_path)
-                prior_chars = {s["index"]: s.get("characters", []) for s in prior["shots"]}
-                for s in manifest["shots"]:
-                    s["characters"] = prior_chars.get(s["index"], [])
+                # I `characters` per shot **non** si toccano qui: li ha già rimessi `merge_prior`
+                # accoppiando per range (inizio e fine). Questo ramo li riassegnava per `index`,
+                # che non è un'identità: bastava un run con una soglia diversa (592 shot → 307 su *Anna*) e
+                # 356 shot prendevano i personaggi di un altro pezzo di film, **in silenzio** —
+                # sovrascrivendo per giunta il recupero corretto fatto poche righe sopra.
                 n_faces, n_chars = 0, len(manifest["cast"])
             else:
                 write_manifest(manifest, manifest_path)  # persisti prima (crash-safe)

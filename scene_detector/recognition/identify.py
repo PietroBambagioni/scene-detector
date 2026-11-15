@@ -130,7 +130,7 @@ def refine_clusters(labels, embeddings, targets, threshold=0.5, min_size=5):
     — meglio un cluster fuso noto che una frammentazione inventata.
 
     Nota storica: l'ibrido «ArcFace primario + ri-clustering di apparenza» era stato provato con
-    SigLIP grezzo e scartato (`plan/DA-FARE.md` §2), perche' produceva
+    SigLIP grezzo e scartato (`plan/VERBALE.md` §4.8), perche' produceva
     `{stormtrooper+Vader}, {K-2SO chiaro}, {K-2SO scuro}` — spaccava K-2SO **per illuminazione**.
     Il motivo era l'encoder, non lo schema: con gli embedding adattati (`adapt.train_adapter`)
     K-2SO resta un gruppo solo attraverso illuminazioni molto diverse.
