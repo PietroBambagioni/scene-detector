@@ -23,7 +23,7 @@ def train_adapter(embeddings, ids, dim=DIM, steps=STEPS, tau=TAU, device="mps", 
     attraversa uno stacco**.
 
     La fonte che funziona senza dati esterni sono i cluster ArcFace **affidabili** del film
-    stesso (`faces.teacher_clusters`): sui volti umani scoperti ArcFace lega correttamente
+    stesso (`faces.split_by_reliability`): sui volti umani scoperti ArcFace lega correttamente
     attraverso gli stacchi, e cio' che varia fra uno shot e l'altro e' proprieta' della
     fotografia del film, non del personaggio. Imparata li', si applica anche ai non-umani.
 

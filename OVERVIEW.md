@@ -56,7 +56,8 @@ scene_detector/
   captioning/caption.py     # VLM (MLX) resumable
   recognition/              # InsightFace + clustering + gallery
   catalog/                  # manifest.json + UI HTML per-film + galleria multi-film
-  evaluation/eval.py        # F1 / precision / recall sui boundary
+  grouping.py               # shot -> scene (OSG), opt-in con --scenes
+  evaluation/               # metriche sui boundary e sulle transizioni + benchmark su SHOT
 ```
 
 ## Crediti modelli
@@ -67,5 +68,3 @@ scene_detector/
   model package `buffalo_l` è **solo per ricerca non commerciale** (licenza separata)
 - [faster-whisper](https://github.com/SYSTRAN/faster-whisper) — Whisper / CTranslate2
 - [Qwen3-VL](https://github.com/QwenLM/Qwen3-VL) — VLM via [mlx-vlm](https://github.com/Blaizzy/mlx-vlm)
-</content>
-</invoke>

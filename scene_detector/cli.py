@@ -116,7 +116,7 @@ def setup(
     weights_dir: Path = typer.Option(Path("weights"), "--weights-dir", "-w"),
     force: bool = typer.Option(False, "--force", help="Riscarica anche i pesi già presenti"),
     models: bool = typer.Option(False, "--models",
-                                help="Scarica anche i modelli grandi (Whisper, VLM, volti): ~4 GB"),
+                                help="Scarica anche i modelli grandi (Whisper, VLM, volti, DINOv2): ~4 GB"),
 ):
     """Scarica i pesi neurali e verifica gli eseguibili esterni.
 

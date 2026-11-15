@@ -22,7 +22,7 @@ def test_manifest_con_clip():
 
 
 def test_manifest_senza_clip():
-    # --split-mode none: niente file su disco, la UI usa i media fragments sul film
+    # --split-mode none: niente file su disco, la UI riproduce il film e sposta la testina
     m = build_manifest(_info(), _scenes(), "transnet",
                        clip_template=None, video_src="../../Film/Rogue.One.mp4")
     assert [s["clip"] for s in m["shots"]] == [None, None]

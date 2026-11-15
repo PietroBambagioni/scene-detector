@@ -23,7 +23,7 @@ scene-detector "FILM.mp4" --all -o catalogo/
 
 ```bash
 ./install.sh            # venv + tutte le dipendenze + peso neurale (31 MB)
-./install.sh --models   # anche Whisper / VLM / volti (~4 GB), altrimenti scaricati al primo run
+./install.sh --models   # anche Whisper / VLM / volti / DINOv2 (~4 GB), altrimenti scaricati al primo run
 ```
 
 A mano, per un'installazione parziale:
@@ -36,6 +36,7 @@ pip install -e '.[neural]'    # TransNetV2: torch, pillow
 pip install -e '.[asr]'       # trascrizione: faster-whisper
 pip install -e '.[vlm]'       # descrizione visiva: mlx-vlm (Apple Silicon)
 pip install -e '.[faces]'     # personaggi: insightface, onnxruntime (CoreML)
+pip install -e '.[characters]' # --faces-refine: DINOv2 sui ritagli di figura
 pip install -e '.[all]'       # tutto ciò che serve a --all
 scene-detector-setup          # pesi in weights/, sha256 verificato
 ```
@@ -49,7 +50,7 @@ rompe nulla finché non lo si chiede.
 ## Come funziona
 
 `--all` esegue sei stadi in sequenza. Ognuno scrive nel manifest; gli stadi lunghi sono
-**resumable**.
+**resumable**. Scene e diarizzazione sono opt-in e stanno [più sotto](#fuori-da---all).
 
 ### 1 · Rilevamento shot
 
@@ -91,12 +92,14 @@ apre — uno score continuo e calibrato, non un flag binario.
 
 | modalità | cosa fa | quando |
 |---|---|---|
-| `copy` (default) | stream copy: velocissimo, ma il taglio si allinea al keyframe più vicino (±GOP) | uso normale |
-| `reencode` | H.264 CRF 18 + AAC, frame-accurate | quando la precisione al frame conta |
-| `none` | **non taglia niente**: `clip: null` nel manifest e `video_src` col path relativo al film | collaudo, disco stretto |
+| `copy` (default) | stream copy: velocissimo, ma la clip parte dall'**ultimo keyframe prima** del punto chiesto (fino a un GOP) | uso normale |
+| `reencode` | H.264 CRF 18 + AAC, frame-accurate: il video è contato in frame, non in millisecondi | quando la precisione al frame conta; **imposto da `--from-manifest`** |
+| `none` | **non taglia niente**: `clip: null` nel manifest | collaudo, disco stretto |
 
-Con `none` la UI riproduce ogni shot come intervallo sul file originale, usando i **media
-fragments** (`#t=start,end`): stesso catalogo completo, zero duplicazione.
+Il manifest porta sempre `video_src`, il path relativo al film, e **la UI riproduce il film
+originale** anche quando le clip esistono: lo carica una volta e sposta la testina, così il
+frame mostrato è quello contato e non dipende da dove l'encoder ha messo i keyframe. Con `none`
+si ha quindi lo stesso catalogo completo, senza duplicare il film.
 
 ### 3 · Riconoscimento personaggi (`--faces`)
 
@@ -170,7 +173,9 @@ resume — non c'è nessuno stato altrove.
   "video": "FILM.mp4", "fps": 23.976, "n_frames": 192701, "duration": 8037.5,
   "detector": "transnet", "n_shots": 2426,
   // ordinato per n_shots decrescente
-  "cast": [ { "id": 0, "name": "Personaggio 1", "n_faces": 262, "n_shots": 76, "shots": [...] } ],
+  "cast": [ { "id": 0, "name": "Personaggio 1", "n_faces": 262, "n_shots": 76 } ],
+  // con cosa è nato il cast: un run con parametri diversi lo riusa, ma lo dice
+  "cast_params": { "faces_min_shots": 3, "faces_threshold": 0.5 /* … */ },
   "shots": [
     { "index": 0, "start_frame": 0, "end_frame": 148,
       "start_time": 0.0, "end_time": 6.214,
@@ -183,13 +188,44 @@ resume — non c'è nessuno stato altrove.
 }
 ```
 
-`index.html` è una pagina autonoma (nessun asset esterno): player, timeline cliccabile, lista
-degli shot, **ricerca full-text nei dialoghi**, card del cast con rinomina, ed export delle
-modifiche. Una seconda pagina, la **galleria**, viene rigenerata a ogni run in cima alla
-cartella di output e raccoglie tutti i film catalogati.
+`index.html` è una pagina autonoma (nessun asset esterno, caratteri compresi): si apre col
+doppio click. Quattro viste — `lista` (scene → shot + player), `⚑ rivedi` (i confini incerti in
+coda, dal più dubbio), `⊞ scheda` (i numeri del film), `? aiuto` — più ricerca nei dialoghi,
+cast rinominabile e fondibile, ed export in JSON, EDL e SRT. Una seconda pagina, la
+**galleria**, viene rigenerata a ogni run in cima alla cartella di output e raccoglie tutti i
+film catalogati.
 
 Ogni run scrive anche la telemetria in `logs/run-<ts>/`: configurazione completa, ambiente, e
 durata/esito di ogni stadio.
+
+**Un run non butta il lavoro dei precedenti.** Descrizioni, dialoghi, personaggi per shot e
+segni di revisione tornano sugli shot che hanno **lo stesso range** (inizio e fine); cast e
+scene tornano se i confini non si sono mossi affatto. Se un confine si è spostato il recupero
+non avviene, ed è voluto: un campo assegnato allo shot sbagliato è peggio di un campo perso.
+
+### Fuori da `--all`
+
+- **`--scenes`** raggruppa gli shot in scene con *Optimal Sequential Grouping* (solo visivo,
+  istogrammi HSV, nessun peso). **Passa `--n-scenes`**: la stima automatica del numero di scene
+  sottostima di ~40%, ed è il motivo per cui non sta in `--all`.
+- **`--diarize`** dice chi parla in ogni shot (campo `speakers`). Usa il binario esterno
+  `speech` (`brew install speech`), non una dipendenza Python. È indipendente da `--asr`.
+- **`--faces-refine`** rimette in discussione i cluster che ArcFace non riconosce come volti
+  umani (droidi, elmetti) sui ritagli di figura, con DINOv2 adattato al film.
+
+### Correggere i confini a mano
+
+La UI è dove si lavora, non solo dove si guarda: `S` taglia lo shot sul fotogramma corrente,
+`M` lo unisce al precedente, `V` segna un confine come rivisto, `⌘Z` annulla. Le correzioni
+vivono nel browser finché non le esporti (`↓ esporta` → JSON); poi
+
+```bash
+scene-detector FILM.mp4 --from-manifest corretto.json -o catalogo/
+```
+
+ritaglia le clip dai confini corretti senza rifare la detection, e riporta descrizioni, cast e
+scene. `--from-manifest` **impone `reencode`**: un confine messo a mano cade dentro uno shot,
+lontano da qualunque keyframe, e in `copy` scivolerebbe indietro fino a un GOP.
 
 ---
 
@@ -245,6 +281,7 @@ scene-detector FILM.mp4 --all --split-mode none -o catalogo/ # catalogo senza du
 | `--split-mode` | `copy` | `copy` \| `reencode` \| `none` |
 | `-j, --jobs` | `0` | processi ffmpeg paralleli per il taglio (0 = core − 2) |
 | `--transnet-weights` | auto da `weights/` | pesi TransNetV2 |
+| `--from-manifest` | — | riparte dai confini di un manifest corretto nella UI: niente detection, ritaglia in `reencode` |
 | `--asr` | off | trascrivi i dialoghi |
 | `--asr-model` | `large-v3-turbo` | `tiny/base/small/medium/large-v3/large-v3-turbo` o path |
 | `--asr-lang` | auto | lingua ISO (es. `it`); auto = rilevata sul parlato |
@@ -259,12 +296,17 @@ scene-detector FILM.mp4 --all --split-mode none -o catalogo/ # catalogo senza du
 | `--faces-min-score` | `0.5` | soglia `det_score`: scarta i volti deboli |
 | `--faces-min-px` | `50` | lato minimo del volto in px: sotto, l'embedding è rumore |
 | `--faces-min-shots` | `3` | un personaggio entra nel cast se ricorre in ≥N shot distinti (taglia le comparse) |
+| `--faces-refine` | off | ri-clusterizza i cluster non-volto sui ritagli di figura (DINOv2) |
+| `--faces-refine-threshold` | `0.70` | soglia coseno del raffinamento. **Non** è `--faces-threshold`: altro spazio, altra scala |
+| `--diarize` | off | chi parla in ogni shot (binario `speech`) |
+| `--scenes` | off | raggruppa gli shot in scene (OSG, solo visivo) |
+| `--n-scenes` | stima | numero di scene. Passalo: la stima sottostima di ~40% |
 
 ### `scene-detector-setup` — pesi e modelli
 
 ```bash
 scene-detector-setup                 # TransNetV2 (31 MB), sha256 verificato
-scene-detector-setup --models        # anticipa anche Whisper / VLM / volti (~4 GB)
+scene-detector-setup --models        # anticipa anche Whisper / VLM / volti / DINOv2 (~4 GB)
 scene-detector-setup --force         # riscarica anche ciò che c'è già
 ```
 
@@ -373,13 +415,13 @@ deve pesare più di uno con 1).
 ## Test
 
 ```bash
-.venv/bin/python -m pytest tests/ -q                    # 82 test, ~0,2 s
+.venv/bin/python -m pytest tests/ -q                    # 173 test, ~2 s
 .venv/bin/python -m pytest tests/test_eval.py -q        # un singolo file
 .venv/bin/python -m pytest tests/ -q -k transition      # un singolo caso
 ```
 
-I test non toccano video né pesi: girano in due decimi di secondo e coprono la logica pura
-(post-processing, clustering, allineamento dialoghi, manifest, metriche).
+I test non toccano video né pesi: girano in un paio di secondi e coprono la logica pura
+(post-processing, clustering, allineamento dialoghi, manifest, metriche, UI).
 
 ---
 
@@ -391,6 +433,7 @@ Un package per stadio della pipeline:
 scene_detector/
   cli.py                    # entrypoint Typer (flag -> Config)
   pipeline.py               # orchestrazione degli stadi
+  grouping.py               # shot -> scene (OSG), opt-in con --scenes
   core/
     config.py               # Config + enum DetectorKind / SplitMode
     scene.py                # datamodel Scene + scenes_from_ranges + enforce_min_len
@@ -399,20 +442,25 @@ scene_detector/
     telemetry.py            # logs/run-<ts>/
   io/video.py               # probe ffprobe -> VideoInfo
   detection/
-    neural.py               # decode + probs_to_ranges + il detector
+    neural.py               # decode + runs_to_ranges + il detector
     pyscenedetect.py
+    confidence.py           # reconcile fra due detector: solo per i banchi in prove/
     models/                 # architettura vendored (TransNetV2) + wrapper
   segmentation/splitter.py  # export clip via ffmpeg, parallelo
   transcription/
     asr.py                  # faster-whisper + VAD + filtro allucinazioni
     align.py                # assegna i segmenti agli shot
+    diarize.py              # chi parla (binario `speech`), opt-in con --diarize
   captioning/caption.py     # sampling frame + backend MLX + resume
   recognition/
     faces.py                # InsightFace + orchestrazione + gallery
     identify.py             # clustering a due stadi + match gallery (logica pura)
+    embed.py · adapt.py     # --faces-refine: DINOv2 sui ritagli + testa adattata al film
   catalog/
     manifest.py             # manifest.json
-    ui.py                   # UI per-film
+    ui.py                   # UI per-film (template unico: CSS, markup, JS)
+    thumbs.py               # una miniatura per shot
+    font/                   # i tre caratteri (SIL OFL), incorporati nella pagina
     gallery.py              # galleria multi-film
   evaluation/
     eval.py                 # metriche: boundary (prf1) e transizioni (transition_iou)
@@ -426,8 +474,8 @@ scene_detector/
 
 - **Memoria**: i frame 48×27 stanno interi in RAM, ~1,25 GB per un film di 2 h a 24 fps. È una
   scelta: il path a streaming costava 120 righe per risparmiare ~1 GB.
-- **Taglio**: `copy` è veloce ma si allinea ai keyframe, quindi su uno shot corto l'errore pesa
-  in proporzione. Se conta, `reencode`.
+- **Taglio**: `copy` è veloce ma parte dal keyframe precedente, quindi su uno shot corto l'errore
+  pesa in proporzione. Se conta, `reencode`.
 - **Film lunghi**: `--split-mode copy` (default), altrimenti migliaia di clip in `reencode` sono
   ore. Le clip occupano circa quanto il film: se non servono, `--split-mode none`.
 - **Output per film**: più film sulla stessa `-o` non si mescolano (ognuno in `<nome-film>/`).

@@ -11,7 +11,7 @@ def build_manifest(video_info, scenes, detector, clip_template="clip/scene-{:03d
 
     I campi `description` e `dialogue` sono placeholder, riempiti dagli step successivi.
     `clip_template=None` (`--split-mode none`): nessuna clip su disco, `clip` resta `None` e
-    `video_src` dice alla UI come raggiungere il film originale per i media fragments.
+    `video_src` dice alla UI come raggiungere il film originale, che riproduce spostando la testina.
     """
     return {
         "video": Path(video_info.path).name,

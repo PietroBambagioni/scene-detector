@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "scene-detector"
 version = "0.1.0"
-description = "Suddivide un film in clip (scene) via TransNetV2 (primario) + PySceneDetect (baseline/split)."
+description = "Da un film a un catalogo navigabile: shot (TransNetV2), personaggi, dialoghi, descrizioni, UI di correzione."
 requires-python = ">=3.10"
 dependencies = [
     "scenedetect>=0.7",   # opencv-python e' dep base in 0.7

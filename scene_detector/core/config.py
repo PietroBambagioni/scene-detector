@@ -14,7 +14,7 @@ class DetectorKind(str, Enum):
 class SplitMode(str, Enum):
     copy = "copy"          # veloce, snap a keyframe
     reencode = "reencode"  # frame-accurate, lento
-    none = "none"          # non taglia: la UI riproduce il film intero con media fragments
+    none = "none"          # non taglia: la UI riproduce il film intero spostando la testina
 
 
 @dataclass
@@ -25,11 +25,12 @@ class Config:
     split_mode: SplitMode = SplitMode.copy
     # Soglia boundary neurale. 0,05 e non 0,5: con `runs_to_ranges` una corsa di frame caldi è
     # una transizione sola, quindi la soglia bassa non moltiplica i tagli — recupera le
-    # dissolvenze. Misurato su 1634 transizioni reali (ClipShots): recall 0,088 → 0,325, e sui
-    # soli stacchi netti 0,81 → 0,95. Costo: +35% di shot su un film.
+    # dissolvenze. Misurato su 1634 transizioni reali (ClipShots), **sul path di produzione**
+    # (corse + `enforce_min_len` a 5): recall 0,088 → 0,270, e sui soli stacchi netti 0,81 → 0,93.
+    # Costo: +32% di shot su un film. Le corse nude danno 0,325 e 0,95, ma non è ciò che gira.
     threshold: float = 0.05
     # Frame minimi per scena. 5 e non 15, ma **solo** perché la soglia è scesa a 0,05: a soglia
-    # alta i due valori sono equivalenti (misurato in §5.7: +1 punto di F1), a soglia bassa
+    # alta i due valori sono equivalenti (misurato, `plan/VERBALE.md` §3.10: +1 punto di F1), a soglia bassa
     # nascono più shot brevi legittimi e la fusione cieca ne mangia di veri — sui soli stacchi
     # netti 0,77 con 15 contro 0,93 con 5. Le due tarature non sono separabili.
     min_scene_len: int = 5
