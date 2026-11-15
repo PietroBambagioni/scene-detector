@@ -72,3 +72,29 @@ def test_transition_iou_matching_indipendente_dall_ordine():
     a = transition_iou([(100, 123), (200, 210)], [(200, 210), (100, 123)])
     b = transition_iou([(200, 210), (100, 123)], [(100, 123), (200, 210)])
     assert a["mean_iou"] == b["mean_iou"] == 1.0
+
+
+def test_il_benchmark_vede_la_larghezza_che_il_detector_ha_delimitato():
+    """Con `runs_to_ranges` gli shot sono contigui e la larghezza vive in `Scene.transition`:
+    ricavare le transizioni dai soli range dava IoU 0,04 su una dissolvenza delimitata per intero,
+    cioe' il comando di benchmark non misurava proprio la cosa per cui le corse esistono."""
+    import numpy as np
+
+    from scene_detector.detection.neural import runs_to_ranges
+    from scene_detector.evaluation.eval import transitions_from_scenes
+
+    probs = np.zeros(300)
+    probs[100:124] = 0.6          # dissolvenza: corsa 100..123
+    probs[200] = 0.9              # stacco netto
+    ranges, tr = runs_to_ranges(probs, 0.05)
+    scenes = scenes_from_ranges(ranges, 25.0, transitions=tr)
+    gt = transitions_from_ranges([(0, 99), (124, 200), (201, 299)])     # buco 100..123 + stacco
+
+    pred = transitions_from_scenes(scenes)
+    assert pred == [(100, 124), (200, 201)]       # corsa i..j -> (i, j+1); lo stacco resta (e1, s2)
+    assert transition_iou(pred, gt)["tp"] == 2
+
+    # controprova: dai soli range la dissolvenza e' uno stacco da 2 frame e non e' un TP
+    ciechi = transitions_from_ranges(ranges)
+    assert ciechi[0] == (123, 124)
+    assert transition_iou(ciechi, gt)["tp"] == 1

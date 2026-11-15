@@ -68,6 +68,19 @@ def transitions_from_ranges(ranges):
     return out
 
 
+def transitions_from_scenes(scenes):
+    """Le transizioni **come le ha delimitate il detector**: una per shot, tranne il primo.
+
+    `transitions_from_ranges` non basta per i predetti: con `runs_to_ranges` gli shot sono
+    contigui e la larghezza della giunta vive in `Scene.transition`, quindi dai soli range ogni
+    dissolvenza torna uno stacco da 2 frame — IoU 0,04 su una da 24 frame che il detector aveva
+    delimitato per intero. Stessa forma del banco (`prove/runs_ab.runs_above`): una corsa `i..j`
+    è `(i, j+1)`, che per lo stacco netto si riduce a `(e1, s2)`.
+    """
+    return [(s.transition[0] if s.transition else s.start_frame - 1, s.start_frame)
+            for s in scenes[1:]]
+
+
 def iou(a, b):
     """IoU di due intervalli di frame inclusivi."""
     inter = min(a[1], b[1]) - max(a[0], b[0]) + 1

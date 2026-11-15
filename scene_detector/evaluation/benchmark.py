@@ -12,7 +12,7 @@ from ..core.scene import enforce_min_len
 from ..detection.neural import TransNetV2Detector, read_small_frames
 from ..io.video import probe
 from .eval import boundaries_from_ranges, boundaries_from_scenes, prf, prf1, transition_iou, \
-    transitions_from_ranges
+    transitions_from_ranges, transitions_from_scenes
 
 
 def evaluate_video(video_path, gt_ranges, cfg, tol=5, min_iou=0.5):
@@ -32,8 +32,7 @@ def evaluate_video(video_path, gt_ranges, cfg, tol=5, min_iou=0.5):
     scenes = enforce_min_len(scenes, vcfg.min_scene_len)
 
     b = prf1(boundaries_from_scenes(scenes), boundaries_from_ranges(gt_ranges), tol)
-    t = transition_iou(transitions_from_ranges([(s.start_frame, s.end_frame) for s in scenes]),
-                       transitions_from_ranges(gt_ranges), min_iou)
+    t = transition_iou(transitions_from_scenes(scenes), transitions_from_ranges(gt_ranges), min_iou)
     return b, t, len(scenes)
 
 
