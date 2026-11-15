@@ -58,6 +58,7 @@
 | **28 ago** | **`--from-manifest` impone `reencode`** — il taglio manuale scivolava di ~1 GOP. La UI conta i frame sul film, mai sulla clip. Comandi di riproduzione nel player |
 | **28 ago** | **La UI diventa uno strumento di lavoro**: quattro viste, coda di revisione per confidenza, scheda del film, salvataggio nel browser, annulla, fusione dei personaggi, EDL/SRT, responsive |
 | 23 set | Revisione del codice: `merge_prior` accoppia per **range** e non per inizio; il browser salva **differenze**, non copie; `--from-manifest` conserva confidenza e transizioni; manifest scritto in modo atomico; la confidenza di una graduale è il **picco** della corsa, non la coda |
+| **15 nov** | Rilettura di piano e codice, sei difetti chiusi con una misura ciascuno: un run senza `--faces`/`--scenes` azzerava cast e scene; il benchmark non vedeva la larghezza delle transizioni; il resume dei volti copriva il cast corretto a mano e non diceva con che parametri era nato; il validatore di `--from-manifest` accettava manifest rotti; `--models` scaricava il modello sbagliato; **il seek al millisecondo scavalca il frame a 23,976 e 29,97 fps** (§9.10) |
 
 ---
 
@@ -83,6 +84,7 @@ una verifica che *doveva* dare un certo risultato e non lo dava.
 | 13 | **Un test rosso che era il test a essere sbagliato.** La lista di scene scritta a mano non copriva tutti gli shot, quindi `contigue: false` era corretto | prima di credere a un fallimento, guardare il banco |
 | 14 | **Una spiegazione plausibile scambiata per una misura.** Le clip `copy` di *Anna* durano 2-4 frame più del dovuto: ne avevo dedotto che partissero *prima* del confine, e che fosse quello a spostare i tagli manuali. L'extra sta in **coda**: l'encoder mette un keyframe su quasi ogni stacco, e l'offset in testa è 0 su 14 shot su 15 | misurando la posizione dei keyframe invece della durata, e confrontando in browser il frame del film con quello della clip — hash 8×8 **identico** |
 | 15 | **Un controllo che non può fallire non è un controllo.** Cercavo gli elementi che sforano *escludendo* quelli dentro un antenato che ritaglia — ma avevo appena messo `body { overflow:auto }`, quindi **ogni** elemento aveva un antenato che ritaglia e il filtro scartava tutti i candidati. Rispondeva «zero colpevoli» mentre la pagina scorreva di lato | i due numeri non tornavano: 109 px di scorrimento reale contro 0 elementi fuori misura |
+| 16 | **Un banco con una proprietà che il difetto non sopporta.** Il taglio frame-accurate era stato verificato a 25 fps (§9.3), dove i PTS sono multipli esatti di 40 ms: l'arrotondamento al millisecondo lì non può sbagliare, quindi il banco **non poteva fallire**. E al rovescio: il sintetico a 23,976 fps dava il 45% di frame sbagliati dove sul vero *Rogue One* sono 0 su 111, perché quel file ha già i PTS al millisecondo. Né il banco né il film, da soli, dicevano la cosa giusta | rifacendo la stessa misura a tre frame rate **e** sul film, prima di credere all'una o all'altra (§9.10) |
 
 > **Il filo comune: un numero troppo netto o troppo storto per essere vero.** Uno zero sugli
 > stacchi, una precision a 0,04, un F1 identico su righe diverse. Un risultato *plausibilmente
@@ -395,7 +397,7 @@ sarebbe manifestato solo il giorno in cui il numero di shot cambiava.
 **Stato del codice, oggi**: `-d autoshot` è cablato in `build_detector` ma `--autoshot-weights`
 non esiste in `cli.py`, quindi `cfg.autoshot_weights` è sempre `None` e il comando fallisce con
 «pesi mancanti». `confidence.reconcile` ha **zero chiamanti** nel package; `Config.agreement_tol`
-ha **zero lettori**. È deliberato — «il wiring si fa se i numeri lo giustificano, non prima» — e
+aveva **zero lettori** (tolto il 15 nov). È deliberato — «il wiring si fa se i numeri lo giustificano, non prima» — e
 i numeri ora dicono di no.
 
 ### 3.8 · OmniShotCut — misurato, complementare, fuori dalla pipeline
@@ -443,6 +445,15 @@ misuravamo 0,21 su un dataset diverso. Due misure indipendenti sullo stesso dife
 
 ⚠️ **Discrepanza interna da conoscere**: due protocolli di matching diversi danno **55** e **89**
 graduali sugli stessi 50 video. I numeri delle due tabelle **non sono confrontabili fra loro**.
+
+⚠️ **Fino al 15 nov il comando non misurava la delimitazione.** `evaluate_video` ricavava le
+transizioni predette dai *range*, che con `runs_to_ranges` sono contigui: la larghezza vive in
+`Scene.transition`, e ogni dissolvenza delimitata per intero tornava uno stacco da 2 frame —
+**IoU 0,04** su una da 24 frame, dove leggendo `Scene.transition` è 1,00. I banchi in `prove/`
+non avevano il difetto (`runs_above` porta la larghezza da sé): era solo il comando ufficiale a
+restare cieco proprio alla cosa per cui le corse esistono. Ora `transitions_from_scenes`, con
+la stessa forma del banco (corsa `i..j` → `(i, j+1)`). **I numeri di transizione stampati da
+`scene-detector-benchmark` prima di quella data non si confrontano con quelli dopo.**
 
 ### 3.10 · `min_scene_len` — misurato e chiuso
 
@@ -716,10 +727,15 @@ funziona solo su chi parla — gli stormtrooper restano indistinguibili.
 
 - 🔴 **Purezza vera del raffinamento.** I numeri sono conteggi e un colpo d'occhio su 16 ritagli.
   Annotare i 259 del cluster 22 chiuderebbe la domanda. Metrica: VPCD.
-- 🔴 **Cast stantio nel catalogo.** `clips/Rogue.One/manifest.json` ha 113 personaggi da un run con
-  `min_shots=2`; il default è 3 e darebbe 65. Il ramo di resume riusa `prior["cast"]` **senza
-  controllare con quali parametri era stato costruito**: rilanciare con parametri diversi non
-  ricalcola. Serve almeno registrare i parametri accanto al cast.
+- ✅ **Cast stantio nel catalogo** (15 nov). `clips/Rogue.One/manifest.json` ha 113 personaggi da
+  un run con `min_shots=2`; il default è 3 e darebbe 65. Il ramo di resume riusava
+  `prior["cast"]` senza sapere con quali parametri era nato — e non lo sapeva nemmeno la
+  telemetria: l'elenco dei flag in `config.json` era ricopiato a mano e mancavano proprio
+  `faces_min_shots` e `faces_min_px`. Ora `cast_params` sta nel manifest accanto al cast, la
+  telemetria scrive `asdict(cfg)`, e se i parametri del run differiscono il resume **avvisa e
+  non ricalcola**: rifare i volti butterebbe nomi e fusioni fatti a mano. ⚠️ I cataloghi nati
+  prima non hanno `cast_params`: lì il resume dice solo che i parametri non sono registrati, e
+  i 113 di *Rogue One* restano finché non si toglie la voce `cast`.
 - 🟡 **Frammentazione 22↔85** (coseno 0,764, stesso volto in due cluster). Il greedy a passo
   singolo non li fonde: serve un secondo merge sui centroidi finali.
 - 🔵 **Recall, non solo purezza.** 1634 volti su 3h33m di *Anna* sono pochi: molte presenze mai
@@ -1255,6 +1271,20 @@ perché esistevano due copie fatte a mano. `CAMPI_COSTOSI = ("description", "dia
 rilegge ciò che c'è già. Chi aggiunge uno step lungo segue lo stesso schema o un'interruzione
 costa l'intero run.
 
+⚠️ **Lo stesso buco, un livello sopra — rimasto aperto fino al 15 nov.** `CAMPI_COSTOSI` sono
+campi *degli shot*. Cast, scene e numero di parlanti stanno sopra, e li riportava solo il ramo
+`--from-manifest`: in ogni altro run `build_manifest` ripartiva da `cast: []`. Simulato sul
+catalogo di *Anna*: dopo un run senza `--faces`/`--scenes` restano **0 personaggi su 29 e 0
+scene su 35**, con 29 id ancora citati negli shot — e il VLM, che prende i nomi dal cast, non
+ne avrebbe più visto nessuno. Il commento diceva «il cast non è qui perché lo step `faces` ha
+già il suo resume»: vero, ma quel resume gira solo con `--faces`.
+
+`merge_film_keys` li riporta da qualunque manifest precedente, **solo se i range coincidono
+tutti**: le scene puntano agli shot per indice (`first_shot`, `last_shot`), quindi con un
+confine spostato parlerebbero di un altro pezzo di film. `cast[].shots`, l'altra lista di
+indici, è stata tolta: non la leggeva nessuno — né il package né la UI — ed era il quinto
+posto in cui un indice di shot viveva come se fosse un'identità.
+
 ### 9.3 · `--from-manifest` — il ritaglio non è una pipeline nuova
 
 Sostituisce **solo** la sorgente dei confini. Da lì in giù split, miniature, manifest e UI non
@@ -1266,6 +1296,10 @@ sanno la differenza, quindi non c'è un ramo in più da mantenere.
 - Cast rinominato a mano e scene corrette vengono riportati.
 - `_shots_corretti` valida l'ingresso — è l'unico input della pipeline che non viene dal nostro
   codice. Il caso peggiore è il **film sbagliato**, che taglierebbe tutto altrove senza dire niente.
+  *(15 nov: controllava solo la contiguità. `(0,9) (10,5) (6,99)` è contigua e ha uno shot
+  rovesciato; e un manifest che finiva a 79 su 100 frame passava, lasciando la coda fuori dal
+  catalogo. Ora l'ultimo shot deve finire su `n_frames − 1` — e perché valga per ogni detector,
+  anche PySceneDetect passa da `cover_exactly`.)*
 
 **Verifica sui frame, non sui log** (clip da 250 frame col numero impresso):
 
@@ -1493,6 +1527,71 @@ dichiarati come `package-data`, che diventano ~590 KB di base64 in ogni `index.h
 > **fondo** per testo bianco, qui sono **testo** su fondo chiaro. Scuriti a `#287A8A` e `#B05800`,
 > tutt'e due a 4,53.
 
+### 9.10 · Il millisecondo scavalca il frame (15 nov)
+
+**ffmpeg con `-ss` consegna il primo frame con PTS ≥ t**, e noi gli passavamo `t` formattato
+`:.3f`. Chiesto sul PTS esatto di un frame, a 25 fps non succede niente — i PTS sono multipli di
+40 ms, l'arrotondamento è l'identità. A 23,976 e 29,97 fps il PTS ha infinite cifre, e una volta
+su due l'arrotondamento lo **supera**: torna il frame dopo.
+
+Due punti del codice ci cadevano, tutti e due sull'ultimo o sul primo frame di uno shot — cioè
+dove un frame di scarto vuol dire *un altro shot*:
+
+| sintetico, 100 frame (`prove/seek_ab.py`) | 23,976 fps | 29,97 fps | 25 fps |
+|---|---|---|---|
+| `-ss` sul PTS esatto: torna il frame dopo | 45/99 | 48/99 | **0/99** |
+| `sample_frames`, shot da 5-6 frame con un campione fuori dallo shot | 79/170 | 80/170 | **0/170** |
+| `split` in `reencode`: clip con primo/ultimo frame sbagliato | 108/128 | 92/128 | **0/128** |
+| **dopo**: `sample_frames` fuori dallo shot | 0/637 | 0/637 | 0/637 |
+| **dopo**: clip `reencode` sbagliate (primo, ultimo, conteggio; con audio) | 0/20 | 0/20 | 0/20 |
+
+Il primo è la coda del bug del §5.11: il tetto `end − 1/fps` mette l'ultimo campione **sul PTS
+esatto** dell'ultimo frame, cioè nel punto più esposto. Il secondo smentisce «`reencode` è
+frame-accurate»: lo è a 25 fps, dove era stato verificato (§9.3).
+
+🔑 **Perché non l'aveva visto nessuno, in tre modi diversi.** *Anna* è a 25 fps. Il banco del
+§9.3 era a 25 fps. E *Rogue One*, che è a 23,976, **non ha il difetto**: 0 su 40 confini a caso e
+0 sui 71 shot da ≤6 frame, misurato sul film. Quel file ha timebase 1/16000 e i PTS già
+arrotondati al millisecondo (0,019 · 0,061 · 0,102 — ha l'aria di un remux da MKV, non
+verificato), quindi il nostro
+arrotondamento coincide col suo. Il difetto è **latente**: aspetta il primo mp4 a frame rate NTSC
+con timebase fine, che è come esce qualunque encode diretto.
+
+**Il rimedio.** Il seek parte **mezzo frame prima**: 20 ms di margine da entrambi i lati, contro
+mezzo millisecondo di errore — e regge anche sui file coi PTS arrotondati, dove un seek al
+microsecondo «esatto» sbaglierebbe nell'altro verso. È lo stesso mezzo frame che la UI usa in
+`goToFrame`, specchiato per la semantica ≥ di ffmpeg.
+
+- `sample_frames`: `t − 0,5/fps`. `_timestamps` non cambia — dice quali istanti, non come cercarli.
+- `split` in `reencode`: `-ss` mezzo frame prima, video contato in **frame** (`-frames:v`),
+  `setpts=PTS-STARTPTS` per riportare il primo a 0, e `-t` solo come tetto per l'audio.
+
+⛔ **Due rimedi più ovvi, provati e sbagliati:**
+
+| | 23,976 | 29,97 | 25 |
+|---|---|---|---|
+| mezzo frame prima, durata in secondi (`-t`) | 64/128 | 61/128 | **124/128** |
+| mezzo frame prima, `-frames:v` — senza `setpts` | giusto, ma il video della clip parte **un frame dopo** l'audio | | |
+
+Il primo *rompe i 25 fps che funzionavano*: con lo start spostato, `-t n/fps` toglie l'ultimo
+frame. Il secondo conta giusto ma lascia `start_time = 0,040` sul video: l'encoder arrotonda il
+mezzo frame alla griglia.
+
+⚠️ **Resta mezzo frame di audio in testa a ogni clip** (21 ms a 24 fps) — per costruzione, non
+misurato all'ascolto — e audio e video differiscono in durata di meno di un frame AAC (misurato:
+da −0,08 a −0,57 frame video). Sotto la soglia a cui si nota; è il prezzo di
+avere il punto di taglio *fra* due frame invece che sopra uno.
+
+⚠️ `copy` resta com'era: taglia sui keyframe comunque. E **i cataloghi esistenti non vanno
+rifatti** — nessuno dei due aveva il difetto.
+
+📌 **Le tre trappole del banco stesso**, tutte prese prima di arrivare al numero: la formula
+`20 + 2N` dava id di frame **negativi** (il range limitato viene espanso in RGB: serve una
+tabella calibrata); il controllo «a metà frame» falliva sull'ultimo frame, perché a metà frame
+ffmpeg dà quello *dopo* (il controllo giusto è mezzo frame **prima**); e contando i frame di una
+clip il cui video non parte a 0 ne usciva uno in più, duplicato dal decoder (`-fps_mode
+passthrough`). Un frame con id −8 è il solito segnale: troppo storto per essere vero.
+
 ### 9.8 · Aperto sul catalogo
 
 - 🔵 **Miniature vecchie orfane** dopo il rename da `{index}` a `{start_frame}`. Uno script di
@@ -1501,8 +1600,9 @@ dichiarati come `package-data`, che diventano ~590 KB di base64 in ogni `index.h
   detector (`source="manuale"` sta nella `Scene`, non arriva al manifest). Servirebbe un campo per
   misurare il detector **contro** le correzioni — che sarebbe anche il modo più economico di farsi
   un ground truth vero.
-- 🔵 **`--faces` dopo un ritaglio** rilegge il cast dal manifest su disco invece che da quello
-  corretto: le rinomine fatte nella UI perdono contro la copia più vecchia. Nicchia.
+- ✅ **`--faces` dopo un ritaglio** rileggeva il cast dal manifest su disco invece che da quello
+  corretto: le rinomine fatte nella UI perdevano contro la copia più vecchia. Ora la sorgente è
+  la stessa di `merge_prior` (15 nov).
 - 🔵 **`clips/Anna/manifest.cleaned.json` e `.pre-asr-fix.json`** citano ancora i path piatti delle
   clip. Istantanee fatte a mano, non toccate.
 - 🔵 **Filtro per confidenza nella UI** — il 19% degli shot di *Rogue One* ha confidenza < 0,2 (col picco; il 25% era misurato sulla coda, §9.9). **Una riga di JS.**
@@ -1576,12 +1676,15 @@ l'installazione base si rompeva al primo decode.
 
 ### 10.4 · Debito residuo
 
-- `Config.agreement_tol` — **zero lettori** nel package (residuo dell'ensemble).
+- ✅ `Config.agreement_tol` — zero lettori nel package: tolto (15 nov). `prove/detect_ab.py`, che
+  lo leggeva, tiene la sua costante.
 - `confidence.reconcile` — **zero chiamanti**; ripristinato col commit AutoShot ma non ricablato.
 - `DetectorKind.autoshot` è in `build_detector` ma `--autoshot-weights` non esiste in `cli.py`:
   `-d autoshot` fallisce sempre con «pesi mancanti».
 - `probs_to_ranges` e `siglip_signatures` — vivi solo nei test / zero chiamanti.
-- `adapt.py` cita `faces.teacher_clusters`, che si chiama **`split_by_reliability`**.
+- ✅ `adapt.py` citava `faces.teacher_clusters`, che si chiama `split_by_reliability` (15 nov).
+- ✅ `scene-detector-setup --models` scaricava SigLIP, che non è nel percorso della pipeline, e
+  non DINOv2, che `--faces-refine` usa (15 nov).
 - ✅ Chiusi il 20 ago: i due resume accoppiati per `index` (§3.6 bis).
 - 🔵 **Frame condivisi faces+vlm** — oggi campionano gli stessi shot in modo indipendente (6
   seek@640 + 3 seek@512). Vale ~2-3 min/film. È l'unica parte del decode-once sopravvissuta.
@@ -1736,10 +1839,13 @@ compaiono in nessuno dei progetti trovati.
   separato a 128×96.
 - 🔵 Etichette di transizione come metadati (arrivano gratis con Omni).
 - 🔵 `Sudden_Jump` — scarti da pausa-macchina del Portapak, nessun detector li modella.
+- 🔵 **Il seek su un film vero a frame rate NTSC con timebase fine** — il difetto del §9.10 è
+  misurato su sintetici e *assente* sui due film in casa. Al primo mp4 del genere, rilanciare
+  `prove/seek_ab.py` non basta: va rifatta la verifica dei 40 confini sul film.
 - 🔵 **GT boundary manuale** — ~20 boundary annotati darebbero un metro dove oggi si assume che il
   manifest abbia ragione. Il modo più economico: tracciare le correzioni manuali della UI (§9.8).
 
-**Volti** — vedi §4.11: purezza VPCD 🔴 · cast stantio 🔴 · frammentazione 22↔85 🟡 · recall 🔵 ·
+**Volti** — vedi §4.11: purezza VPCD 🔴 · cast stantio ✅ · frammentazione 22↔85 🟡 · recall 🔵 ·
 provino stabile 🔵.
 
 **Scene**
@@ -1782,6 +1888,7 @@ l'unica costante fra un confronto e l'altro.
 | `movienet*.py` | MovieNet, 630 film | identità IMDb |
 | `vlm_naming.py` · `vlm_purity.py` | *Rogue One* + *Anna* | GT **costruito** |
 | `costo_corse.py` · `picco_sweep.py` · `offset_check.py` · `boundary_check.py` | diagnostica | — |
+| `seek_ab.py` | sintetici a 23,976 / 29,97 / 25 fps, generati al volo | esatto per costruzione (il grigio è il numero del frame) |
 
 **Cache riusabili** (evitano ore di ricalcolo): `prove/Anna/probs.npy` ·
 `prove/Rogue.One/probs_transnet.npz` · `prove/shot-dataset/probs/*.npz` (50 video, 7,5 min di
