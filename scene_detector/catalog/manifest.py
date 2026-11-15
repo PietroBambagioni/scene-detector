@@ -122,7 +122,7 @@ def merge_scene_names(manifest, path):
 
 # Ciò che sta **sopra** gli shot e che `build_manifest` non ricostruisce: il cast (ore di volti,
 # più i nomi dati a mano), le scene (corrette a mano nella UI), il numero di parlanti.
-CHIAVI_FILM = ("cast", "scenes", "n_scenes", "n_speakers")
+CHIAVI_FILM = ("cast", "cast_params", "scenes", "n_scenes", "n_speakers")
 
 
 def load_prior(path):

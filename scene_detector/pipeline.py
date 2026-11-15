@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from dataclasses import asdict
 from pathlib import Path
 
 from .core import telemetry as tel_mod
@@ -55,6 +56,31 @@ def _scene_corrette(m, fps):
                      for s in shots])
 
 
+def _parametri_volti(cfg):
+    """I parametri da cui dipende un cast: cambiarne uno ne darebbe un altro."""
+    return {k: str(v) if isinstance(v, Path) else v
+            for k, v in asdict(cfg).items() if k.startswith("faces_")}
+
+
+def _riusa_cast(manifest, prior, params):
+    """Resume dei volti: riporta il cast e i parametri con cui è nato. -> le differenze dai
+    parametri di questo run (`[]` se nessuna o se non erano registrati), `None` senza un cast.
+
+    Il resume non ri-rileva niente, quindi i parametri di *questo* run non si applicano: senza
+    dirlo, `--faces-min-shots 3` su un cast nato con 2 sembra aver funzionato e ne lascia 113
+    dove ne vorrebbe 65 (*Rogue One*, VERBALE §4.11). Si avvisa e non si ricalcola: rifare i
+    volti butterebbe nomi e fusioni fatti a mano nella UI.
+    """
+    if not (prior and prior.get("cast")):
+        return None
+    manifest["cast"] = prior["cast"]
+    nati = prior.get("cast_params")
+    if not nati:
+        return []
+    manifest["cast_params"] = nati
+    return [f"{k} {nati.get(k)} → {v}" for k, v in params.items() if nati.get(k) != v]
+
+
 def run(cfg: Config) -> None:
     """Orchestrazione end-to-end: detection → split → (faces) → (ASR) → (VLM) → manifest/UI → galleria.
 
@@ -71,23 +97,9 @@ def run(cfg: Config) -> None:
     env = tel_mod.collect_env()
     tel.write_config({
         "command": tel_mod.command_snapshot(),
-        "flags": {
-            "detector": cfg.detector.value,
-            "split_mode": cfg.split_mode.value, "threshold": cfg.threshold,
-            "min_scene_len": cfg.min_scene_len, "min_peak": cfg.min_peak,
-            "asr": cfg.asr, "asr_model": cfg.asr_model, "asr_lang": cfg.asr_lang,
-            "asr_threads": cfg.asr_threads, "diarize": cfg.diarize,
-            "vlm": cfg.vlm, "vlm_model": cfg.vlm_model, "vlm_frames": cfg.vlm_frames,
-            "faces": cfg.faces,
-            "faces_gallery": str(cfg.faces_gallery) if cfg.faces_gallery else None,
-            "faces_frames": cfg.faces_frames, "faces_threshold": cfg.faces_threshold,
-            "faces_min_score": cfg.faces_min_score, "faces_refine": cfg.faces_refine,
-            "faces_refine_threshold": cfg.faces_refine_threshold,
-            "scenes": cfg.scenes, "n_scenes": cfg.n_scenes,
-            "jobs": cfg.jobs, "output_dir": str(cfg.output_dir),
-            "from_manifest": str(cfg.from_manifest) if cfg.from_manifest else None,
-            "transnet_weights": str(cfg.transnet_weights) if cfg.transnet_weights else None,
-        },
+        # la `Config` intera, non un elenco ricopiato a mano: quello restava indietro, e mancavano
+        # proprio `faces_min_shots` e `faces_min_px`, i due che dicono con cosa è nato un cast
+        "flags": asdict(cfg),
         "mode": {
             "detector": cfg.detector.value,
             "split_mode": cfg.split_mode.value,
@@ -217,15 +229,26 @@ def run(cfg: Config) -> None:
         step += 1
         log.info("[%d/%d] Riconoscimento personaggi…", step, n_steps)
         with tel.step("faces") as o:
-            from .catalog.manifest import load_manifest
-            prior = load_manifest(manifest_path) if manifest_path.exists() else None
-            if prior and prior.get("cast"):
-                manifest["cast"] = prior["cast"]  # resume: riusa il cast già calcolato (+ eventuali rinomine)
-                # Il resume non ri-rileva niente, quindi le opzioni volti di *questo* run non si
-                # applicano: va detto, o `--faces-refine` sembra non fare nulla.
-                if cfg.faces_refine:
-                    log.warning("  cast riusato dal manifest: --faces-refine non applicato "
-                                "(togli la voce `cast` da %s per rifare i volti)", manifest_path)
+            params = _parametri_volti(cfg)
+            # resume: riusa il cast già calcolato (+ eventuali rinomine). `prior` è il JSON
+            # corretto a mano quando c'è: rileggendo sempre da disco, i nomi dati nella UI
+            # perdevano contro la copia più vecchia.
+            diversi = _riusa_cast(manifest, prior, params)
+            if diversi is not None:
+                rifare = (f"togli la voce `cast` da {cfg.from_manifest or manifest_path} "
+                          "per rifare i volti")
+                if diversi:
+                    log.warning("  cast riusato dal manifest, nato con altri parametri: %s — "
+                                "quelli di questo run non sono applicati (%s)",
+                                ", ".join(diversi), rifare)
+                elif "cast_params" not in manifest:
+                    log.info("  cast riusato dal manifest; i parametri con cui è nato non sono "
+                             "registrati")
+                    if cfg.faces_refine:
+                        log.warning("  --faces-refine non applicato (%s)", rifare)
+                if "cast" not in riportate:
+                    log.warning("  i confini sono cambiati dal run che ha fatto il cast: gli shot "
+                                "nuovi restano senza personaggi (%s)", rifare)
                 # I `characters` per shot **non** si toccano qui: li ha già rimessi `merge_prior`
                 # accoppiando per range (inizio e fine). Questo ramo li riassegnava per `index`,
                 # che non è un'identità: bastava un run con una soglia diversa (592 shot → 307 su *Anna*) e
@@ -247,6 +270,7 @@ def run(cfg: Config) -> None:
                     min_face_px=cfg.faces_min_px, film_dir=out_dir, encoder=encoder,
                     refine_threshold=cfg.faces_refine_threshold,
                 )
+                manifest["cast_params"] = params
             o["n_faces"] = n_faces
             o["n_characters"] = n_chars
             o["gallery"] = str(cfg.faces_gallery) if cfg.faces_gallery else None

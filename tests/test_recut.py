@@ -138,3 +138,58 @@ def test_il_ritaglio_conserva_confidenza_e_transizione(tmp_path):
     scenes = _scene_corrette(m, 25.0)
     assert [s.confidence for s in scenes] == [1.0, 0.12, None]
     assert [s.transition for s in scenes] == [None, (96, 99), None]
+
+
+def test_il_cast_corretto_a_mano_vince_su_quello_su_disco():
+    """Il resume dei volti rileggeva sempre il manifest su disco: con `--from-manifest --faces`
+    i nomi dati nella UI perdevano contro la copia piu' vecchia."""
+    from scene_detector.pipeline import _riusa_cast
+
+    corretto = {"cast": [{"id": 0, "name": "Anna"}]}        # `prior` e' il JSON corretto, se c'e'
+    manifest = {"cast": []}
+    assert _riusa_cast(manifest, corretto, {}) == []
+    assert manifest["cast"][0]["name"] == "Anna"
+    # senza un cast da riusare si rifanno i volti
+    assert _riusa_cast({"cast": []}, {"cast": []}, {}) is None
+    assert _riusa_cast({"cast": []}, None, {}) is None
+
+
+def test_un_cast_nato_con_altri_parametri_si_dichiara():
+    """Il resume non ri-rileva niente: `--faces-min-shots 3` su un cast nato con 2 sembrava aver
+    funzionato (*Rogue One*: 113 personaggi dove il default ne darebbe 65)."""
+    from scene_detector.core.config import Config
+    from scene_detector.pipeline import _parametri_volti, _riusa_cast
+
+    nati = _parametri_volti(Config(video=Path("f.mp4"), faces_min_shots=2,
+                                   faces_gallery=Path("cast/")))
+    assert nati["faces_min_shots"] == 2 and nati["faces_min_px"] == 50
+    assert nati["faces_gallery"] == "cast"          # finisce nel JSON: stringa, non Path
+    assert "faces" not in nati                      # l'interruttore non e' un parametro del cast
+
+    prior = {"cast": [{"id": 0}], "cast_params": nati}
+    ora = _parametri_volti(Config(video=Path("f.mp4"), faces_gallery=Path("cast/")))
+    manifest = {"cast": []}
+    assert _riusa_cast(manifest, prior, ora) == ["faces_min_shots 2 → 3"]
+    assert manifest["cast_params"] == nati          # resta scritto con cosa e' nato, non con cosa si e' chiesto
+    assert _riusa_cast({"cast": []}, prior, nati) == []
+
+    # manifest di prima che i parametri si registrassero: niente da confrontare, e non si inventa
+    vecchio = {"cast": []}
+    assert _riusa_cast(vecchio, {"cast": [{"id": 0}]}, ora) == []
+    assert "cast_params" not in vecchio
+
+
+def test_la_telemetria_registra_tutta_la_config(tmp_path):
+    """L'elenco dei flag era ricopiato a mano e restava indietro: mancavano `faces_min_shots` e
+    `faces_min_px`. `asdict` deve restare serializzabile cosi' com'e' (Path, enum)."""
+    from dataclasses import asdict
+
+    from scene_detector.core.config import Config
+    from scene_detector.core.telemetry import Telemetry
+
+    tel = Telemetry(tmp_path)
+    tel.write_config({"flags": asdict(Config(video=Path("f.mp4"), from_manifest=Path("m.json")))})
+    flags = json.loads((tel.log_dir / "config.json").read_text())["flags"]
+    assert flags["faces_min_shots"] == 3 and flags["faces_min_px"] == 50
+    assert flags["detector"] == "transnet" and flags["from_manifest"] == "m.json"
+    tel.close()
