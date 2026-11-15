@@ -180,3 +180,23 @@ def test_la_confidenza_di_una_graduale_e_il_picco_non_la_coda():
     ranges, transitions = runs_to_ranges(probs, 0.05)
     assert ranges == [(0, 10), (11, 28), (29, 39)]
     assert boundary_confidences(ranges, probs, transitions) == [1.0, 0.95, 0.8]
+
+
+def test_anche_pyscenedetect_copre_esattamente_i_frame_di_probe(monkeypatch):
+    """OpenCV conta i frame per conto suo: l'invariante «coprono tutti i frame di probe» valeva
+    solo sulla via neurale, e un manifest di PySceneDetect poteva non passare `--from-manifest`."""
+    import sys
+    from types import SimpleNamespace as NS
+
+    from scene_detector.detection.pyscenedetect import PySceneDetectDetector
+
+    tc = lambda f: NS(get_frames=lambda: f)
+    falso = NS(open_video=lambda p: None, ContentDetector=lambda **k: None,
+               SceneManager=lambda: NS(add_detector=lambda d: None,
+                                       detect_scenes=lambda v, show_progress: None,
+                                       # `end` esclusivo; OpenCV vede 203 frame, probe 200
+                                       get_scene_list=lambda: [(tc(0), tc(100)), (tc(100), tc(203))]))
+    monkeypatch.setitem(sys.modules, "scenedetect", falso)
+
+    scenes = PySceneDetectDetector().detect(NS(path="f.mp4", n_frames=200, fps=25.0))
+    assert [(s.start_frame, s.end_frame) for s in scenes] == [(0, 99), (100, 199)]

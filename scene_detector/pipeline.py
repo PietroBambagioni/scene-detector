@@ -34,8 +34,18 @@ def _shots_corretti(path, info):
         if b["start_frame"] != a["end_frame"] + 1:
             raise ValueError(f"{path}: shot non contigui fra #{a['index']} (fine {a['end_frame']}) "
                              f"e #{b['index']} (inizio {b['start_frame']})")
+    # la contiguità da sola non basta: (0,9) (10,5) (6,99) è contigua e ha uno shot rovesciato
+    for s in shots:
+        if s["end_frame"] < s["start_frame"]:
+            raise ValueError(f"{path}: shot #{s['index']} rovesciato "
+                             f"({s['start_frame']}–{s['end_frame']})")
     if shots[0]["start_frame"] != 0 or shots[-1]["end_frame"] >= info.n_frames:
         raise ValueError(f"{path}: i range escono dal video (0–{info.n_frames - 1})")
+    # «coprono tutti i frame» vale anche in coda: un manifest che finisce prima lascerebbe la fine
+    # del film fuori dal catalogo, senza un errore
+    if shots[-1]["end_frame"] != info.n_frames - 1:
+        raise ValueError(f"{path}: l'ultimo shot finisce a {shots[-1]['end_frame']}, il video a "
+                         f"{info.n_frames - 1} — la coda resterebbe scoperta")
     return m
 
 

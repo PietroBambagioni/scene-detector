@@ -193,3 +193,18 @@ def test_la_telemetria_registra_tutta_la_config(tmp_path):
     assert flags["faces_min_shots"] == 3 and flags["faces_min_px"] == 50
     assert flags["detector"] == "transnet" and flags["from_manifest"] == "m.json"
     tel.close()
+
+
+def test_shot_rovesciato(tmp_path):
+    """Contiguo ma rotto: 10 viene dopo 9 e 6 dopo 5, eppure il secondo shot finisce prima di
+    cominciare. La sola contiguita' lo lasciava passare."""
+    path = _manifest(tmp_path, [(0, 9), (10, 5), (6, 249)])
+    with pytest.raises(ValueError, match="rovesciato"):
+        _shots_corretti(path, _info())
+
+
+def test_coda_scoperta(tmp_path):
+    """I range coprono tutti i frame **di probe**: finire prima taglia via la fine del film."""
+    path = _manifest(tmp_path, [(0, 99), (100, 199)])
+    with pytest.raises(ValueError, match="coda"):
+        _shots_corretti(path, _info())
