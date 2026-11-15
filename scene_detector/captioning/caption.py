@@ -51,8 +51,18 @@ def sample_frames(video, start_time, end_time, n=3, size=512, fps=None):
 
     Passa `fps` quando ce l'hai: senza, sugli shot corti si finisce sul frame dello shot dopo
     (vedi `_timestamps`).
+
+    Il seek parte **mezzo frame prima** dell'istante voluto. ffmpeg con `-ss` consegna il primo
+    frame con PTS ≥ t, e `t` arriva arrotondato al millisecondo: chiesto sul PTS esatto di un
+    frame, a 23,976 o 29,97 fps l'arrotondamento lo supera una volta su due e torna il frame
+    **dopo** — sull'ultimo frame di uno shot corto, il primo dello shot successivo. A 25 fps i PTS
+    sono multipli esatti di 40 ms e il difetto non si vede: è per questo che né *Anna* né i banchi
+    l'avevano mostrato. Misurato su un sintetico a 23,976 fps: 79 shot da 5-6 frame su 170 con un
+    campione fuori dallo shot, 0 con il mezzo frame. Vedi `plan/VERBALE.md` §9.10.
     """
-    return [_extract_frame(video, t, size) for t in _timestamps(start_time, end_time, n, fps)]
+    half = 0.5 / fps if fps else 0.0
+    return [_extract_frame(video, t - half, size)
+            for t in _timestamps(start_time, end_time, n, fps)]
 
 
 # ------------------------------------------------------------------ prompt ---

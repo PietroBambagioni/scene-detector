@@ -137,3 +137,32 @@ def test_caption_manifest_injects_character_names(monkeypatch):
     cap = _StubCaptioner()
     caption_manifest(manifest, "video.mp4", cap, progress=False)
     assert cap.last_characters == ["Alice", "Bob"]   # id cluster risolti in nomi dal cast
+
+
+def test_il_seek_non_scavalca_lo_shot_a_23_976_fps(monkeypatch):
+    """ffmpeg con `-ss` consegna il primo frame con PTS >= t, e t viaggia arrotondato al ms.
+    Chiesto sul PTS esatto dell'ultimo frame, a 23,976 fps l'arrotondamento lo supera una volta
+    su due e torna il primo frame dello shot **dopo**. A 25 fps non succede mai (PTS multipli di
+    40 ms): e' il motivo per cui ne' *Anna* ne' i banchi l'avevano mostrato."""
+    fps = 24000 / 1001
+
+    def frame_di_ffmpeg(t):
+        t = float(f"{max(0.0, t):.3f}")                 # come lo formatta `_extract_frame`
+        f = int(t * fps)
+        return f if f / fps >= t - 1e-12 else f + 1     # primo frame con PTS >= t
+
+    visti = []
+    monkeypatch.setattr(caption, "_extract_frame", lambda video, t, size: visti.append(t))
+    fuori = 0
+    for start in range(1, 400):
+        for lung, n in ((1, 1), (2, 1), (5, 3), (6, 3), (6, 6)):
+            end = start + lung - 1                      # inclusivo
+            visti.clear()
+            # i tempi arrivano dal manifest, gia' arrotondati al millisecondo
+            caption.sample_frames("f.mp4", round(start / fps, 3), round((end + 1) / fps, 3), n, 64, fps)
+            fuori += any(not start <= frame_di_ffmpeg(t) <= end for t in visti)
+    assert fuori == 0
+
+    # controprova: senza il mezzo frame il difetto c'e', quindi il test lo sa vedere
+    ultimo = [f / fps for f in range(1, 400)]           # seek sul PTS esatto del frame f
+    assert sum(frame_di_ffmpeg(t) != f for f, t in enumerate(ultimo, 1)) > 100

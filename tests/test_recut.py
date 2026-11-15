@@ -208,3 +208,35 @@ def test_coda_scoperta(tmp_path):
     path = _manifest(tmp_path, [(0, 99), (100, 199)])
     with pytest.raises(ValueError, match="coda"):
         _shots_corretti(path, _info())
+
+
+def test_reencode_conta_i_frame_e_non_i_millisecondi(tmp_path, monkeypatch):
+    """`-ss`/`-t` in secondi arrotondati al ms: a 23,976 fps le clip `reencode` uscivano con un
+    frame in piu' o in meno (108 su 128 su un sintetico). Il video si conta in frame, e il seek
+    parte mezzo frame prima del primo: l'arrotondamento non puo' scavalcarlo."""
+    from scene_detector.core.config import SplitMode
+    from scene_detector.core.scene import scenes_from_ranges
+    from scene_detector.segmentation import splitter
+
+    cmds = []
+    monkeypatch.setattr(splitter.subprocess, "run", lambda cmd, **k: cmds.append(cmd))
+    fps = 24000 / 1001
+    info = VideoInfo(path=Path("/film/banco.mp4"), fps=fps, n_frames=250, duration=250 / fps,
+                     width=640, height=360)
+    scenes = scenes_from_ranges([(0, 99), (100, 136), (137, 249)], fps)
+
+    splitter.split(info, scenes, tmp_path, SplitMode.reencode, jobs=1)
+    arg = lambda cmd, flag: cmd[cmd.index(flag) + 1]
+    assert [arg(c, "-frames:v") for c in cmds] == ["100", "37", "113"]
+    for c, sc in zip(cmds, scenes):
+        ss = float(arg(c, "-ss"))
+        # fra il frame prima e il primo dello shot, lontano dal ms da entrambi (0 per il primo shot)
+        assert ss == 0 or (sc.start_frame - 1) / fps + 0.005 < ss < sc.start_frame / fps - 0.005
+        # il tetto in secondi non deve poter togliere l'ultimo frame, ne' far entrare troppo audio
+        assert sc.n_frames / fps < float(arg(c, "-t")) < (sc.n_frames + 1) / fps
+
+    # `copy` taglia comunque sui keyframe: resta com'era
+    cmds.clear()
+    splitter.split(info, scenes, tmp_path, SplitMode.copy, jobs=1)
+    assert all("-frames:v" not in c and arg(c, "-c") == "copy" for c in cmds)
+    assert arg(cmds[1], "-ss") == f"{100 / fps:.3f}"
