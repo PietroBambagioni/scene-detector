@@ -140,7 +140,8 @@ def run(cfg: Config) -> None:
         o["split_mode"] = cfg.split_mode.value
         o["workers"] = split_workers
 
-    from .catalog.manifest import build_manifest, merge_prior, write_manifest
+    from .catalog.manifest import (build_manifest, load_prior, merge_film_keys, merge_prior,
+                                   write_manifest)
     label = cfg.detector.value
     # La UI riproduce **sempre** il film originale: le serve come raggiungerlo dalla cartella del
     # catalogo (relativo: catalogo e film restano spostabili insieme). Anche con le clip su disco,
@@ -162,14 +163,13 @@ def run(cfg: Config) -> None:
     if recuperati:
         log.info("[resume] %d shot recuperati dal manifest esistente", recuperati)
 
-    if corretto:
-        # Roba che `build_manifest` non ricostruisce e che un ritaglio non deve buttare: i nomi
-        # dei personaggi digitati a mano e le scene corrette nella UI. Stesso spirito di
-        # `merge_prior`, un livello sopra. Se lo step vero rigira (`--faces`, `--scenes`)
-        # ricalcola dopo e vince.
-        for chiave in ("cast", "scenes", "n_scenes", "n_speakers"):
-            if corretto.get(chiave) and not manifest.get(chiave):
-                manifest[chiave] = corretto[chiave]
+    # Roba che `build_manifest` non ricostruisce e che un run non deve buttare: il cast coi nomi
+    # digitati a mano e le scene corrette nella UI. Valeva solo per il ritaglio manuale, quindi un
+    # `--vlm` da solo azzerava cast e scene. Stessa sorgente di `merge_prior` qui sopra.
+    prior = corretto or load_prior(manifest_path)
+    riportate = merge_film_keys(manifest, prior)
+    if riportate:
+        log.info("[resume] dal manifest esistente: %s", ", ".join(riportate))
 
     # Miniature **per shot** e sempre, non solo con `--scenes`: la lista della UI le mostra in
     # entrambe le modalità (senza, resta una fila di testo), e con le scene fanno anche le

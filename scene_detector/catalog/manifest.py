@@ -48,7 +48,7 @@ def build_manifest(video_info, scenes, detector, clip_template="clip/scene-{:03d
 # nuovo li lasciasse a `None`, un run senza `--vlm`/`--asr` **cancellerebbe** il lavoro dei run
 # precedenti. È già successo: `clips/Rogue.One/manifest.json` ha perso 3204 descrizioni e 897
 # dialoghi (5h16m) in un run `--scenes`, e si sono recuperati solo perché esistevano due copie
-# fatte a mano. Il cast non è qui perché lo step `faces` ha già il suo resume.
+# fatte a mano. Il cast non è qui perché non sta sugli shot: lo riporta `merge_film_keys`.
 # `rivisto` non costa ore di GPU ma ore di persona: e' il segno «questo confine l'ho guardato»
 # della modalita' revisione, e perderlo vuol dire riguardare la coda da capo.
 CAMPI_COSTOSI = ("description", "dialogue", "characters", "speakers", "rivisto")
@@ -118,6 +118,44 @@ def merge_scene_names(manifest, path):
             sc["name"] = nome
             n += 1
     return n
+
+
+# Ciò che sta **sopra** gli shot e che `build_manifest` non ricostruisce: il cast (ore di volti,
+# più i nomi dati a mano), le scene (corrette a mano nella UI), il numero di parlanti.
+CHIAVI_FILM = ("cast", "scenes", "n_scenes", "n_speakers")
+
+
+def load_prior(path):
+    """Il manifest già su disco, o `None` se non c'è o è illeggibile: è il primo run, non un errore."""
+    try:
+        return load_manifest(path)
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def merge_film_keys(manifest, prior):
+    """Riporta `CHIAVI_FILM` da un manifest precedente con **gli stessi shot**. -> chiavi riportate.
+
+    È `merge_prior` un livello sopra, e copre lo stesso buco: un run che non riaccende `--faces`
+    o `--scenes` ripartiva da `cast: []` e senza scene, lasciando negli shot gli id di personaggi
+    che non esistono più — su *Anna* 29 personaggi e 35 scene azzerati da un `--vlm` da solo. Il
+    recupero c'era già, ma solo per `--from-manifest`.
+
+    **Solo se i range coincidono tutti.** Le scene puntano agli shot per indice (`first_shot`,
+    `last_shot`), e un cast contato su altri shot dichiara presenze che non valgono più: con i
+    confini spostati non torna niente, per la stessa ragione di `merge_prior` — un campo assegnato
+    male è peggio di uno perso. Dove il valore nuovo c'è già non si tocca: lo step vero
+    (`--faces`, `--scenes`, `--diarize`) gira dopo e vince.
+    """
+    def ranges(m):
+        return [(s.get("start_frame"), s.get("end_frame")) for s in m.get("shots", [])]
+
+    if not prior or ranges(prior) != ranges(manifest):
+        return []
+    chiavi = [k for k in CHIAVI_FILM if prior.get(k) and not manifest.get(k)]
+    for k in chiavi:
+        manifest[k] = prior[k]
+    return chiavi
 
 
 def write_manifest(manifest, path):

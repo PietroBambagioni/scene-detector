@@ -178,3 +178,48 @@ def test_write_manifest_non_lascia_un_file_a_meta(tmp_path, monkeypatch):
     with pytest.raises(KeyboardInterrupt):
         mod.write_manifest({"shots": [{"description": "nuova"}]}, path)
     assert mod.load_manifest(path)["shots"][0]["description"] == "vecchia"
+
+
+def test_un_run_senza_faces_non_azzera_cast_e_scene(tmp_path):
+    """`build_manifest` riparte da `cast: []`: un `--vlm` da solo lasciava negli shot gli id di
+    personaggi che non esistevano piu' (su *Anna*: 29 personaggi e 35 scene azzerati)."""
+    from scene_detector.catalog.manifest import load_prior, merge_film_keys, write_manifest
+
+    path = tmp_path / "manifest.json"
+    prima = build_manifest(_info(), _scenes(), "transnet")
+    prima.update(cast=[{"id": 3, "name": "Anna"}], n_speakers=2, n_scenes=1,
+                 scenes=[{"index": 0, "first_shot": 0, "last_shot": 1}])
+    write_manifest(prima, path)
+
+    nuovo = build_manifest(_info(), _scenes(), "transnet")
+    assert merge_film_keys(nuovo, load_prior(path)) == ["cast", "scenes", "n_scenes", "n_speakers"]
+    assert nuovo["cast"] == [{"id": 3, "name": "Anna"}]
+    assert nuovo["scenes"][0]["last_shot"] == 1
+
+    # lo step vero ha gia' scritto: non si copre
+    rifatto = build_manifest(_info(), _scenes(), "transnet")
+    rifatto["cast"] = [{"id": 0, "name": "Personaggio 1"}]
+    assert "cast" not in merge_film_keys(rifatto, load_prior(path))
+    assert rifatto["cast"][0]["name"] == "Personaggio 1"
+
+
+def test_cast_e_scene_non_tornano_se_i_confini_si_sono_mossi(tmp_path):
+    """Le scene puntano agli shot per indice: su shot diversi indicherebbero un altro pezzo di
+    film. Basta un confine spostato, anche solo la fine dell'ultimo shot."""
+    from scene_detector.catalog.manifest import load_prior, merge_film_keys, write_manifest
+
+    path = tmp_path / "manifest.json"
+    prima = build_manifest(_info(), _scenes(), "transnet")
+    prima.update(cast=[{"id": 3, "name": "Anna"}], scenes=[{"first_shot": 0, "last_shot": 1}])
+    write_manifest(prima, path)
+
+    for ranges in ([(0, 89), (90, 199)], [(0, 99), (100, 198)], [(0, 199)]):
+        nuovo = build_manifest(_info(), scenes_from_ranges(ranges, 25.0), "transnet")
+        assert merge_film_keys(nuovo, load_prior(path)) == []
+        assert nuovo["cast"] == [] and "scenes" not in nuovo
+
+    # primo run, o manifest troncato da un'interruzione: non e' un errore
+    assert load_prior(tmp_path / "assente.json") is None
+    (tmp_path / "rotto.json").write_text("{", encoding="utf-8")
+    assert load_prior(tmp_path / "rotto.json") is None
+    assert merge_film_keys(build_manifest(_info(), _scenes(), "transnet"), None) == []
