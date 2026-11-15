@@ -205,7 +205,10 @@ def build_cast(labels, shot_indices, names=None, min_shots=2):
     un'apparizione unica. Misurato su Rogue One (8839 volti): il taglio per volti a >=2 lascia 274
     "personaggi", quello per shot a >=2 ne lascia 113, tagliando netto i 548 apparsi una volta.
     Ritorna:
-      - `cast`: lista di {id, name, n_faces, n_shots, shots}, ordinata per n_shots desc.
+      - `cast`: lista di {id, name, n_faces, n_shots}, ordinata per n_shots desc. Niente elenco
+        degli shot: era una lista di **indici**, che non sono un'identità (al primo taglio nella
+        UI scalano tutti) e che né il package né la UI leggevano — la verità sta in
+        `shot["characters"]`, da cui `n_shots` si ricalcola.
       - `per_shot`: {shot_index: set(cluster_id)} limitato ai cluster tenuti nel cast.
     """
     names = names or {}
@@ -225,7 +228,6 @@ def build_cast(labels, shot_indices, names=None, min_shots=2):
             "name": names.get(cid) or f"Personaggio {cid + 1}",
             "n_faces": len(sis),
             "n_shots": len(shots),
-            "shots": shots,
         })
     cast.sort(key=lambda c: (-c["n_shots"], c["id"]))
 

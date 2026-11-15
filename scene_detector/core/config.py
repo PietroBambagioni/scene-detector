@@ -43,7 +43,6 @@ class Config:
     # (12/12 sui controlli). Su un film pulito le stesse corse sono in buona parte stacchi
     # legittimi. Vedi `plan/VERBALE.md` §3.6.
     min_peak: float = 0.0
-    agreement_tol: int = 5        # tolleranza (frame) per agreement in ensemble
     transnet_weights: Path | None = None
     autoshot_weights: Path | None = None
     # Confini presi da un manifest corretto a mano nella UI invece che dal detector. Il detector
