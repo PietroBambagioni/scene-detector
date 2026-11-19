@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 350" width="1000" height="350" role="img" aria-label="Probabilità di taglio per frame: una corsa di frame sopra soglia è una sola transizione, inclusa nello shot uscente; un picco sotto min-peak non apre uno shot.">
+<style>
+  .ink{fill:#1f2328}.mut{fill:#59636e}.ln{stroke:#d1d9e0}.lnk{stroke:#1f2328}
+  .acc{fill:#1f8a9e}.accs{stroke:#1f8a9e}.accf{fill:#1f8a9e;fill-opacity:.14}
+  .warm{fill:#c4511c}.warms{stroke:#c4511c}.warmf{fill:#c4511c;fill-opacity:.12}
+  .dim{fill:#8c959f}.trk{fill:#eaeef2}
+  text{font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+  .t{font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;font-weight:600}
+  @media (prefers-color-scheme: dark){
+    .ink{fill:#e6edf3}.mut{fill:#9198a1}.ln{stroke:#3d444d}.lnk{stroke:#e6edf3}
+    .acc{fill:#4fb3c8}.accs{stroke:#4fb3c8}.accf{fill:#4fb3c8;fill-opacity:.18}
+    .warm{fill:#ec8a55}.warms{stroke:#ec8a55}.warmf{fill:#ec8a55;fill-opacity:.15}
+    .dim{fill:#6e7681}.trk{fill:#21262d}
+  }
+</style>
+<rect class="dim" x="82.0" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="94.5" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="107.0" y="228.3" width="8.5" height="1.7" rx="1.5"/>
+<rect class="dim" x="119.5" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="132.0" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="144.5" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="157.0" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="169.5" y="228.3" width="8.5" height="1.7" rx="1.5"/>
+<rect class="dim" x="182.0" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="194.5" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="207.0" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="219.5" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="232.0" y="228.3" width="8.5" height="1.7" rx="1.5"/>
+<rect class="dim" x="244.5" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="acc" x="257.0" y="65.1" width="8.5" height="164.9" rx="1.5"/>
+<rect class="dim" x="269.5" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="282.0" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="294.5" y="228.3" width="8.5" height="1.7" rx="1.5"/>
+<rect class="dim" x="307.0" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="319.5" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="332.0" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="344.5" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="357.0" y="228.3" width="8.5" height="1.7" rx="1.5"/>
+<rect class="dim" x="369.5" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="382.0" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="394.5" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="407.0" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="419.5" y="228.3" width="8.5" height="1.7" rx="1.5"/>
+<rect class="dim" x="432.0" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="acc" x="444.5" y="218.1" width="8.5" height="11.9" rx="1.5"/>
+<rect class="acc" x="457.0" y="202.8" width="8.5" height="27.2" rx="1.5"/>
+<rect class="acc" x="469.5" y="165.4" width="8.5" height="64.6" rx="1.5"/>
+<rect class="acc" x="482.0" y="126.3" width="8.5" height="103.7" rx="1.5"/>
+<rect class="acc" x="494.5" y="107.6" width="8.5" height="122.4" rx="1.5"/>
+<rect class="acc" x="507.0" y="136.5" width="8.5" height="93.5" rx="1.5"/>
+<rect class="acc" x="519.5" y="177.3" width="8.5" height="52.7" rx="1.5"/>
+<rect class="acc" x="532.0" y="206.2" width="8.5" height="23.8" rx="1.5"/>
+<rect class="acc" x="544.5" y="219.8" width="8.5" height="10.2" rx="1.5"/>
+<rect class="dim" x="557.0" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="569.5" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="582.0" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="594.5" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="607.0" y="228.3" width="8.5" height="1.7" rx="1.5"/>
+<rect class="dim" x="619.5" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="632.0" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="644.5" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="657.0" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="warm" x="669.5" y="214.7" width="8.5" height="15.3" rx="1.5"/>
+<rect class="warm" x="682.0" y="194.3" width="8.5" height="35.7" rx="1.5"/>
+<rect class="warm" x="694.5" y="209.6" width="8.5" height="20.4" rx="1.5"/>
+<rect class="dim" x="707.0" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="719.5" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="732.0" y="228.3" width="8.5" height="1.7" rx="1.5"/>
+<rect class="dim" x="744.5" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="757.0" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="769.5" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="782.0" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="794.5" y="228.3" width="8.5" height="1.7" rx="1.5"/>
+<rect class="dim" x="807.0" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<rect class="dim" x="819.5" y="228.5" width="8.5" height="1.5" rx="1.5"/>
+<line class="lnk" x1="80" y1="230" x2="830.0" y2="230" stroke-width="1"/>
+<line class="accs" x1="80" y1="221.5" x2="830.0" y2="221.5" stroke-width="1.2" />
+<text class="acc" x="838.0" y="225.5">--threshold 0,05</text>
+<line class="accs" x1="80" y1="145.0" x2="830.0" y2="145.0" stroke-width="1.2" stroke-dasharray="5 4"/>
+<text class="acc" x="838.0" y="149.0">--min-peak 0,5</text>
+<text class="mut" x="68" y="64.0" text-anchor="end">1,0</text>
+<text class="mut" x="68" y="234" text-anchor="end">0</text>
+<text class="mut" x="68" y="149.0" text-anchor="end">prob</text>
+<text class="ink" x="249.25" y="75.1" text-anchor="end">stacco netto</text>
+<text class="mut" x="249.25" y="91.1" text-anchor="end">picco sull'ultimo frame</text>
+<text class="mut" x="249.25" y="106.1" text-anchor="end">dello shot uscente</text>
+<text class="ink" x="498.75" y="77.6" text-anchor="middle">dissolvenza</text>
+<text class="mut" x="498.75" y="93.6" text-anchor="middle">una corsa = una giunta</text>
+<text class="warm" x="686.25" y="164.3" text-anchor="middle">flicker</text>
+<text class="warm" x="686.25" y="180.3" text-anchor="middle">picco &lt; 0,5</text>
+<rect class="accf accs" x="81.0" y="262" width="185.5" height="30" rx="4" stroke-width="1.2"/>
+<text class="ink" x="173.8" y="281" text-anchor="middle">shot 1</text>
+<rect class="accf accs" x="268.5" y="262" width="285.5" height="30" rx="4" stroke-width="1.2"/>
+<text class="ink" x="411.2" y="281" text-anchor="middle">shot 2</text>
+<rect class="accf accs" x="556.0" y="262" width="148.0" height="30" rx="4" stroke-width="1.2"/>
+<text class="ink" x="630.0" y="281" text-anchor="middle">shot 3</text>
+<rect class="warmf warms" x="706.0" y="262" width="123.0" height="30" rx="4" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text class="ink" x="767.5" y="281" text-anchor="middle">shot 4</text>
+<path class="accs" d="M444.5 302 v6 H553.0 v-6" fill="none" stroke-width="1.2"/>
+<text class="mut" x="498.8" y="324" text-anchor="middle">Scene.transition = (29, 37)</text>
+<text class="warm" x="767.5" y="324" text-anchor="middle">con --min-peak 0,5: si fonde col 3</text>
+<text class="mut" x="830.0" y="346" text-anchor="end">frame →</text>
+</svg>
