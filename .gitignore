@@ -24,5 +24,16 @@ datasets/
 # log dei run
 *.log
 
-# sottoprogetto Anna / Fuori campo
-fuoricampo/
+# sottoprogetto Anna / Fuori campo: dentro codice, documenti e risultati (i JSON, che senza
+# i video non si rifanno); fuori il materiale e ciò che si rigenera da quei JSON
+fuoricampo/ANNA/
+fuoricampo/lavoro/
+fuoricampo/dati/
+fuoricampo/audio/
+fuoricampo/inviluppo/
+fuoricampo/font/
+fuoricampo/thumbs/
+fuoricampo/thumbs-scartato/
+fuoricampo/candidati.npz
+fuoricampo/*.html
+fuoricampo/*.pdf

@@ -1,0 +1,3902 @@
+[
+ {
+  "film_start": 94.5,
+  "film_end": 118.0,
+  "parte": 2,
+  "girato_start": 3873.5,
+  "girato_end": 3891.5,
+  "durata": 23.5,
+  "score": 0.865,
+  "n": 31
+ },
+ {
+  "film_start": 118.0,
+  "film_end": 130.5,
+  "parte": 2,
+  "girato_start": 3893.5,
+  "girato_end": 3906.0,
+  "durata": 12.5,
+  "score": 0.859,
+  "n": 25
+ },
+ {
+  "film_start": 130.5,
+  "film_end": 175.0,
+  "parte": 2,
+  "girato_start": 3906.5,
+  "girato_end": 3951.0,
+  "durata": 44.5,
+  "score": 0.8,
+  "n": 36
+ },
+ {
+  "film_start": 131.5,
+  "film_end": 175.5,
+  "parte": 2,
+  "girato_start": 3906.5,
+  "girato_end": 3950.5,
+  "durata": 44.0,
+  "score": 0.802,
+  "n": 8
+ },
+ {
+  "film_start": 175.5,
+  "film_end": 181.56,
+  "parte": 2,
+  "girato_start": 3952.0,
+  "girato_end": 3958.06,
+  "durata": 6.060000000000002,
+  "score": 0.793,
+  "n": 12
+ },
+ {
+  "film_start": 187.0,
+  "film_end": 227.0,
+  "parte": 2,
+  "girato_start": 4023.0,
+  "girato_end": 4062.5,
+  "durata": 40.0,
+  "score": 0.681,
+  "n": 59
+ },
+ {
+  "film_start": 234.0,
+  "film_end": 290.5,
+  "parte": 5,
+  "girato_start": 9869.5,
+  "girato_end": 9926.0,
+  "durata": 56.5,
+  "score": 0.801,
+  "n": 37
+ },
+ {
+  "film_start": 290.5,
+  "film_end": 304.24,
+  "parte": 5,
+  "girato_start": 9928.5,
+  "girato_end": 9942.24,
+  "durata": 13.740000000000009,
+  "score": 0.897,
+  "n": 27
+ },
+ {
+  "film_start": 313.0,
+  "film_end": 336.04,
+  "parte": 5,
+  "girato_start": 9951.5,
+  "girato_end": 9974.54,
+  "durata": 23.04000000000002,
+  "score": 0.77,
+  "n": 37
+ },
+ {
+  "film_start": 342.72,
+  "film_end": 359.52,
+  "parte": 5,
+  "girato_start": 9984.72,
+  "girato_end": 10001.52,
+  "durata": 16.799999999999955,
+  "score": 0.844,
+  "n": 19
+ },
+ {
+  "film_start": 361.24,
+  "film_end": 411.8,
+  "parte": 5,
+  "girato_start": 10088.24,
+  "girato_end": 10138.8,
+  "durata": 50.56,
+  "score": 0.801,
+  "n": 26
+ },
+ {
+  "film_start": 361.24,
+  "film_end": 412.0,
+  "parte": 5,
+  "girato_start": 10088.74,
+  "girato_end": 10139.0,
+  "durata": 50.75999999999999,
+  "score": 0.806,
+  "n": 19
+ },
+ {
+  "film_start": 414.4,
+  "film_end": 490.24,
+  "parte": 5,
+  "girato_start": 7808.9,
+  "girato_end": 7884.74,
+  "durata": 75.84000000000003,
+  "score": 0.801,
+  "n": 19
+ },
+ {
+  "film_start": 414.4,
+  "film_end": 490.24,
+  "parte": 5,
+  "girato_start": 7808.9,
+  "girato_end": 7884.74,
+  "durata": 75.84000000000003,
+  "score": 0.801,
+  "n": 9
+ },
+ {
+  "film_start": 423.5,
+  "film_end": 490.0,
+  "parte": 5,
+  "girato_start": 7817.5,
+  "girato_end": 7884.0,
+  "durata": 66.5,
+  "score": 0.814,
+  "n": 10
+ },
+ {
+  "film_start": 490.92,
+  "film_end": 494.24,
+  "parte": 5,
+  "girato_start": 7722.92,
+  "girato_end": 7726.24,
+  "durata": 3.319999999999993,
+  "score": 0.812,
+  "n": 18
+ },
+ {
+  "film_start": 495.2,
+  "film_end": 571.0,
+  "parte": 5,
+  "girato_start": 7896.2,
+  "girato_end": 7970.5,
+  "durata": 75.80000000000001,
+  "score": 0.801,
+  "n": 36
+ },
+ {
+  "film_start": 573.76,
+  "film_end": 607.2,
+  "parte": 5,
+  "girato_start": 8051.26,
+  "girato_end": 8084.7,
+  "durata": 33.440000000000055,
+  "score": 0.82,
+  "n": 12
+ },
+ {
+  "film_start": 573.76,
+  "film_end": 607.2,
+  "parte": 5,
+  "girato_start": 8049.76,
+  "girato_end": 8083.2,
+  "durata": 33.440000000000055,
+  "score": 0.831,
+  "n": 20
+ },
+ {
+  "film_start": 607.2,
+  "film_end": 670.52,
+  "parte": 5,
+  "girato_start": 8097.2,
+  "girato_end": 8160.52,
+  "durata": 63.319999999999936,
+  "score": 0.811,
+  "n": 6
+ },
+ {
+  "film_start": 607.2,
+  "film_end": 670.52,
+  "parte": 5,
+  "girato_start": 8098.2,
+  "girato_end": 8161.52,
+  "durata": 63.319999999999936,
+  "score": 0.827,
+  "n": 21
+ },
+ {
+  "film_start": 672.5,
+  "film_end": 686.5,
+  "parte": 5,
+  "girato_start": 8347.0,
+  "girato_end": 8360.0,
+  "durata": 14.0,
+  "score": 0.724,
+  "n": 15
+ },
+ {
+  "film_start": 686.52,
+  "film_end": 701.92,
+  "parte": 5,
+  "girato_start": 8374.02,
+  "girato_end": 8389.42,
+  "durata": 15.399999999999977,
+  "score": 0.808,
+  "n": 12
+ },
+ {
+  "film_start": 701.92,
+  "film_end": 746.5,
+  "parte": 5,
+  "girato_start": 8395.92,
+  "girato_end": 8440.5,
+  "durata": 44.58000000000004,
+  "score": 0.812,
+  "n": 21
+ },
+ {
+  "film_start": 746.5,
+  "film_end": 801.5,
+  "parte": 5,
+  "girato_start": 8724.5,
+  "girato_end": 8779.5,
+  "durata": 55.0,
+  "score": 0.921,
+  "n": 7
+ },
+ {
+  "film_start": 749.32,
+  "film_end": 813.5,
+  "parte": 5,
+  "girato_start": 8726.32,
+  "girato_end": 8790.5,
+  "durata": 64.17999999999995,
+  "score": 0.864,
+  "n": 13
+ },
+ {
+  "film_start": 749.5,
+  "film_end": 778.5,
+  "parte": 5,
+  "girato_start": 8724.0,
+  "girato_end": 8753.0,
+  "durata": 29.0,
+  "score": 0.873,
+  "n": 8
+ },
+ {
+  "film_start": 775.5,
+  "film_end": 874.8,
+  "parte": 5,
+  "girato_start": 8751.5,
+  "girato_end": 8850.8,
+  "durata": 99.29999999999995,
+  "score": 0.895,
+  "n": 13
+ },
+ {
+  "film_start": 831.5,
+  "film_end": 836.0,
+  "parte": 5,
+  "girato_start": 8799.0,
+  "girato_end": 8799.5,
+  "durata": 4.5,
+  "score": 0.897,
+  "n": 9
+ },
+ {
+  "film_start": 846.0,
+  "film_end": 856.5,
+  "parte": 5,
+  "girato_start": 8844.0,
+  "girato_end": 8848.5,
+  "durata": 10.5,
+  "score": 0.825,
+  "n": 12
+ },
+ {
+  "film_start": 847.0,
+  "film_end": 866.0,
+  "parte": 5,
+  "girato_start": 8833.5,
+  "girato_end": 8852.5,
+  "durata": 19.0,
+  "score": 0.859,
+  "n": 6
+ },
+ {
+  "film_start": 855.5,
+  "film_end": 874.5,
+  "parte": 5,
+  "girato_start": 8776.0,
+  "girato_end": 8795.0,
+  "durata": 19.0,
+  "score": 0.816,
+  "n": 6
+ },
+ {
+  "film_start": 874.8,
+  "film_end": 928.0,
+  "parte": 5,
+  "girato_start": 8223.3,
+  "girato_end": 8276.5,
+  "durata": 53.200000000000045,
+  "score": 0.829,
+  "n": 79
+ },
+ {
+  "film_start": 928.0,
+  "film_end": 965.5,
+  "parte": 5,
+  "girato_start": 8295.0,
+  "girato_end": 8333.0,
+  "durata": 37.5,
+  "score": 0.81,
+  "n": 45
+ },
+ {
+  "film_start": 968.2,
+  "film_end": 1054.92,
+  "parte": 5,
+  "girato_start": 10911.2,
+  "girato_end": 10997.92,
+  "durata": 86.72000000000003,
+  "score": 0.727,
+  "n": 58
+ },
+ {
+  "film_start": 983.5,
+  "film_end": 1054.92,
+  "parte": 5,
+  "girato_start": 10926.0,
+  "girato_end": 10997.42,
+  "durata": 71.42000000000007,
+  "score": 0.756,
+  "n": 28
+ },
+ {
+  "film_start": 1055.0,
+  "film_end": 1073.56,
+  "parte": 5,
+  "girato_start": 11003.5,
+  "girato_end": 11022.06,
+  "durata": 18.559999999999945,
+  "score": 0.86,
+  "n": 14
+ },
+ {
+  "film_start": 1075.16,
+  "film_end": 1120.0,
+  "parte": 5,
+  "girato_start": 11363.16,
+  "girato_end": 11408.0,
+  "durata": 44.83999999999992,
+  "score": 0.946,
+  "n": 90
+ },
+ {
+  "film_start": 1120.0,
+  "film_end": 1232.5,
+  "parte": 5,
+  "girato_start": 11407.5,
+  "girato_end": 11520.0,
+  "durata": 112.5,
+  "score": 0.803,
+  "n": 25
+ },
+ {
+  "film_start": 1136.5,
+  "film_end": 1236.5,
+  "parte": 5,
+  "girato_start": 11425.5,
+  "girato_end": 11525.5,
+  "durata": 100.0,
+  "score": 0.814,
+  "n": 8
+ },
+ {
+  "film_start": 1141.0,
+  "film_end": 1278.0,
+  "parte": 5,
+  "girato_start": 11428.5,
+  "girato_end": 11565.5,
+  "durata": 137.0,
+  "score": 0.842,
+  "n": 71
+ },
+ {
+  "film_start": 1182.0,
+  "film_end": 1294.6,
+  "parte": 5,
+  "girato_start": 11469.0,
+  "girato_end": 11581.6,
+  "durata": 112.59999999999991,
+  "score": 0.847,
+  "n": 88
+ },
+ {
+  "film_start": 1294.6,
+  "film_end": 1298.5,
+  "parte": 5,
+  "girato_start": 11581.6,
+  "girato_end": 11585.5,
+  "durata": 3.900000000000091,
+  "score": 0.815,
+  "n": 6
+ },
+ {
+  "film_start": 1298.5,
+  "film_end": 1381.5,
+  "parte": 5,
+  "girato_start": 11616.0,
+  "girato_end": 11699.0,
+  "durata": 83.0,
+  "score": 0.804,
+  "n": 6
+ },
+ {
+  "film_start": 1300.0,
+  "film_end": 1387.4,
+  "parte": 5,
+  "girato_start": 11617.0,
+  "girato_end": 11704.4,
+  "durata": 87.40000000000009,
+  "score": 0.8,
+  "n": 17
+ },
+ {
+  "film_start": 1387.4,
+  "film_end": 1454.2,
+  "parte": 5,
+  "girato_start": 11703.9,
+  "girato_end": 11770.7,
+  "durata": 66.79999999999995,
+  "score": 0.8,
+  "n": 41
+ },
+ {
+  "film_start": 1441.0,
+  "film_end": 1449.5,
+  "parte": 5,
+  "girato_start": 11747.0,
+  "girato_end": 11758.0,
+  "durata": 8.5,
+  "score": 0.824,
+  "n": 6
+ },
+ {
+  "film_start": 1454.0,
+  "film_end": 1479.6,
+  "parte": 5,
+  "girato_start": 11827.0,
+  "girato_end": 11852.6,
+  "durata": 25.59999999999991,
+  "score": 0.872,
+  "n": 17
+ },
+ {
+  "film_start": 1458.0,
+  "film_end": 1479.6,
+  "parte": 5,
+  "girato_start": 11811.0,
+  "girato_end": 11832.6,
+  "durata": 21.59999999999991,
+  "score": 0.861,
+  "n": 6
+ },
+ {
+  "film_start": 1475.5,
+  "film_end": 1503.5,
+  "parte": 5,
+  "girato_start": 11889.0,
+  "girato_end": 11917.0,
+  "durata": 28.0,
+  "score": 0.865,
+  "n": 6
+ },
+ {
+  "film_start": 1479.6,
+  "film_end": 1530.04,
+  "parte": 5,
+  "girato_start": 11895.1,
+  "girato_end": 11945.54,
+  "durata": 50.440000000000055,
+  "score": 0.851,
+  "n": 13
+ },
+ {
+  "film_start": 1479.6,
+  "film_end": 1530.04,
+  "parte": 5,
+  "girato_start": 11895.6,
+  "girato_end": 11946.04,
+  "durata": 50.440000000000055,
+  "score": 0.802,
+  "n": 19
+ },
+ {
+  "film_start": 1479.6,
+  "film_end": 1530.0,
+  "parte": 5,
+  "girato_start": 11896.1,
+  "girato_end": 11944.0,
+  "durata": 50.40000000000009,
+  "score": 0.802,
+  "n": 13
+ },
+ {
+  "film_start": 1564.5,
+  "film_end": 1571.0,
+  "parte": 2,
+  "girato_start": 3011.0,
+  "girato_end": 3015.0,
+  "durata": 6.5,
+  "score": 0.764,
+  "n": 7
+ },
+ {
+  "film_start": 1571.0,
+  "film_end": 1573.5,
+  "parte": 2,
+  "girato_start": 2874.0,
+  "girato_end": 2876.5,
+  "durata": 2.5,
+  "score": 0.93,
+  "n": 5
+ },
+ {
+  "film_start": 1573.5,
+  "film_end": 1581.5,
+  "parte": 2,
+  "girato_start": 2868.0,
+  "girato_end": 2876.0,
+  "durata": 8.0,
+  "score": 0.805,
+  "n": 7
+ },
+ {
+  "film_start": 1581.5,
+  "film_end": 1593.0,
+  "parte": 2,
+  "girato_start": 2870.5,
+  "girato_end": 2882.0,
+  "durata": 11.5,
+  "score": 0.858,
+  "n": 23
+ },
+ {
+  "film_start": 1593.0,
+  "film_end": 1597.0,
+  "parte": 2,
+  "girato_start": 3104.0,
+  "girato_end": 3106.0,
+  "durata": 4.0,
+  "score": 0.768,
+  "n": 6
+ },
+ {
+  "film_start": 1597.0,
+  "film_end": 1617.0,
+  "parte": 2,
+  "girato_start": 2841.0,
+  "girato_end": 2861.0,
+  "durata": 20.0,
+  "score": 0.863,
+  "n": 40
+ },
+ {
+  "film_start": 1617.0,
+  "film_end": 1710.0,
+  "parte": 2,
+  "girato_start": 2620.0,
+  "girato_end": 2714.0,
+  "durata": 93.0,
+  "score": 0.837,
+  "n": 144
+ },
+ {
+  "film_start": 1710.0,
+  "film_end": 1717.5,
+  "parte": 2,
+  "girato_start": 2775.5,
+  "girato_end": 2782.5,
+  "durata": 7.5,
+  "score": 0.774,
+  "n": 11
+ },
+ {
+  "film_start": 1717.6,
+  "film_end": 1721.5,
+  "parte": 2,
+  "girato_start": 2733.6,
+  "girato_end": 2737.5,
+  "durata": 3.900000000000091,
+  "score": 0.899,
+  "n": 8
+ },
+ {
+  "film_start": 1721.5,
+  "film_end": 1732.84,
+  "parte": 2,
+  "girato_start": 3073.5,
+  "girato_end": 3084.84,
+  "durata": 11.339999999999918,
+  "score": 0.909,
+  "n": 8
+ },
+ {
+  "film_start": 1737.5,
+  "film_end": 1757.0,
+  "parte": 2,
+  "girato_start": 3006.0,
+  "girato_end": 3025.0,
+  "durata": 19.5,
+  "score": 0.909,
+  "n": 33
+ },
+ {
+  "film_start": 1757.4,
+  "film_end": 1765.0,
+  "parte": 2,
+  "girato_start": 3184.4,
+  "girato_end": 3192.0,
+  "durata": 7.599999999999909,
+  "score": 0.894,
+  "n": 16
+ },
+ {
+  "film_start": 1765.0,
+  "film_end": 1799.0,
+  "parte": 2,
+  "girato_start": 3192.0,
+  "girato_end": 3226.0,
+  "durata": 34.0,
+  "score": 0.942,
+  "n": 61
+ },
+ {
+  "film_start": 1804.5,
+  "film_end": 1837.36,
+  "parte": 2,
+  "girato_start": 2858.5,
+  "girato_end": 2891.3599999999997,
+  "durata": 32.8599999999999,
+  "score": 0.899,
+  "n": 48
+ },
+ {
+  "film_start": 1837.5,
+  "film_end": 1862.0,
+  "parte": 2,
+  "girato_start": 2928.0,
+  "girato_end": 2952.5,
+  "durata": 24.5,
+  "score": 0.779,
+  "n": 46
+ },
+ {
+  "film_start": 1867.5,
+  "film_end": 1906.5,
+  "parte": 2,
+  "girato_start": 3335.5,
+  "girato_end": 3374.5,
+  "durata": 39.0,
+  "score": 0.876,
+  "n": 40
+ },
+ {
+  "film_start": 1923.0,
+  "film_end": 2042.0,
+  "parte": 2,
+  "girato_start": 3376.0,
+  "girato_end": 3495.5,
+  "durata": 119.0,
+  "score": 0.847,
+  "n": 207
+ },
+ {
+  "film_start": 2042.5,
+  "film_end": 2076.64,
+  "parte": 2,
+  "girato_start": 3561.0,
+  "girato_end": 3595.14,
+  "durata": 34.13999999999987,
+  "score": 0.862,
+  "n": 46
+ },
+ {
+  "film_start": 2076.5,
+  "film_end": 2089.5,
+  "parte": 2,
+  "girato_start": 3622.5,
+  "girato_end": 3636.0,
+  "durata": 13.0,
+  "score": 0.701,
+  "n": 9
+ },
+ {
+  "film_start": 2096.5,
+  "film_end": 2111.5,
+  "parte": 2,
+  "girato_start": 3641.5,
+  "girato_end": 3656.5,
+  "durata": 15.0,
+  "score": 0.833,
+  "n": 24
+ },
+ {
+  "film_start": 2111.5,
+  "film_end": 2168.0,
+  "parte": 2,
+  "girato_start": 3657.0,
+  "girato_end": 3713.5,
+  "durata": 56.5,
+  "score": 0.906,
+  "n": 113
+ },
+ {
+  "film_start": 2168.0,
+  "film_end": 2207.0,
+  "parte": 2,
+  "girato_start": 3714.0,
+  "girato_end": 3753.0,
+  "durata": 39.0,
+  "score": 0.801,
+  "n": 14
+ },
+ {
+  "film_start": 2207.5,
+  "film_end": 2222.0,
+  "parte": 2,
+  "girato_start": 3762.0,
+  "girato_end": 3776.5,
+  "durata": 14.5,
+  "score": 0.865,
+  "n": 11
+ },
+ {
+  "film_start": 2222.5,
+  "film_end": 2228.0,
+  "parte": 2,
+  "girato_start": 3813.0,
+  "girato_end": 3818.5,
+  "durata": 5.5,
+  "score": 0.862,
+  "n": 10
+ },
+ {
+  "film_start": 2235.68,
+  "film_end": 2248.92,
+  "parte": 5,
+  "girato_start": 9657.18,
+  "girato_end": 9670.42,
+  "durata": 13.240000000000236,
+  "score": 0.859,
+  "n": 8
+ },
+ {
+  "film_start": 2248.92,
+  "film_end": 2253.44,
+  "parte": 5,
+  "girato_start": 9670.92,
+  "girato_end": 9675.44,
+  "durata": 4.519999999999982,
+  "score": 0.902,
+  "n": 12
+ },
+ {
+  "film_start": 2253.5,
+  "film_end": 2340.0,
+  "parte": 5,
+  "girato_start": 9101.5,
+  "girato_end": 9188.0,
+  "durata": 86.5,
+  "score": 0.808,
+  "n": 134
+ },
+ {
+  "film_start": 2326.88,
+  "film_end": 2375.0,
+  "parte": 5,
+  "girato_start": 9174.880000000001,
+  "girato_end": 9223.5,
+  "durata": 48.11999999999989,
+  "score": 0.829,
+  "n": 80
+ },
+ {
+  "film_start": 2376.5,
+  "film_end": 2429.0,
+  "parte": 5,
+  "girato_start": 9214.0,
+  "girato_end": 9266.5,
+  "durata": 52.5,
+  "score": 0.846,
+  "n": 79
+ },
+ {
+  "film_start": 2430.0,
+  "film_end": 2570.0,
+  "parte": 4,
+  "girato_start": 4768.5,
+  "girato_end": 4909.5,
+  "durata": 140.0,
+  "score": 0.88,
+  "n": 265
+ },
+ {
+  "film_start": 2571.0,
+  "film_end": 2610.5,
+  "parte": 4,
+  "girato_start": 5053.0,
+  "girato_end": 5093.0,
+  "durata": 39.5,
+  "score": 0.886,
+  "n": 77
+ },
+ {
+  "film_start": 2610.5,
+  "film_end": 2624.0,
+  "parte": 4,
+  "girato_start": 5118.0,
+  "girato_end": 5131.5,
+  "durata": 13.5,
+  "score": 0.951,
+  "n": 27
+ },
+ {
+  "film_start": 2624.0,
+  "film_end": 2722.5,
+  "parte": 4,
+  "girato_start": 5135.0,
+  "girato_end": 5229.0,
+  "durata": 98.5,
+  "score": 0.845,
+  "n": 177
+ },
+ {
+  "film_start": 2726.0,
+  "film_end": 2816.5,
+  "parte": 2,
+  "girato_start": 167.5,
+  "girato_end": 258.5,
+  "durata": 90.5,
+  "score": 0.816,
+  "n": 138
+ },
+ {
+  "film_start": 2816.5,
+  "film_end": 2851.0,
+  "parte": 2,
+  "girato_start": 272.0,
+  "girato_end": 306.5,
+  "durata": 34.5,
+  "score": 0.859,
+  "n": 56
+ },
+ {
+  "film_start": 2851.0,
+  "film_end": 2955.0,
+  "parte": 2,
+  "girato_start": 402.5,
+  "girato_end": 506.5,
+  "durata": 104.0,
+  "score": 0.826,
+  "n": 163
+ },
+ {
+  "film_start": 2955.0,
+  "film_end": 2967.0,
+  "parte": 2,
+  "girato_start": 529.0,
+  "girato_end": 541.0,
+  "durata": 12.0,
+  "score": 0.866,
+  "n": 24
+ },
+ {
+  "film_start": 2967.0,
+  "film_end": 3037.5,
+  "parte": 2,
+  "girato_start": 729.0,
+  "girato_end": 800.0,
+  "durata": 70.5,
+  "score": 0.815,
+  "n": 116
+ },
+ {
+  "film_start": 3037.5,
+  "film_end": 3144.0,
+  "parte": 2,
+  "girato_start": 848.5,
+  "girato_end": 955.0,
+  "durata": 106.5,
+  "score": 0.878,
+  "n": 188
+ },
+ {
+  "film_start": 3144.0,
+  "film_end": 3194.0,
+  "parte": 2,
+  "girato_start": 1030.0,
+  "girato_end": 1080.0,
+  "durata": 50.0,
+  "score": 0.87,
+  "n": 88
+ },
+ {
+  "film_start": 3194.0,
+  "film_end": 3201.5,
+  "parte": 2,
+  "girato_start": 1136.5,
+  "girato_end": 1144.0,
+  "durata": 7.5,
+  "score": 0.801,
+  "n": 15
+ },
+ {
+  "film_start": 3204.88,
+  "film_end": 3209.0,
+  "parte": 2,
+  "girato_start": 1139.88,
+  "girato_end": 1144.0,
+  "durata": 4.119999999999891,
+  "score": 0.713,
+  "n": 9
+ },
+ {
+  "film_start": 3209.0,
+  "film_end": 3257.0,
+  "parte": 2,
+  "girato_start": 1192.5,
+  "girato_end": 1240.5,
+  "durata": 48.0,
+  "score": 0.892,
+  "n": 81
+ },
+ {
+  "film_start": 3257.0,
+  "film_end": 3280.5,
+  "parte": 2,
+  "girato_start": 1358.5,
+  "girato_end": 1382.0,
+  "durata": 23.5,
+  "score": 0.849,
+  "n": 41
+ },
+ {
+  "film_start": 3280.5,
+  "film_end": 3351.0,
+  "parte": 2,
+  "girato_start": 1428.5,
+  "girato_end": 1499.0,
+  "durata": 70.5,
+  "score": 0.876,
+  "n": 124
+ },
+ {
+  "film_start": 3351.0,
+  "film_end": 3371.0,
+  "parte": 2,
+  "girato_start": 1510.5,
+  "girato_end": 1530.5,
+  "durata": 20.0,
+  "score": 0.836,
+  "n": 34
+ },
+ {
+  "film_start": 3372.5,
+  "film_end": 3437.5,
+  "parte": 2,
+  "girato_start": 1530.0,
+  "girato_end": 1594.0,
+  "durata": 65.0,
+  "score": 0.873,
+  "n": 123
+ },
+ {
+  "film_start": 3439.0,
+  "film_end": 3451.0,
+  "parte": 2,
+  "girato_start": 1630.5,
+  "girato_end": 1642.5,
+  "durata": 12.0,
+  "score": 0.889,
+  "n": 24
+ },
+ {
+  "film_start": 3453.5,
+  "film_end": 3469.0,
+  "parte": 2,
+  "girato_start": 1631.0,
+  "girato_end": 1646.5,
+  "durata": 15.5,
+  "score": 0.879,
+  "n": 31
+ },
+ {
+  "film_start": 3469.08,
+  "film_end": 3509.5,
+  "parte": 2,
+  "girato_start": 1705.58,
+  "girato_end": 1746.0,
+  "durata": 40.42000000000007,
+  "score": 0.879,
+  "n": 81
+ },
+ {
+  "film_start": 3509.5,
+  "film_end": 3522.5,
+  "parte": 2,
+  "girato_start": 1746.5,
+  "girato_end": 1758.5,
+  "durata": 13.0,
+  "score": 0.811,
+  "n": 8
+ },
+ {
+  "film_start": 3522.5,
+  "film_end": 3575.5,
+  "parte": 2,
+  "girato_start": 1818.5,
+  "girato_end": 1872.0,
+  "durata": 53.0,
+  "score": 0.825,
+  "n": 83
+ },
+ {
+  "film_start": 3575.5,
+  "film_end": 3589.0,
+  "parte": 2,
+  "girato_start": 1889.0,
+  "girato_end": 1902.5,
+  "durata": 13.5,
+  "score": 0.847,
+  "n": 24
+ },
+ {
+  "film_start": 3589.0,
+  "film_end": 3625.5,
+  "parte": 2,
+  "girato_start": 1991.0,
+  "girato_end": 2027.5,
+  "durata": 36.5,
+  "score": 0.878,
+  "n": 73
+ },
+ {
+  "film_start": 3625.5,
+  "film_end": 3639.0,
+  "parte": 2,
+  "girato_start": 2043.0,
+  "girato_end": 2057.0,
+  "durata": 13.5,
+  "score": 0.916,
+  "n": 22
+ },
+ {
+  "film_start": 3639.0,
+  "film_end": 3678.5,
+  "parte": 2,
+  "girato_start": 2077.5,
+  "girato_end": 2117.0,
+  "durata": 39.5,
+  "score": 0.875,
+  "n": 70
+ },
+ {
+  "film_start": 3678.56,
+  "film_end": 3731.5,
+  "parte": 2,
+  "girato_start": 2267.06,
+  "girato_end": 2320.0,
+  "durata": 52.940000000000055,
+  "score": 0.95,
+  "n": 106
+ },
+ {
+  "film_start": 3731.5,
+  "film_end": 3789.0,
+  "parte": 2,
+  "girato_start": 2320.0,
+  "girato_end": 2378.0,
+  "durata": 57.5,
+  "score": 0.801,
+  "n": 99
+ },
+ {
+  "film_start": 3793.5,
+  "film_end": 3797.0,
+  "parte": 2,
+  "girato_start": 2382.5,
+  "girato_end": 2386.0,
+  "durata": 3.5,
+  "score": 0.819,
+  "n": 6
+ },
+ {
+  "film_start": 3797.0,
+  "film_end": 3814.0,
+  "parte": 2,
+  "girato_start": 2400.5,
+  "girato_end": 2417.5,
+  "durata": 17.0,
+  "score": 0.777,
+  "n": 30
+ },
+ {
+  "film_start": 3956.0,
+  "film_end": 3961.0,
+  "parte": 4,
+  "girato_start": 9271.0,
+  "girato_end": 9272.0,
+  "durata": 5.0,
+  "score": 0.751,
+  "n": 10
+ },
+ {
+  "film_start": 4118.0,
+  "film_end": 4123.0,
+  "parte": 2,
+  "girato_start": 3528.0,
+  "girato_end": 3531.0,
+  "durata": 5.0,
+  "score": 0.839,
+  "n": 6
+ },
+ {
+  "film_start": 4149.0,
+  "film_end": 4209.0,
+  "parte": 5,
+  "girato_start": 5541.5,
+  "girato_end": 5601.5,
+  "durata": 60.0,
+  "score": 0.889,
+  "n": 108
+ },
+ {
+  "film_start": 4209.5,
+  "film_end": 4299.84,
+  "parte": 5,
+  "girato_start": 5609.0,
+  "girato_end": 5699.34,
+  "durata": 90.34000000000015,
+  "score": 0.819,
+  "n": 114
+ },
+ {
+  "film_start": 4243.0,
+  "film_end": 4299.84,
+  "parte": 5,
+  "girato_start": 5642.5,
+  "girato_end": 5699.34,
+  "durata": 56.840000000000146,
+  "score": 0.801,
+  "n": 6
+ },
+ {
+  "film_start": 4299.84,
+  "film_end": 4380.5,
+  "parte": 5,
+  "girato_start": 5704.84,
+  "girato_end": 5785.5,
+  "durata": 80.65999999999985,
+  "score": 0.812,
+  "n": 11
+ },
+ {
+  "film_start": 4299.84,
+  "film_end": 4384.04,
+  "parte": 5,
+  "girato_start": 5705.34,
+  "girato_end": 5789.54,
+  "durata": 84.19999999999982,
+  "score": 0.803,
+  "n": 19
+ },
+ {
+  "film_start": 4300.0,
+  "film_end": 4324.0,
+  "parte": 5,
+  "girato_start": 5705.5,
+  "girato_end": 5729.5,
+  "durata": 24.0,
+  "score": 0.801,
+  "n": 8
+ },
+ {
+  "film_start": 4310.5,
+  "film_end": 4384.04,
+  "parte": 5,
+  "girato_start": 5716.0,
+  "girato_end": 5789.54,
+  "durata": 73.53999999999996,
+  "score": 0.813,
+  "n": 27
+ },
+ {
+  "film_start": 4384.0,
+  "film_end": 4399.0,
+  "parte": 5,
+  "girato_start": 5794.0,
+  "girato_end": 5809.5,
+  "durata": 15.0,
+  "score": 0.874,
+  "n": 24
+ },
+ {
+  "film_start": 4399.0,
+  "film_end": 4418.5,
+  "parte": 5,
+  "girato_start": 5816.5,
+  "girato_end": 5836.0,
+  "durata": 19.5,
+  "score": 0.827,
+  "n": 20
+ },
+ {
+  "film_start": 4418.5,
+  "film_end": 4421.5,
+  "parte": 5,
+  "girato_start": 5836.0,
+  "girato_end": 5839.0,
+  "durata": 3.0,
+  "score": 0.789,
+  "n": 6
+ },
+ {
+  "film_start": 4421.5,
+  "film_end": 4427.76,
+  "parte": 5,
+  "girato_start": 5839.0,
+  "girato_end": 5845.26,
+  "durata": 6.260000000000218,
+  "score": 0.812,
+  "n": 8
+ },
+ {
+  "film_start": 4427.76,
+  "film_end": 4463.5,
+  "parte": 5,
+  "girato_start": 5889.26,
+  "girato_end": 5925.0,
+  "durata": 35.73999999999978,
+  "score": 0.854,
+  "n": 14
+ },
+ {
+  "film_start": 4427.76,
+  "film_end": 4464.0,
+  "parte": 5,
+  "girato_start": 5888.76,
+  "girato_end": 5926.0,
+  "durata": 36.23999999999978,
+  "score": 0.864,
+  "n": 26
+ },
+ {
+  "film_start": 4464.0,
+  "film_end": 4482.8,
+  "parte": 5,
+  "girato_start": 5963.0,
+  "girato_end": 5981.8,
+  "durata": 18.800000000000182,
+  "score": 0.788,
+  "n": 23
+ },
+ {
+  "film_start": 4483.0,
+  "film_end": 4507.5,
+  "parte": 5,
+  "girato_start": 6013.0,
+  "girato_end": 6037.5,
+  "durata": 24.5,
+  "score": 0.739,
+  "n": 25
+ },
+ {
+  "film_start": 4507.68,
+  "film_end": 4514.0,
+  "parte": 5,
+  "girato_start": 6053.68,
+  "girato_end": 6060.0,
+  "durata": 6.319999999999709,
+  "score": 0.899,
+  "n": 13
+ },
+ {
+  "film_start": 4514.0,
+  "film_end": 4552.0,
+  "parte": 5,
+  "girato_start": 6060.0,
+  "girato_end": 6098.5,
+  "durata": 38.0,
+  "score": 0.803,
+  "n": 28
+ },
+ {
+  "film_start": 4551.92,
+  "film_end": 4561.84,
+  "parte": 5,
+  "girato_start": 6129.92,
+  "girato_end": 6139.84,
+  "durata": 9.920000000000073,
+  "score": 0.751,
+  "n": 4
+ },
+ {
+  "film_start": 4562.0,
+  "film_end": 4568.0,
+  "parte": 5,
+  "girato_start": 6216.5,
+  "girato_end": 6222.0,
+  "durata": 6.0,
+  "score": 0.785,
+  "n": 9
+ },
+ {
+  "film_start": 4568.0,
+  "film_end": 4581.0,
+  "parte": 5,
+  "girato_start": 6281.5,
+  "girato_end": 6295.0,
+  "durata": 13.0,
+  "score": 0.811,
+  "n": 6
+ },
+ {
+  "film_start": 4581.0,
+  "film_end": 4586.36,
+  "parte": 5,
+  "girato_start": 6295.0,
+  "girato_end": 6300.36,
+  "durata": 5.359999999999673,
+  "score": 0.776,
+  "n": 10
+ },
+ {
+  "film_start": 4587.5,
+  "film_end": 4653.5,
+  "parte": 5,
+  "girato_start": 6328.0,
+  "girato_end": 6394.0,
+  "durata": 66.0,
+  "score": 0.851,
+  "n": 128
+ },
+ {
+  "film_start": 4653.5,
+  "film_end": 4771.5,
+  "parte": 5,
+  "girato_start": 6436.5,
+  "girato_end": 6554.5,
+  "durata": 118.0,
+  "score": 0.847,
+  "n": 161
+ },
+ {
+  "film_start": 4773.0,
+  "film_end": 4837.48,
+  "parte": 5,
+  "girato_start": 6557.0,
+  "girato_end": 6621.48,
+  "durata": 64.47999999999956,
+  "score": 0.809,
+  "n": 74
+ },
+ {
+  "film_start": 4837.48,
+  "film_end": 4848.5,
+  "parte": 5,
+  "girato_start": 6641.98,
+  "girato_end": 6653.0,
+  "durata": 11.020000000000437,
+  "score": 0.883,
+  "n": 23
+ },
+ {
+  "film_start": 4848.5,
+  "film_end": 4873.0,
+  "parte": 5,
+  "girato_start": 6653.5,
+  "girato_end": 6677.5,
+  "durata": 24.5,
+  "score": 0.812,
+  "n": 29
+ },
+ {
+  "film_start": 4873.0,
+  "film_end": 4883.5,
+  "parte": 5,
+  "girato_start": 6694.5,
+  "girato_end": 6705.0,
+  "durata": 10.5,
+  "score": 0.84,
+  "n": 21
+ },
+ {
+  "film_start": 4883.5,
+  "film_end": 4901.12,
+  "parte": 5,
+  "girato_start": 6701.0,
+  "girato_end": 6718.62,
+  "durata": 17.61999999999989,
+  "score": 0.819,
+  "n": 6
+ },
+ {
+  "film_start": 4901.0,
+  "film_end": 4919.0,
+  "parte": 5,
+  "girato_start": 6875.5,
+  "girato_end": 6892.5,
+  "durata": 18.0,
+  "score": 0.868,
+  "n": 33
+ },
+ {
+  "film_start": 4919.0,
+  "film_end": 5009.5,
+  "parte": 5,
+  "girato_start": 6955.5,
+  "girato_end": 7047.0,
+  "durata": 90.5,
+  "score": 0.83,
+  "n": 155
+ },
+ {
+  "film_start": 5010.0,
+  "film_end": 5035.0,
+  "parte": 5,
+  "girato_start": 7289.0,
+  "girato_end": 7313.5,
+  "durata": 25.0,
+  "score": 0.757,
+  "n": 44
+ },
+ {
+  "film_start": 5035.5,
+  "film_end": 5050.0,
+  "parte": 5,
+  "girato_start": 7551.5,
+  "girato_end": 7566.0,
+  "durata": 14.5,
+  "score": 0.918,
+  "n": 26
+ },
+ {
+  "film_start": 5050.0,
+  "film_end": 5067.5,
+  "parte": 5,
+  "girato_start": 7491.5,
+  "girato_end": 7509.5,
+  "durata": 17.5,
+  "score": 0.824,
+  "n": 24
+ },
+ {
+  "film_start": 5071.5,
+  "film_end": 5097.12,
+  "parte": 5,
+  "girato_start": 7513.5,
+  "girato_end": 7539.12,
+  "durata": 25.61999999999989,
+  "score": 0.895,
+  "n": 42
+ },
+ {
+  "film_start": 5106.0,
+  "film_end": 5114.0,
+  "parte": 5,
+  "girato_start": 7542.0,
+  "girato_end": 7550.0,
+  "durata": 8.0,
+  "score": 0.891,
+  "n": 16
+ },
+ {
+  "film_start": 5115.0,
+  "film_end": 5141.5,
+  "parte": 5,
+  "girato_start": 9317.0,
+  "girato_end": 9343.5,
+  "durata": 26.5,
+  "score": 0.852,
+  "n": 41
+ },
+ {
+  "film_start": 5129.5,
+  "film_end": 5141.5,
+  "parte": 5,
+  "girato_start": 9331.5,
+  "girato_end": 9343.5,
+  "durata": 12.0,
+  "score": 0.908,
+  "n": 8
+ },
+ {
+  "film_start": 5146.32,
+  "film_end": 5220.0,
+  "parte": 2,
+  "girato_start": 4465.32,
+  "girato_end": 4540.0,
+  "durata": 73.68000000000029,
+  "score": 0.851,
+  "n": 121
+ },
+ {
+  "film_start": 5220.0,
+  "film_end": 5246.5,
+  "parte": 2,
+  "girato_start": 4878.5,
+  "girato_end": 4905.0,
+  "durata": 26.5,
+  "score": 0.851,
+  "n": 12
+ },
+ {
+  "film_start": 5220.24,
+  "film_end": 5255.0,
+  "parte": 2,
+  "girato_start": 4880.24,
+  "girato_end": 4915.0,
+  "durata": 34.76000000000022,
+  "score": 0.807,
+  "n": 33
+ },
+ {
+  "film_start": 5257.5,
+  "film_end": 5268.0,
+  "parte": 2,
+  "girato_start": 4979.5,
+  "girato_end": 4988.5,
+  "durata": 10.5,
+  "score": 0.88,
+  "n": 17
+ },
+ {
+  "film_start": 5260.0,
+  "film_end": 5286.0,
+  "parte": 2,
+  "girato_start": 4982.0,
+  "girato_end": 5008.0,
+  "durata": 26.0,
+  "score": 0.827,
+  "n": 27
+ },
+ {
+  "film_start": 5286.0,
+  "film_end": 5358.5,
+  "parte": 2,
+  "girato_start": 5142.0,
+  "girato_end": 5213.5,
+  "durata": 72.5,
+  "score": 0.825,
+  "n": 125
+ },
+ {
+  "film_start": 5358.5,
+  "film_end": 5372.0,
+  "parte": 2,
+  "girato_start": 5267.0,
+  "girato_end": 5280.5,
+  "durata": 13.5,
+  "score": 0.834,
+  "n": 27
+ },
+ {
+  "film_start": 5374.5,
+  "film_end": 5451.5,
+  "parte": 2,
+  "girato_start": 5403.0,
+  "girato_end": 5480.0,
+  "durata": 77.0,
+  "score": 0.801,
+  "n": 45
+ },
+ {
+  "film_start": 5391.5,
+  "film_end": 5473.0,
+  "parte": 2,
+  "girato_start": 5420.0,
+  "girato_end": 5501.5,
+  "durata": 81.5,
+  "score": 0.847,
+  "n": 80
+ },
+ {
+  "film_start": 5425.0,
+  "film_end": 5510.0,
+  "parte": 2,
+  "girato_start": 5454.5,
+  "girato_end": 5539.0,
+  "durata": 85.0,
+  "score": 0.843,
+  "n": 71
+ },
+ {
+  "film_start": 5510.0,
+  "film_end": 5579.0,
+  "parte": 2,
+  "girato_start": 5809.0,
+  "girato_end": 5878.5,
+  "durata": 69.0,
+  "score": 0.839,
+  "n": 124
+ },
+ {
+  "film_start": 5579.0,
+  "film_end": 5667.5,
+  "parte": 2,
+  "girato_start": 6004.0,
+  "girato_end": 6092.5,
+  "durata": 88.5,
+  "score": 0.861,
+  "n": 138
+ },
+ {
+  "film_start": 5667.5,
+  "film_end": 5705.0,
+  "parte": 2,
+  "girato_start": 6179.0,
+  "girato_end": 6216.5,
+  "durata": 37.5,
+  "score": 0.867,
+  "n": 72
+ },
+ {
+  "film_start": 5705.0,
+  "film_end": 5716.5,
+  "parte": 2,
+  "girato_start": 6224.5,
+  "girato_end": 6235.5,
+  "durata": 11.5,
+  "score": 0.806,
+  "n": 15
+ },
+ {
+  "film_start": 5717.0,
+  "film_end": 5750.0,
+  "parte": 2,
+  "girato_start": 6273.0,
+  "girato_end": 6306.0,
+  "durata": 33.0,
+  "score": 0.85,
+  "n": 59
+ },
+ {
+  "film_start": 5750.0,
+  "film_end": 5766.0,
+  "parte": 2,
+  "girato_start": 6375.5,
+  "girato_end": 6391.5,
+  "durata": 16.0,
+  "score": 0.878,
+  "n": 32
+ },
+ {
+  "film_start": 5766.0,
+  "film_end": 5946.5,
+  "parte": 2,
+  "girato_start": 6391.5,
+  "girato_end": 6572.0,
+  "durata": 180.5,
+  "score": 0.83,
+  "n": 256
+ },
+ {
+  "film_start": 5772.0,
+  "film_end": 5804.72,
+  "parte": 2,
+  "girato_start": 6397.5,
+  "girato_end": 6430.22,
+  "durata": 32.720000000000255,
+  "score": 0.805,
+  "n": 10
+ },
+ {
+  "film_start": 5946.5,
+  "film_end": 5949.0,
+  "parte": 2,
+  "girato_start": 6572.5,
+  "girato_end": 6575.0,
+  "durata": 2.5,
+  "score": 0.716,
+  "n": 5
+ },
+ {
+  "film_start": 5949.0,
+  "film_end": 6003.0,
+  "parte": 2,
+  "girato_start": 6575.5,
+  "girato_end": 6629.5,
+  "durata": 54.0,
+  "score": 0.818,
+  "n": 74
+ },
+ {
+  "film_start": 6010.0,
+  "film_end": 6194.5,
+  "parte": 2,
+  "girato_start": 6660.0,
+  "girato_end": 6846.0,
+  "durata": 184.5,
+  "score": 0.856,
+  "n": 305
+ },
+ {
+  "film_start": 6194.5,
+  "film_end": 6211.5,
+  "parte": 3,
+  "girato_start": 6879.5,
+  "girato_end": 6897.0,
+  "durata": 17.0,
+  "score": 0.837,
+  "n": 31
+ },
+ {
+  "film_start": 6212.5,
+  "film_end": 6248.5,
+  "parte": 3,
+  "girato_start": 6974.0,
+  "girato_end": 7010.0,
+  "durata": 36.0,
+  "score": 0.822,
+  "n": 14
+ },
+ {
+  "film_start": 6212.5,
+  "film_end": 6261.5,
+  "parte": 3,
+  "girato_start": 6980.5,
+  "girato_end": 7016.0,
+  "durata": 49.0,
+  "score": 0.81,
+  "n": 61
+ },
+ {
+  "film_start": 6261.5,
+  "film_end": 6295.0,
+  "parte": 3,
+  "girato_start": 7023.5,
+  "girato_end": 7057.0,
+  "durata": 33.5,
+  "score": 0.812,
+  "n": 44
+ },
+ {
+  "film_start": 6293.5,
+  "film_end": 6299.0,
+  "parte": 3,
+  "girato_start": 7037.5,
+  "girato_end": 7038.5,
+  "durata": 5.5,
+  "score": 0.826,
+  "n": 11
+ },
+ {
+  "film_start": 6299.0,
+  "film_end": 6355.5,
+  "parte": 3,
+  "girato_start": 7062.5,
+  "girato_end": 7119.0,
+  "durata": 56.5,
+  "score": 0.86,
+  "n": 113
+ },
+ {
+  "film_start": 6355.5,
+  "film_end": 6393.0,
+  "parte": 3,
+  "girato_start": 7118.0,
+  "girato_end": 7153.5,
+  "durata": 37.5,
+  "score": 0.87,
+  "n": 68
+ },
+ {
+  "film_start": 6393.0,
+  "film_end": 6402.5,
+  "parte": 3,
+  "girato_start": 7155.5,
+  "girato_end": 7165.0,
+  "durata": 9.5,
+  "score": 0.826,
+  "n": 19
+ },
+ {
+  "film_start": 6402.5,
+  "film_end": 6415.0,
+  "parte": 3,
+  "girato_start": 7165.0,
+  "girato_end": 7177.0,
+  "durata": 12.5,
+  "score": 0.8,
+  "n": 16
+ },
+ {
+  "film_start": 6416.0,
+  "film_end": 6443.0,
+  "parte": 2,
+  "girato_start": 7008.0,
+  "girato_end": 7034.5,
+  "durata": 27.0,
+  "score": 0.837,
+  "n": 42
+ },
+ {
+  "film_start": 6445.0,
+  "film_end": 6484.56,
+  "parte": 2,
+  "girato_start": 7099.0,
+  "girato_end": 7138.56,
+  "durata": 39.5600000000004,
+  "score": 0.819,
+  "n": 67
+ },
+ {
+  "film_start": 6484.5,
+  "film_end": 6508.5,
+  "parte": 2,
+  "girato_start": 7365.5,
+  "girato_end": 7389.0,
+  "durata": 24.0,
+  "score": 0.843,
+  "n": 40
+ },
+ {
+  "film_start": 6508.4,
+  "film_end": 6645.5,
+  "parte": 2,
+  "girato_start": 7422.4,
+  "girato_end": 7558.0,
+  "durata": 137.10000000000036,
+  "score": 0.871,
+  "n": 236
+ },
+ {
+  "film_start": 6645.5,
+  "film_end": 6684.0,
+  "parte": 2,
+  "girato_start": 7671.0,
+  "girato_end": 7709.5,
+  "durata": 38.5,
+  "score": 0.845,
+  "n": 74
+ },
+ {
+  "film_start": 6684.0,
+  "film_end": 6698.88,
+  "parte": 2,
+  "girato_start": 7784.5,
+  "girato_end": 7799.38,
+  "durata": 14.88000000000011,
+  "score": 0.865,
+  "n": 20
+ },
+ {
+  "film_start": 6707.0,
+  "film_end": 6842.0,
+  "parte": 2,
+  "girato_start": 7807.5,
+  "girato_end": 7941.5,
+  "durata": 135.0,
+  "score": 0.828,
+  "n": 188
+ },
+ {
+  "film_start": 6859.5,
+  "film_end": 6924.0,
+  "parte": 2,
+  "girato_start": 7961.0,
+  "girato_end": 8025.5,
+  "durata": 64.5,
+  "score": 0.844,
+  "n": 89
+ },
+ {
+  "film_start": 6911.5,
+  "film_end": 6934.0,
+  "parte": 2,
+  "girato_start": 8013.5,
+  "girato_end": 8036.0,
+  "durata": 22.5,
+  "score": 0.818,
+  "n": 17
+ },
+ {
+  "film_start": 6941.5,
+  "film_end": 7024.0,
+  "parte": 4,
+  "girato_start": 4014.5,
+  "girato_end": 4097.0,
+  "durata": 82.5,
+  "score": 0.855,
+  "n": 140
+ },
+ {
+  "film_start": 7027.5,
+  "film_end": 7182.5,
+  "parte": 4,
+  "girato_start": 3471.0,
+  "girato_end": 3622.0,
+  "durata": 155.0,
+  "score": 0.847,
+  "n": 271
+ },
+ {
+  "film_start": 7150.5,
+  "film_end": 7284.5,
+  "parte": 4,
+  "girato_start": 3594.5,
+  "girato_end": 3725.5,
+  "durata": 134.0,
+  "score": 0.866,
+  "n": 195
+ },
+ {
+  "film_start": 7264.5,
+  "film_end": 7339.5,
+  "parte": 4,
+  "girato_start": 3708.5,
+  "girato_end": 3781.0,
+  "durata": 75.0,
+  "score": 0.806,
+  "n": 99
+ },
+ {
+  "film_start": 7339.5,
+  "film_end": 7444.5,
+  "parte": 4,
+  "girato_start": 3783.5,
+  "girato_end": 3889.0,
+  "durata": 105.0,
+  "score": 0.83,
+  "n": 184
+ },
+ {
+  "film_start": 7444.5,
+  "film_end": 7455.0,
+  "parte": 4,
+  "girato_start": 3902.5,
+  "girato_end": 3913.0,
+  "durata": 10.5,
+  "score": 0.875,
+  "n": 19
+ },
+ {
+  "film_start": 7455.0,
+  "film_end": 7464.04,
+  "parte": 4,
+  "girato_start": 3907.0,
+  "girato_end": 3916.04,
+  "durata": 9.039999999999964,
+  "score": 0.915,
+  "n": 18
+ },
+ {
+  "film_start": 7470.5,
+  "film_end": 7526.16,
+  "parte": 4,
+  "girato_start": 129.5,
+  "girato_end": 185.15999999999985,
+  "durata": 55.659999999999854,
+  "score": 0.877,
+  "n": 17
+ },
+ {
+  "film_start": 7470.68,
+  "film_end": 7513.0,
+  "parte": 4,
+  "girato_start": 131.1800000000003,
+  "girato_end": 173.5,
+  "durata": 42.31999999999971,
+  "score": 0.86,
+  "n": 16
+ },
+ {
+  "film_start": 7470.68,
+  "film_end": 7526.0,
+  "parte": 4,
+  "girato_start": 128.6800000000003,
+  "girato_end": 185.0,
+  "durata": 55.31999999999971,
+  "score": 0.802,
+  "n": 52
+ },
+ {
+  "film_start": 7526.16,
+  "film_end": 7556.0,
+  "parte": 4,
+  "girato_start": 333.15999999999985,
+  "girato_end": 363.0,
+  "durata": 29.840000000000146,
+  "score": 0.822,
+  "n": 50
+ },
+ {
+  "film_start": 7556.0,
+  "film_end": 7738.5,
+  "parte": 4,
+  "girato_start": 384.0,
+  "girato_end": 566.5,
+  "durata": 182.5,
+  "score": 0.862,
+  "n": 217
+ },
+ {
+  "film_start": 7678.5,
+  "film_end": 7779.5,
+  "parte": 4,
+  "girato_start": 505.5,
+  "girato_end": 606.5,
+  "durata": 101.0,
+  "score": 0.861,
+  "n": 74
+ },
+ {
+  "film_start": 7683.5,
+  "film_end": 7796.0,
+  "parte": 4,
+  "girato_start": 512.0,
+  "girato_end": 622.0,
+  "durata": 112.5,
+  "score": 0.849,
+  "n": 111
+ },
+ {
+  "film_start": 7795.8,
+  "film_end": 7885.0,
+  "parte": 4,
+  "girato_start": 645.8000000000002,
+  "girato_end": 735.0,
+  "durata": 89.19999999999982,
+  "score": 0.82,
+  "n": 112
+ },
+ {
+  "film_start": 7796.0,
+  "film_end": 7827.5,
+  "parte": 4,
+  "girato_start": 643.5,
+  "girato_end": 675.0,
+  "durata": 31.5,
+  "score": 0.867,
+  "n": 7
+ },
+ {
+  "film_start": 7817.0,
+  "film_end": 7885.0,
+  "parte": 4,
+  "girato_start": 666.5,
+  "girato_end": 734.0,
+  "durata": 68.0,
+  "score": 0.828,
+  "n": 35
+ },
+ {
+  "film_start": 7892.5,
+  "film_end": 7904.5,
+  "parte": 3,
+  "girato_start": 7261.0,
+  "girato_end": 7270.0,
+  "durata": 12.0,
+  "score": 0.801,
+  "n": 20
+ },
+ {
+  "film_start": 7905.5,
+  "film_end": 7919.0,
+  "parte": 3,
+  "girato_start": 7274.5,
+  "girato_end": 7287.5,
+  "durata": 13.5,
+  "score": 0.818,
+  "n": 19
+ },
+ {
+  "film_start": 7923.0,
+  "film_end": 7961.5,
+  "parte": 3,
+  "girato_start": 7291.5,
+  "girato_end": 7330.0,
+  "durata": 38.5,
+  "score": 0.825,
+  "n": 37
+ },
+ {
+  "film_start": 7933.5,
+  "film_end": 7961.5,
+  "parte": 3,
+  "girato_start": 7302.5,
+  "girato_end": 7330.5,
+  "durata": 28.0,
+  "score": 0.878,
+  "n": 32
+ },
+ {
+  "film_start": 7933.5,
+  "film_end": 7988.0,
+  "parte": 3,
+  "girato_start": 7302.5,
+  "girato_end": 7351.5,
+  "durata": 54.5,
+  "score": 0.846,
+  "n": 52
+ },
+ {
+  "film_start": 7976.0,
+  "film_end": 8032.0,
+  "parte": 3,
+  "girato_start": 7345.0,
+  "girato_end": 7401.0,
+  "durata": 56.0,
+  "score": 0.84,
+  "n": 20
+ },
+ {
+  "film_start": 7992.0,
+  "film_end": 8031.5,
+  "parte": 3,
+  "girato_start": 7361.0,
+  "girato_end": 7400.5,
+  "durata": 39.5,
+  "score": 0.819,
+  "n": 51
+ },
+ {
+  "film_start": 8019.5,
+  "film_end": 8096.0,
+  "parte": 3,
+  "girato_start": 7390.5,
+  "girato_end": 7467.0,
+  "durata": 76.5,
+  "score": 0.817,
+  "n": 104
+ },
+ {
+  "film_start": 8085.5,
+  "film_end": 8130.5,
+  "parte": 3,
+  "girato_start": 7455.0,
+  "girato_end": 7497.0,
+  "durata": 45.0,
+  "score": 0.839,
+  "n": 66
+ },
+ {
+  "film_start": 8130.5,
+  "film_end": 8155.5,
+  "parte": 3,
+  "girato_start": 7500.0,
+  "girato_end": 7525.0,
+  "durata": 25.0,
+  "score": 0.823,
+  "n": 34
+ },
+ {
+  "film_start": 8147.5,
+  "film_end": 8222.5,
+  "parte": 3,
+  "girato_start": 7517.0,
+  "girato_end": 7592.0,
+  "durata": 75.0,
+  "score": 0.822,
+  "n": 52
+ },
+ {
+  "film_start": 8174.5,
+  "film_end": 8243.0,
+  "parte": 3,
+  "girato_start": 7544.0,
+  "girato_end": 7612.5,
+  "durata": 68.5,
+  "score": 0.826,
+  "n": 126
+ },
+ {
+  "film_start": 8243.0,
+  "film_end": 8250.28,
+  "parte": 3,
+  "girato_start": 7613.0,
+  "girato_end": 7620.280000000001,
+  "durata": 7.280000000000655,
+  "score": 0.8,
+  "n": 14
+ },
+ {
+  "film_start": 8251.5,
+  "film_end": 8382.0,
+  "parte": 4,
+  "girato_start": 5378.0,
+  "girato_end": 5509.5,
+  "durata": 130.5,
+  "score": 0.841,
+  "n": 221
+ },
+ {
+  "film_start": 8382.0,
+  "film_end": 8468.5,
+  "parte": 4,
+  "girato_start": 5663.0,
+  "girato_end": 5750.5,
+  "durata": 86.5,
+  "score": 0.835,
+  "n": 153
+ },
+ {
+  "film_start": 8468.5,
+  "film_end": 8499.5,
+  "parte": 4,
+  "girato_start": 2403.0,
+  "girato_end": 2434.0,
+  "durata": 31.0,
+  "score": 0.827,
+  "n": 57
+ },
+ {
+  "film_start": 8501.0,
+  "film_end": 8547.0,
+  "parte": 4,
+  "girato_start": 2543.5,
+  "girato_end": 2589.5,
+  "durata": 46.0,
+  "score": 0.904,
+  "n": 67
+ },
+ {
+  "film_start": 8531.0,
+  "film_end": 8590.0,
+  "parte": 4,
+  "girato_start": 2585.0,
+  "girato_end": 2631.0,
+  "durata": 59.0,
+  "score": 0.897,
+  "n": 99
+ },
+ {
+  "film_start": 8554.0,
+  "film_end": 8615.5,
+  "parte": 4,
+  "girato_start": 2596.5,
+  "girato_end": 2658.0,
+  "durata": 61.5,
+  "score": 0.873,
+  "n": 40
+ },
+ {
+  "film_start": 8603.5,
+  "film_end": 8635.0,
+  "parte": 4,
+  "girato_start": 2650.0,
+  "girato_end": 2676.0,
+  "durata": 31.5,
+  "score": 0.882,
+  "n": 45
+ },
+ {
+  "film_start": 8636.0,
+  "film_end": 8677.92,
+  "parte": 4,
+  "girato_start": 2722.0,
+  "girato_end": 2763.92,
+  "durata": 41.92000000000007,
+  "score": 0.898,
+  "n": 61
+ },
+ {
+  "film_start": 8636.04,
+  "film_end": 8677.92,
+  "parte": 4,
+  "girato_start": 2722.540000000001,
+  "girato_end": 2764.42,
+  "durata": 41.8799999999992,
+  "score": 0.903,
+  "n": 6
+ },
+ {
+  "film_start": 8671.5,
+  "film_end": 8701.5,
+  "parte": 4,
+  "girato_start": 2740.5,
+  "girato_end": 2770.5,
+  "durata": 30.0,
+  "score": 0.911,
+  "n": 8
+ },
+ {
+  "film_start": 8678.6,
+  "film_end": 8703.5,
+  "parte": 4,
+  "girato_start": 2765.1000000000004,
+  "girato_end": 2790.0,
+  "durata": 24.899999999999636,
+  "score": 0.913,
+  "n": 27
+ },
+ {
+  "film_start": 8678.6,
+  "film_end": 8728.0,
+  "parte": 4,
+  "girato_start": 2765.1000000000004,
+  "girato_end": 2814.5,
+  "durata": 49.399999999999636,
+  "score": 0.875,
+  "n": 33
+ },
+ {
+  "film_start": 8706.5,
+  "film_end": 8728.5,
+  "parte": 4,
+  "girato_start": 2798.0,
+  "girato_end": 2815.0,
+  "durata": 22.0,
+  "score": 0.863,
+  "n": 14
+ },
+ {
+  "film_start": 8728.48,
+  "film_end": 8744.5,
+  "parte": 4,
+  "girato_start": 2822.4799999999996,
+  "girato_end": 2835.0,
+  "durata": 16.020000000000437,
+  "score": 0.844,
+  "n": 22
+ },
+ {
+  "film_start": 8744.5,
+  "film_end": 8797.5,
+  "parte": 4,
+  "girato_start": 2839.0,
+  "girato_end": 2892.0,
+  "durata": 53.0,
+  "score": 0.887,
+  "n": 62
+ },
+ {
+  "film_start": 8797.76,
+  "film_end": 8827.0,
+  "parte": 4,
+  "girato_start": 2916.76,
+  "girato_end": 2946.0,
+  "durata": 29.23999999999978,
+  "score": 0.762,
+  "n": 8
+ },
+ {
+  "film_start": 8797.76,
+  "film_end": 8827.0,
+  "parte": 4,
+  "girato_start": 2915.76,
+  "girato_end": 2945.0,
+  "durata": 29.23999999999978,
+  "score": 0.773,
+  "n": 8
+ },
+ {
+  "film_start": 8798.0,
+  "film_end": 8827.0,
+  "parte": 4,
+  "girato_start": 2916.0,
+  "girato_end": 2945.0,
+  "durata": 29.0,
+  "score": 0.798,
+  "n": 18
+ },
+ {
+  "film_start": 8801.0,
+  "film_end": 8827.0,
+  "parte": 4,
+  "girato_start": 2919.0,
+  "girato_end": 2945.0,
+  "durata": 26.0,
+  "score": 0.782,
+  "n": 14
+ },
+ {
+  "film_start": 8830.04,
+  "film_end": 8871.0,
+  "parte": 3,
+  "girato_start": 9116.04,
+  "girato_end": 9157.0,
+  "durata": 40.95999999999913,
+  "score": 0.807,
+  "n": 11
+ },
+ {
+  "film_start": 8854.0,
+  "film_end": 8911.76,
+  "parte": 3,
+  "girato_start": 9139.5,
+  "girato_end": 9197.26,
+  "durata": 57.76000000000022,
+  "score": 0.814,
+  "n": 15
+ },
+ {
+  "film_start": 8881.5,
+  "film_end": 8911.76,
+  "parte": 3,
+  "girato_start": 9167.5,
+  "girato_end": 9197.76,
+  "durata": 30.26000000000022,
+  "score": 0.819,
+  "n": 20
+ },
+ {
+  "film_start": 8916.28,
+  "film_end": 8953.5,
+  "parte": 3,
+  "girato_start": 9212.28,
+  "girato_end": 9249.5,
+  "durata": 37.219999999999345,
+  "score": 0.832,
+  "n": 17
+ },
+ {
+  "film_start": 8916.5,
+  "film_end": 8953.6,
+  "parte": 3,
+  "girato_start": 9215.5,
+  "girato_end": 9252.6,
+  "durata": 37.100000000000364,
+  "score": 0.8,
+  "n": 20
+ },
+ {
+  "film_start": 8928.0,
+  "film_end": 8953.6,
+  "parte": 3,
+  "girato_start": 9223.5,
+  "girato_end": 9249.1,
+  "durata": 25.600000000000364,
+  "score": 0.805,
+  "n": 11
+ },
+ {
+  "film_start": 8953.6,
+  "film_end": 8964.0,
+  "parte": 3,
+  "girato_start": 9281.6,
+  "girato_end": 9292.0,
+  "durata": 10.399999999999636,
+  "score": 0.811,
+  "n": 21
+ },
+ {
+  "film_start": 8964.0,
+  "film_end": 9001.0,
+  "parte": 3,
+  "girato_start": 9292.5,
+  "girato_end": 9329.5,
+  "durata": 37.0,
+  "score": 0.874,
+  "n": 6
+ },
+ {
+  "film_start": 8995.0,
+  "film_end": 9032.5,
+  "parte": 4,
+  "girato_start": 2915.5,
+  "girato_end": 2953.0,
+  "durata": 37.5,
+  "score": 0.812,
+  "n": 40
+ },
+ {
+  "film_start": 8996.5,
+  "film_end": 9143.5,
+  "parte": 4,
+  "girato_start": 2917.0,
+  "girato_end": 3064.0,
+  "durata": 147.0,
+  "score": 0.863,
+  "n": 176
+ },
+ {
+  "film_start": 9099.5,
+  "film_end": 9224.5,
+  "parte": 4,
+  "girato_start": 3020.0,
+  "girato_end": 3145.0,
+  "durata": 125.0,
+  "score": 0.839,
+  "n": 188
+ },
+ {
+  "film_start": 9229.5,
+  "film_end": 9234.5,
+  "parte": 3,
+  "girato_start": 2827.5,
+  "girato_end": 2828.0,
+  "durata": 5.0,
+  "score": 0.698,
+  "n": 10
+ },
+ {
+  "film_start": 9237.0,
+  "film_end": 9245.0,
+  "parte": 3,
+  "girato_start": 4275.0,
+  "girato_end": 4283.0,
+  "durata": 8.0,
+  "score": 0.843,
+  "n": 13
+ },
+ {
+  "film_start": 9245.5,
+  "film_end": 9277.6,
+  "parte": 3,
+  "girato_start": 4471.5,
+  "girato_end": 4503.6,
+  "durata": 32.100000000000364,
+  "score": 0.753,
+  "n": 40
+ },
+ {
+  "film_start": 9279.44,
+  "film_end": 9349.5,
+  "parte": 3,
+  "girato_start": 4654.9400000000005,
+  "girato_end": 4725.0,
+  "durata": 70.05999999999949,
+  "score": 0.804,
+  "n": 29
+ },
+ {
+  "film_start": 9279.44,
+  "film_end": 9375.5,
+  "parte": 3,
+  "girato_start": 4654.9400000000005,
+  "girato_end": 4751.0,
+  "durata": 96.05999999999949,
+  "score": 0.848,
+  "n": 74
+ },
+ {
+  "film_start": 9296.5,
+  "film_end": 9376.5,
+  "parte": 3,
+  "girato_start": 4672.0,
+  "girato_end": 4751.5,
+  "durata": 80.0,
+  "score": 0.813,
+  "n": 44
+ },
+ {
+  "film_start": 9376.5,
+  "film_end": 9394.16,
+  "parte": 3,
+  "girato_start": 4817.0,
+  "girato_end": 4834.66,
+  "durata": 17.659999999999854,
+  "score": 0.808,
+  "n": 32
+ },
+ {
+  "film_start": 9395.44,
+  "film_end": 9411.0,
+  "parte": 3,
+  "girato_start": 5816.9400000000005,
+  "girato_end": 5832.5,
+  "durata": 15.55999999999949,
+  "score": 0.819,
+  "n": 23
+ },
+ {
+  "film_start": 9411.0,
+  "film_end": 9449.0,
+  "parte": 3,
+  "girato_start": 5900.5,
+  "girato_end": 5939.5,
+  "durata": 38.0,
+  "score": 0.858,
+  "n": 67
+ },
+ {
+  "film_start": 9449.0,
+  "film_end": 9484.28,
+  "parte": 3,
+  "girato_start": 6009.5,
+  "girato_end": 6044.780000000001,
+  "durata": 35.280000000000655,
+  "score": 0.867,
+  "n": 39
+ },
+ {
+  "film_start": 9471.5,
+  "film_end": 9484.5,
+  "parte": 3,
+  "girato_start": 6032.0,
+  "girato_end": 6044.5,
+  "durata": 13.0,
+  "score": 0.821,
+  "n": 22
+ },
+ {
+  "film_start": 9485.5,
+  "film_end": 9529.5,
+  "parte": 3,
+  "girato_start": 6196.5,
+  "girato_end": 6240.5,
+  "durata": 44.0,
+  "score": 0.871,
+  "n": 84
+ },
+ {
+  "film_start": 9531.5,
+  "film_end": 9568.5,
+  "parte": 3,
+  "girato_start": 5384.5,
+  "girato_end": 5421.0,
+  "durata": 37.0,
+  "score": 0.85,
+  "n": 68
+ },
+ {
+  "film_start": 9572.5,
+  "film_end": 9576.0,
+  "parte": 3,
+  "girato_start": 5424.5,
+  "girato_end": 5429.0,
+  "durata": 3.5,
+  "score": 0.85,
+  "n": 7
+ },
+ {
+  "film_start": 9581.48,
+  "film_end": 9598.0,
+  "parte": 5,
+  "girato_start": 8651.98,
+  "girato_end": 8668.5,
+  "durata": 16.520000000000437,
+  "score": 0.776,
+  "n": 6
+ },
+ {
+  "film_start": 9581.48,
+  "film_end": 9598.04,
+  "parte": 5,
+  "girato_start": 8651.48,
+  "girato_end": 8668.04,
+  "durata": 16.56000000000131,
+  "score": 0.779,
+  "n": 6
+ },
+ {
+  "film_start": 9598.04,
+  "film_end": 9610.5,
+  "parte": 5,
+  "girato_start": 8671.54,
+  "girato_end": 8684.0,
+  "durata": 12.459999999999127,
+  "score": 0.879,
+  "n": 25
+ },
+ {
+  "film_start": 9610.5,
+  "film_end": 9617.5,
+  "parte": 5,
+  "girato_start": 8690.5,
+  "girato_end": 8691.0,
+  "durata": 7.0,
+  "score": 0.716,
+  "n": 14
+ },
+ {
+  "film_start": 9617.5,
+  "film_end": 9627.16,
+  "parte": 2,
+  "girato_start": 8504.5,
+  "girato_end": 8514.16,
+  "durata": 9.659999999999854,
+  "score": 0.732,
+  "n": 8
+ },
+ {
+  "film_start": 9630.5,
+  "film_end": 9638.0,
+  "parte": 2,
+  "girato_start": 8476.0,
+  "girato_end": 8483.0,
+  "durata": 7.5,
+  "score": 0.847,
+  "n": 9
+ },
+ {
+  "film_start": 9652.5,
+  "film_end": 9668.0,
+  "parte": 2,
+  "girato_start": 8808.5,
+  "girato_end": 8824.0,
+  "durata": 15.5,
+  "score": 0.705,
+  "n": 19
+ },
+ {
+  "film_start": 9668.76,
+  "film_end": 9729.5,
+  "parte": 2,
+  "girato_start": 8892.76,
+  "girato_end": 8953.5,
+  "durata": 60.73999999999978,
+  "score": 0.804,
+  "n": 122
+ },
+ {
+  "film_start": 9729.5,
+  "film_end": 9737.0,
+  "parte": 2,
+  "girato_start": 8953.0,
+  "girato_end": 8960.5,
+  "durata": 7.5,
+  "score": 0.69,
+  "n": 9
+ },
+ {
+  "film_start": 9737.0,
+  "film_end": 9745.88,
+  "parte": 2,
+  "girato_start": 8960.5,
+  "girato_end": 8969.38,
+  "durata": 8.8799999999992,
+  "score": 0.773,
+  "n": 17
+ },
+ {
+  "film_start": 9788.5,
+  "film_end": 9813.5,
+  "parte": 2,
+  "girato_start": 9036.0,
+  "girato_end": 9061.0,
+  "durata": 25.0,
+  "score": 0.727,
+  "n": 28
+ },
+ {
+  "film_start": 9818.0,
+  "film_end": 9822.5,
+  "parte": 2,
+  "girato_start": 9065.5,
+  "girato_end": 9070.0,
+  "durata": 4.5,
+  "score": 0.701,
+  "n": 9
+ },
+ {
+  "film_start": 9828.5,
+  "film_end": 9844.72,
+  "parte": 2,
+  "girato_start": 9079.0,
+  "girato_end": 9095.22,
+  "durata": 16.219999999999345,
+  "score": 0.752,
+  "n": 19
+ },
+ {
+  "film_start": 9849.5,
+  "film_end": 9888.0,
+  "parte": 2,
+  "girato_start": 9221.0,
+  "girato_end": 9259.5,
+  "durata": 38.5,
+  "score": 0.728,
+  "n": 49
+ },
+ {
+  "film_start": 9888.0,
+  "film_end": 9899.52,
+  "parte": 2,
+  "girato_start": 9259.0,
+  "girato_end": 9270.52,
+  "durata": 11.520000000000437,
+  "score": 0.74,
+  "n": 23
+ },
+ {
+  "film_start": 9901.0,
+  "film_end": 9919.0,
+  "parte": 2,
+  "girato_start": 9272.5,
+  "girato_end": 9290.5,
+  "durata": 18.0,
+  "score": 0.744,
+  "n": 10
+ },
+ {
+  "film_start": 9921.5,
+  "film_end": 9938.0,
+  "parte": 2,
+  "girato_start": 9293.0,
+  "girato_end": 9309.5,
+  "durata": 16.5,
+  "score": 0.757,
+  "n": 15
+ },
+ {
+  "film_start": 9938.0,
+  "film_end": 9965.5,
+  "parte": 2,
+  "girato_start": 9309.5,
+  "girato_end": 9337.0,
+  "durata": 27.5,
+  "score": 0.754,
+  "n": 55
+ },
+ {
+  "film_start": 9965.5,
+  "film_end": 9976.0,
+  "parte": 2,
+  "girato_start": 9337.0,
+  "girato_end": 9347.5,
+  "durata": 10.5,
+  "score": 0.68,
+  "n": 12
+ },
+ {
+  "film_start": 9980.0,
+  "film_end": 9998.5,
+  "parte": 2,
+  "girato_start": 9351.5,
+  "girato_end": 9370.0,
+  "durata": 18.5,
+  "score": 0.828,
+  "n": 6
+ },
+ {
+  "film_start": 10052.0,
+  "film_end": 10069.08,
+  "parte": 2,
+  "girato_start": 9430.0,
+  "girato_end": 9447.08,
+  "durata": 17.079999999999927,
+  "score": 0.742,
+  "n": 19
+ },
+ {
+  "film_start": 10069.88,
+  "film_end": 10086.4,
+  "parte": 2,
+  "girato_start": 9463.88,
+  "girato_end": 9480.4,
+  "durata": 16.520000000000437,
+  "score": 0.844,
+  "n": 7
+ },
+ {
+  "film_start": 10096.04,
+  "film_end": 10100.0,
+  "parte": 5,
+  "girato_start": 9267.04,
+  "girato_end": 9271.0,
+  "durata": 3.959999999999127,
+  "score": 0.789,
+  "n": 8
+ },
+ {
+  "film_start": 10100.0,
+  "film_end": 10127.5,
+  "parte": 5,
+  "girato_start": 9271.5,
+  "girato_end": 9298.0,
+  "durata": 27.5,
+  "score": 0.82,
+  "n": 7
+ },
+ {
+  "film_start": 10101.0,
+  "film_end": 10127.92,
+  "parte": 5,
+  "girato_start": 9272.0,
+  "girato_end": 9298.92,
+  "durata": 26.920000000000073,
+  "score": 0.802,
+  "n": 16
+ },
+ {
+  "film_start": 10129.0,
+  "film_end": 10154.16,
+  "parte": 5,
+  "girato_start": 9452.0,
+  "girato_end": 9477.16,
+  "durata": 25.159999999999854,
+  "score": 0.855,
+  "n": 45
+ },
+ {
+  "film_start": 10155.24,
+  "film_end": 10161.36,
+  "parte": 4,
+  "girato_start": 6235.24,
+  "girato_end": 6241.360000000001,
+  "durata": 6.1200000000008,
+  "score": 0.829,
+  "n": 6
+ },
+ {
+  "film_start": 10168.28,
+  "film_end": 10273.0,
+  "parte": 4,
+  "girato_start": 6249.780000000001,
+  "girato_end": 6354.5,
+  "durata": 104.71999999999935,
+  "score": 0.801,
+  "n": 53
+ },
+ {
+  "film_start": 10180.5,
+  "film_end": 10195.5,
+  "parte": 4,
+  "girato_start": 6255.5,
+  "girato_end": 6270.5,
+  "durata": 15.0,
+  "score": 0.801,
+  "n": 6
+ },
+ {
+  "film_start": 10221.0,
+  "film_end": 10281.52,
+  "parte": 4,
+  "girato_start": 6300.5,
+  "girato_end": 6361.02,
+  "durata": 60.52000000000044,
+  "score": 0.802,
+  "n": 20
+ },
+ {
+  "film_start": 10231.5,
+  "film_end": 10262.0,
+  "parte": 4,
+  "girato_start": 6301.5,
+  "girato_end": 6317.5,
+  "durata": 30.5,
+  "score": 0.803,
+  "n": 26
+ },
+ {
+  "film_start": 10254.0,
+  "film_end": 10272.0,
+  "parte": 4,
+  "girato_start": 6387.0,
+  "girato_end": 6405.0,
+  "durata": 18.0,
+  "score": 0.876,
+  "n": 9
+ },
+ {
+  "film_start": 10281.52,
+  "film_end": 10328.5,
+  "parte": 4,
+  "girato_start": 6368.02,
+  "girato_end": 6408.5,
+  "durata": 46.97999999999956,
+  "score": 0.826,
+  "n": 25
+ },
+ {
+  "film_start": 10328.5,
+  "film_end": 10348.0,
+  "parte": 4,
+  "girato_start": 6408.5,
+  "girato_end": 6428.0,
+  "durata": 19.5,
+  "score": 0.786,
+  "n": 39
+ },
+ {
+  "film_start": 10348.0,
+  "film_end": 10445.0,
+  "parte": 4,
+  "girato_start": 6427.5,
+  "girato_end": 6524.5,
+  "durata": 97.0,
+  "score": 0.813,
+  "n": 7
+ },
+ {
+  "film_start": 10349.0,
+  "film_end": 10433.0,
+  "parte": 4,
+  "girato_start": 6429.0,
+  "girato_end": 6513.0,
+  "durata": 84.0,
+  "score": 0.81,
+  "n": 27
+ },
+ {
+  "film_start": 10349.0,
+  "film_end": 10467.0,
+  "parte": 4,
+  "girato_start": 6429.0,
+  "girato_end": 6547.0,
+  "durata": 118.0,
+  "score": 0.813,
+  "n": 42
+ },
+ {
+  "film_start": 10357.5,
+  "film_end": 10361.5,
+  "parte": 5,
+  "girato_start": 9648.5,
+  "girato_end": 9648.5,
+  "durata": 4.0,
+  "score": 0.848,
+  "n": 6
+ },
+ {
+  "film_start": 10371.5,
+  "film_end": 10462.0,
+  "parte": 4,
+  "girato_start": 6451.0,
+  "girato_end": 6541.5,
+  "durata": 90.5,
+  "score": 0.804,
+  "n": 10
+ },
+ {
+  "film_start": 10384.0,
+  "film_end": 10495.0,
+  "parte": 4,
+  "girato_start": 6464.0,
+  "girato_end": 6575.0,
+  "durata": 111.0,
+  "score": 0.863,
+  "n": 22
+ },
+ {
+  "film_start": 10420.0,
+  "film_end": 10513.5,
+  "parte": 4,
+  "girato_start": 6499.5,
+  "girato_end": 6593.0,
+  "durata": 93.5,
+  "score": 0.807,
+  "n": 24
+ },
+ {
+  "film_start": 10456.5,
+  "film_end": 10515.0,
+  "parte": 4,
+  "girato_start": 6537.5,
+  "girato_end": 6594.5,
+  "durata": 58.5,
+  "score": 0.711,
+  "n": 18
+ },
+ {
+  "film_start": 10515.0,
+  "film_end": 10520.0,
+  "parte": 5,
+  "girato_start": 6616.0,
+  "girato_end": 6621.0,
+  "durata": 5.0,
+  "score": 0.826,
+  "n": 10
+ },
+ {
+  "film_start": 10520.0,
+  "film_end": 10528.5,
+  "parte": 4,
+  "girato_start": 6564.0,
+  "girato_end": 6567.5,
+  "durata": 8.5,
+  "score": 0.73,
+  "n": 12
+ },
+ {
+  "film_start": 10528.4,
+  "film_end": 10595.0,
+  "parte": 4,
+  "girato_start": 6608.9,
+  "girato_end": 6675.5,
+  "durata": 66.60000000000036,
+  "score": 0.767,
+  "n": 9
+ },
+ {
+  "film_start": 10540.08,
+  "film_end": 10666.0,
+  "parte": 4,
+  "girato_start": 6619.58,
+  "girato_end": 6745.5,
+  "durata": 125.92000000000007,
+  "score": 0.861,
+  "n": 46
+ },
+ {
+  "film_start": 10566.5,
+  "film_end": 10573.5,
+  "parte": 3,
+  "girato_start": 3424.0,
+  "girato_end": 3428.5,
+  "durata": 7.0,
+  "score": 0.851,
+  "n": 6
+ },
+ {
+  "film_start": 10589.0,
+  "film_end": 10689.5,
+  "parte": 4,
+  "girato_start": 6669.0,
+  "girato_end": 6769.5,
+  "durata": 100.5,
+  "score": 0.849,
+  "n": 6
+ },
+ {
+  "film_start": 10597.0,
+  "film_end": 10720.5,
+  "parte": 4,
+  "girato_start": 6678.5,
+  "girato_end": 6802.0,
+  "durata": 123.5,
+  "score": 0.91,
+  "n": 33
+ },
+ {
+  "film_start": 10624.5,
+  "film_end": 10736.5,
+  "parte": 4,
+  "girato_start": 6704.0,
+  "girato_end": 6816.0,
+  "durata": 112.0,
+  "score": 0.898,
+  "n": 26
+ },
+ {
+  "film_start": 10641.5,
+  "film_end": 10736.0,
+  "parte": 4,
+  "girato_start": 6720.5,
+  "girato_end": 6815.0,
+  "durata": 94.5,
+  "score": 0.921,
+  "n": 29
+ },
+ {
+  "film_start": 10668.5,
+  "film_end": 10735.5,
+  "parte": 4,
+  "girato_start": 6747.5,
+  "girato_end": 6814.5,
+  "durata": 67.0,
+  "score": 0.931,
+  "n": 10
+ },
+ {
+  "film_start": 10736.5,
+  "film_end": 10739.5,
+  "parte": 4,
+  "girato_start": 6776.0,
+  "girato_end": 6779.0,
+  "durata": 3.0,
+  "score": 0.859,
+  "n": 6
+ },
+ {
+  "film_start": 10739.5,
+  "film_end": 10814.0,
+  "parte": 4,
+  "girato_start": 6822.0,
+  "girato_end": 6896.5,
+  "durata": 74.5,
+  "score": 0.928,
+  "n": 78
+ },
+ {
+  "film_start": 10758.0,
+  "film_end": 10811.5,
+  "parte": 4,
+  "girato_start": 6842.5,
+  "girato_end": 6884.0,
+  "durata": 53.5,
+  "score": 0.927,
+  "n": 43
+ },
+ {
+  "film_start": 10763.5,
+  "film_end": 10874.0,
+  "parte": 4,
+  "girato_start": 6843.5,
+  "girato_end": 6954.0,
+  "durata": 110.5,
+  "score": 0.905,
+  "n": 21
+ },
+ {
+  "film_start": 10826.0,
+  "film_end": 10974.5,
+  "parte": 4,
+  "girato_start": 6907.0,
+  "girato_end": 7055.5,
+  "durata": 148.5,
+  "score": 0.924,
+  "n": 222
+ },
+ {
+  "film_start": 10923.0,
+  "film_end": 11001.0,
+  "parte": 4,
+  "girato_start": 7003.0,
+  "girato_end": 7081.0,
+  "durata": 78.0,
+  "score": 0.942,
+  "n": 19
+ },
+ {
+  "film_start": 10975.0,
+  "film_end": 11000.5,
+  "parte": 4,
+  "girato_start": 7055.5,
+  "girato_end": 7079.0,
+  "durata": 25.5,
+  "score": 0.938,
+  "n": 14
+ },
+ {
+  "film_start": 10988.5,
+  "film_end": 11026.5,
+  "parte": 4,
+  "girato_start": 6838.5,
+  "girato_end": 6876.5,
+  "durata": 38.0,
+  "score": 0.9,
+  "n": 7
+ },
+ {
+  "film_start": 11003.0,
+  "film_end": 11020.0,
+  "parte": 4,
+  "girato_start": 6816.5,
+  "girato_end": 6828.5,
+  "durata": 17.0,
+  "score": 0.917,
+  "n": 10
+ },
+ {
+  "film_start": 11007.0,
+  "film_end": 11031.0,
+  "parte": 4,
+  "girato_start": 7089.5,
+  "girato_end": 7113.5,
+  "durata": 24.0,
+  "score": 0.875,
+  "n": 11
+ },
+ {
+  "film_start": 11031.0,
+  "film_end": 11055.5,
+  "parte": 4,
+  "girato_start": 7110.5,
+  "girato_end": 7135.0,
+  "durata": 24.5,
+  "score": 0.865,
+  "n": 49
+ },
+ {
+  "film_start": 11055.5,
+  "film_end": 11087.0,
+  "parte": 4,
+  "girato_start": 7135.5,
+  "girato_end": 7166.0,
+  "durata": 31.5,
+  "score": 0.806,
+  "n": 39
+ },
+ {
+  "film_start": 11091.0,
+  "film_end": 11097.0,
+  "parte": 4,
+  "girato_start": 7238.0,
+  "girato_end": 7244.5,
+  "durata": 6.0,
+  "score": 0.81,
+  "n": 8
+ },
+ {
+  "film_start": 11097.0,
+  "film_end": 11101.5,
+  "parte": 5,
+  "girato_start": 9661.0,
+  "girato_end": 9665.5,
+  "durata": 4.5,
+  "score": 0.832,
+  "n": 9
+ },
+ {
+  "film_start": 11101.5,
+  "film_end": 11110.5,
+  "parte": 5,
+  "girato_start": 9664.0,
+  "girato_end": 9664.5,
+  "durata": 9.0,
+  "score": 0.819,
+  "n": 18
+ },
+ {
+  "film_start": 11108.5,
+  "film_end": 11168.0,
+  "parte": 4,
+  "girato_start": 7256.0,
+  "girato_end": 7315.5,
+  "durata": 59.5,
+  "score": 0.828,
+  "n": 89
+ },
+ {
+  "film_start": 11170.5,
+  "film_end": 11205.5,
+  "parte": 4,
+  "girato_start": 7413.0,
+  "girato_end": 7448.0,
+  "durata": 35.0,
+  "score": 0.812,
+  "n": 54
+ },
+ {
+  "film_start": 11207.92,
+  "film_end": 11215.0,
+  "parte": 4,
+  "girato_start": 7588.92,
+  "girato_end": 7596.0,
+  "durata": 7.079999999999927,
+  "score": 0.845,
+  "n": 15
+ },
+ {
+  "film_start": 11215.0,
+  "film_end": 11220.0,
+  "parte": 4,
+  "girato_start": 7595.5,
+  "girato_end": 7601.0,
+  "durata": 5.0,
+  "score": 0.8,
+  "n": 6
+ },
+ {
+  "film_start": 11221.0,
+  "film_end": 11233.5,
+  "parte": 4,
+  "girato_start": 7493.5,
+  "girato_end": 7505.5,
+  "durata": 12.5,
+  "score": 0.814,
+  "n": 24
+ },
+ {
+  "film_start": 11235.5,
+  "film_end": 11295.0,
+  "parte": 4,
+  "girato_start": 7666.5,
+  "girato_end": 7726.5,
+  "durata": 59.5,
+  "score": 0.889,
+  "n": 65
+ },
+ {
+  "film_start": 11237.5,
+  "film_end": 11294.96,
+  "parte": 4,
+  "girato_start": 7669.0,
+  "girato_end": 7726.459999999999,
+  "durata": 57.45999999999913,
+  "score": 0.882,
+  "n": 15
+ },
+ {
+  "film_start": 11295.0,
+  "film_end": 11313.0,
+  "parte": 4,
+  "girato_start": 7872.5,
+  "girato_end": 7890.5,
+  "durata": 18.0,
+  "score": 0.869,
+  "n": 35
+ },
+ {
+  "film_start": 11317.5,
+  "film_end": 11322.0,
+  "parte": 4,
+  "girato_start": 7958.5,
+  "girato_end": 7964.0,
+  "durata": 4.5,
+  "score": 0.872,
+  "n": 8
+ },
+ {
+  "film_start": 11322.5,
+  "film_end": 11344.5,
+  "parte": 4,
+  "girato_start": 8022.5,
+  "girato_end": 8045.0,
+  "durata": 22.0,
+  "score": 0.921,
+  "n": 37
+ },
+ {
+  "film_start": 11345.0,
+  "film_end": 11420.0,
+  "parte": 4,
+  "girato_start": 8100.5,
+  "girato_end": 8175.5,
+  "durata": 75.0,
+  "score": 0.895,
+  "n": 70
+ },
+ {
+  "film_start": 11346.0,
+  "film_end": 11420.16,
+  "parte": 4,
+  "girato_start": 8101.5,
+  "girato_end": 8175.66,
+  "durata": 74.15999999999985,
+  "score": 0.902,
+  "n": 65
+ },
+ {
+  "film_start": 11426.32,
+  "film_end": 11437.0,
+  "parte": 4,
+  "girato_start": 8754.82,
+  "girato_end": 8765.5,
+  "durata": 10.680000000000291,
+  "score": 0.913,
+  "n": 6
+ },
+ {
+  "film_start": 11426.32,
+  "film_end": 11448.5,
+  "parte": 4,
+  "girato_start": 8756.82,
+  "girato_end": 8779.0,
+  "durata": 22.18000000000029,
+  "score": 0.851,
+  "n": 9
+ },
+ {
+  "film_start": 11448.5,
+  "film_end": 11452.5,
+  "parte": 4,
+  "girato_start": 8770.5,
+  "girato_end": 8774.5,
+  "durata": 4.0,
+  "score": 0.839,
+  "n": 8
+ },
+ {
+  "film_start": 11452.5,
+  "film_end": 11467.5,
+  "parte": 4,
+  "girato_start": 8783.0,
+  "girato_end": 8797.0,
+  "durata": 15.0,
+  "score": 0.859,
+  "n": 7
+ },
+ {
+  "film_start": 11467.64,
+  "film_end": 11472.0,
+  "parte": 4,
+  "girato_start": 9086.14,
+  "girato_end": 9090.5,
+  "durata": 4.360000000000582,
+  "score": 0.912,
+  "n": 9
+ },
+ {
+  "film_start": 11472.0,
+  "film_end": 11480.5,
+  "parte": 4,
+  "girato_start": 9248.5,
+  "girato_end": 9250.0,
+  "durata": 8.5,
+  "score": 0.858,
+  "n": 11
+ },
+ {
+  "film_start": 11492.0,
+  "film_end": 11526.0,
+  "parte": 4,
+  "girato_start": 9163.5,
+  "girato_end": 9197.5,
+  "durata": 34.0,
+  "score": 0.869,
+  "n": 12
+ },
+ {
+  "film_start": 11493.5,
+  "film_end": 11523.0,
+  "parte": 4,
+  "girato_start": 9163.5,
+  "girato_end": 9194.5,
+  "durata": 29.5,
+  "score": 0.895,
+  "n": 12
+ },
+ {
+  "film_start": 11530.2,
+  "film_end": 11573.5,
+  "parte": 4,
+  "girato_start": 9383.2,
+  "girato_end": 9426.5,
+  "durata": 43.29999999999927,
+  "score": 0.932,
+  "n": 87
+ },
+ {
+  "film_start": 11573.5,
+  "film_end": 11577.5,
+  "parte": 3,
+  "girato_start": 9286.5,
+  "girato_end": 9287.0,
+  "durata": 4.0,
+  "score": 0.826,
+  "n": 7
+ },
+ {
+  "film_start": 11584.5,
+  "film_end": 11646.36,
+  "parte": 4,
+  "girato_start": 9437.0,
+  "girato_end": 9498.86,
+  "durata": 61.86000000000058,
+  "score": 0.814,
+  "n": 69
+ },
+ {
+  "film_start": 11633.0,
+  "film_end": 11646.36,
+  "parte": 4,
+  "girato_start": 9485.5,
+  "girato_end": 9498.86,
+  "durata": 13.360000000000582,
+  "score": 0.867,
+  "n": 6
+ },
+ {
+  "film_start": 11646.5,
+  "film_end": 11736.5,
+  "parte": 4,
+  "girato_start": 9671.0,
+  "girato_end": 9761.0,
+  "durata": 90.0,
+  "score": 0.915,
+  "n": 105
+ },
+ {
+  "film_start": 11732.5,
+  "film_end": 11738.5,
+  "parte": 4,
+  "girato_start": 5971.0,
+  "girato_end": 5971.5,
+  "durata": 6.0,
+  "score": 0.818,
+  "n": 11
+ },
+ {
+  "film_start": 11747.44,
+  "film_end": 11803.92,
+  "parte": 3,
+  "girato_start": 9344.44,
+  "girato_end": 9400.92,
+  "durata": 56.47999999999956,
+  "score": 0.75,
+  "n": 34
+ },
+ {
+  "film_start": 11747.5,
+  "film_end": 11797.5,
+  "parte": 3,
+  "girato_start": 9342.5,
+  "girato_end": 9392.5,
+  "durata": 50.0,
+  "score": 0.747,
+  "n": 22
+ },
+ {
+  "film_start": 11804.84,
+  "film_end": 11845.24,
+  "parte": 3,
+  "girato_start": 10127.34,
+  "girato_end": 10167.74,
+  "durata": 40.399999999999636,
+  "score": 0.704,
+  "n": 24
+ },
+ {
+  "film_start": 11845.24,
+  "film_end": 11888.48,
+  "parte": 3,
+  "girato_start": 10263.74,
+  "girato_end": 10306.98,
+  "durata": 43.23999999999978,
+  "score": 0.746,
+  "n": 35
+ },
+ {
+  "film_start": 11845.24,
+  "film_end": 11888.48,
+  "parte": 3,
+  "girato_start": 10263.74,
+  "girato_end": 10306.98,
+  "durata": 43.23999999999978,
+  "score": 0.853,
+  "n": 7
+ },
+ {
+  "film_start": 11888.5,
+  "film_end": 11900.5,
+  "parte": 3,
+  "girato_start": 9630.5,
+  "girato_end": 9643.0,
+  "durata": 12.0,
+  "score": 0.725,
+  "n": 24
+ },
+ {
+  "film_start": 11900.76,
+  "film_end": 11973.0,
+  "parte": 3,
+  "girato_start": 9667.76,
+  "girato_end": 9736.5,
+  "durata": 72.23999999999978,
+  "score": 0.719,
+  "n": 57
+ },
+ {
+  "film_start": 11901.5,
+  "film_end": 11972.92,
+  "parte": 3,
+  "girato_start": 9667.5,
+  "girato_end": 9738.92,
+  "durata": 71.42000000000007,
+  "score": 0.702,
+  "n": 47
+ },
+ {
+  "film_start": 11975.28,
+  "film_end": 11977.5,
+  "parte": 4,
+  "girato_start": 9747.78,
+  "girato_end": 9750.0,
+  "durata": 2.219999999999345,
+  "score": 0.903,
+  "n": 5
+ },
+ {
+  "film_start": 11977.5,
+  "film_end": 11988.0,
+  "parte": 3,
+  "girato_start": 7673.0,
+  "girato_end": 7677.5,
+  "durata": 10.5,
+  "score": 0.795,
+  "n": 11
+ },
+ {
+  "film_start": 11988.0,
+  "film_end": 11992.8,
+  "parte": 2,
+  "girato_start": 7738.0,
+  "girato_end": 7742.799999999999,
+  "durata": 4.799999999999272,
+  "score": 0.771,
+  "n": 9
+ },
+ {
+  "film_start": 11992.8,
+  "film_end": 11999.0,
+  "parte": 4,
+  "girato_start": 5805.799999999999,
+  "girato_end": 5812.0,
+  "durata": 6.200000000000728,
+  "score": 0.84,
+  "n": 13
+ },
+ {
+  "film_start": 11999.0,
+  "film_end": 12010.68,
+  "parte": 2,
+  "girato_start": 7549.0,
+  "girato_end": 7560.68,
+  "durata": 11.680000000000291,
+  "score": 0.847,
+  "n": 6
+ },
+ {
+  "film_start": 12006.0,
+  "film_end": 12010.5,
+  "parte": 4,
+  "girato_start": 6263.5,
+  "girato_end": 6264.0,
+  "durata": 4.5,
+  "score": 0.804,
+  "n": 9
+ },
+ {
+  "film_start": 12022.84,
+  "film_end": 12049.0,
+  "parte": 4,
+  "girato_start": 6241.34,
+  "girato_end": 6267.5,
+  "durata": 26.159999999999854,
+  "score": 0.867,
+  "n": 53
+ },
+ {
+  "film_start": 12049.0,
+  "film_end": 12076.5,
+  "parte": 3,
+  "girato_start": 9283.0,
+  "girato_end": 9287.5,
+  "durata": 27.5,
+  "score": 0.826,
+  "n": 43
+ },
+ {
+  "film_start": 12076.5,
+  "film_end": 12080.28,
+  "parte": 4,
+  "girato_start": 11105.5,
+  "girato_end": 11109.28,
+  "durata": 3.780000000000655,
+  "score": 0.881,
+  "n": 7
+ },
+ {
+  "film_start": 12080.28,
+  "film_end": 12097.5,
+  "parte": 3,
+  "girato_start": 9282.78,
+  "girato_end": 9300.0,
+  "durata": 17.219999999999345,
+  "score": 0.845,
+  "n": 35
+ },
+ {
+  "film_start": 12097.5,
+  "film_end": 12110.0,
+  "parte": 3,
+  "girato_start": 9287.0,
+  "girato_end": 9299.5,
+  "durata": 12.5,
+  "score": 0.82,
+  "n": 9
+ },
+ {
+  "film_start": 12102.0,
+  "film_end": 12110.0,
+  "parte": 4,
+  "girato_start": 6243.0,
+  "girato_end": 6251.0,
+  "durata": 8.0,
+  "score": 0.801,
+  "n": 6
+ },
+ {
+  "film_start": 12110.28,
+  "film_end": 12118.5,
+  "parte": 4,
+  "girato_start": 10764.28,
+  "girato_end": 10772.5,
+  "durata": 8.219999999999345,
+  "score": 0.805,
+  "n": 17
+ },
+ {
+  "film_start": 12118.5,
+  "film_end": 12138.5,
+  "parte": 4,
+  "girato_start": 10773.5,
+  "girato_end": 10793.0,
+  "durata": 20.0,
+  "score": 0.801,
+  "n": 37
+ },
+ {
+  "film_start": 12143.5,
+  "film_end": 12190.5,
+  "parte": 4,
+  "girato_start": 11857.0,
+  "girato_end": 11904.0,
+  "durata": 47.0,
+  "score": 0.847,
+  "n": 79
+ },
+ {
+  "film_start": 12190.5,
+  "film_end": 12262.0,
+  "parte": 4,
+  "girato_start": 11265.0,
+  "girato_end": 11332.5,
+  "durata": 71.5,
+  "score": 0.874,
+  "n": 133
+ },
+ {
+  "film_start": 12262.0,
+  "film_end": 12393.0,
+  "parte": 4,
+  "girato_start": 11336.0,
+  "girato_end": 11464.0,
+  "durata": 131.0,
+  "score": 0.883,
+  "n": 235
+ },
+ {
+  "film_start": 12393.0,
+  "film_end": 12399.5,
+  "parte": 4,
+  "girato_start": 11466.5,
+  "girato_end": 11471.0,
+  "durata": 6.5,
+  "score": 0.869,
+  "n": 11
+ },
+ {
+  "film_start": 12400.5,
+  "film_end": 12451.0,
+  "parte": 4,
+  "girato_start": 11487.0,
+  "girato_end": 11538.5,
+  "durata": 50.5,
+  "score": 0.874,
+  "n": 89
+ },
+ {
+  "film_start": 12451.68,
+  "film_end": 12469.5,
+  "parte": 4,
+  "girato_start": 11818.68,
+  "girato_end": 11836.5,
+  "durata": 17.81999999999971,
+  "score": 0.834,
+  "n": 36
+ },
+ {
+  "film_start": 12469.5,
+  "film_end": 12477.5,
+  "parte": 4,
+  "girato_start": 11654.0,
+  "girato_end": 11657.5,
+  "durata": 8.0,
+  "score": 0.817,
+  "n": 16
+ },
+ {
+  "film_start": 12477.5,
+  "film_end": 12536.0,
+  "parte": 4,
+  "girato_start": 11662.0,
+  "girato_end": 11720.5,
+  "durata": 58.5,
+  "score": 0.822,
+  "n": 112
+ },
+ {
+  "film_start": 12537.0,
+  "film_end": 12753.0,
+  "parte": 4,
+  "girato_start": 11915.0,
+  "girato_end": 12130.0,
+  "durata": 216.0,
+  "score": 0.914,
+  "n": 400
+ },
+ {
+  "film_start": 12754.0,
+  "film_end": 12796.5,
+  "parte": 4,
+  "girato_start": 12143.5,
+  "girato_end": 12186.0,
+  "durata": 42.5,
+  "score": 0.925,
+  "n": 84
+ }
+]
